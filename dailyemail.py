@@ -34,6 +34,7 @@ def main():
     thread = threading.Thread(target=mirror_touch_2_macro)
     thread.start()
     thread.join()
+    release_all()
 
 def mirror_touch_2_macro():
   print("Starting Mirror Touch 2 macro")
@@ -50,20 +51,25 @@ def mirror_touch_2_rotation():
     press_release('alt', delay=0.07)
     if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.63)
+    if data['is_paused']: return
   press('left')
   if data['is_paused']: return
   jump_attack()
   release('left', delay=0.2)
   if data['is_paused']: return
   jump_down_attack(attackDelay=0.4, delayAfter=0.6)
+  if data['is_paused']: return
   erda_fountain()
+  if data['is_paused']: return
   press('right')
   if data['is_paused']: return
   jump_attack(jumpDelay=0.2, attackDelay=0.3, delayAfter=0.63)
   if data['is_paused']: return
   jump_attack(jumpDelay=0.2, attackDelay=0.3, delayAfter=0.63)
+  if data['is_paused']: return
   if rng > 0.7:
     jump_attack(jumpDelay=0.2, attackDelay=0.3, delayAfter=0.63)
+  if data['is_paused']: return
   release('right')
   press_release('x', delay=0.7)
 
@@ -82,13 +88,17 @@ def mirror_touch_2_loot():
   release('left')
   rng = random.random()
   if rng > 0.5:
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.8)
     press_release('right')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
   else:
     press_release('right')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.8)
     press_release('left')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7) 
   time.sleep(0.3)
 
@@ -100,13 +110,17 @@ def mirror_touch_2_loot():
     data['next_web'] = datetime.now() + timedelta(minutes=3)
   elif rng > 0.5:
     press_release('left')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.8)
     press_release('right')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
   else:
     press_release('right')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
     press_release('left')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)  
   time.sleep(0.6)
 
@@ -115,45 +129,70 @@ def mirror_touch_2_loot():
   rng = random.random()
   if rng > 0.5:
     press_release('left')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.8)
+    if data['is_paused']: return
     press_release('right')
+    if data['is_paused']: return
     press_release('r', delay=0.8)
   else:
     press_release('right')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.8)
+    if data['is_paused']: return
     press_release('left')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
   time.sleep(0.6)
 
   press('right')
+  if data['is_paused']: return
   jump_attack(jumpDelay=0.2, attackDelay=0.3, delayAfter=0.63)
   if data['is_paused']: return
   jump_attack(jumpDelay=0.2, attackDelay=0.3, delayAfter=0.63)
 
-  if data['is_paused']: return
-  jump_up(delayAfter=1)
-  release('right')
   rng = random.random()
+  bolt_burst_when_jump = rng > 0.5
+  if data['is_paused']: return
+  jump_up(delayAfter=0.5 if bolt_burst_when_jump else 1)
+  if data['is_paused']: return
+  if bolt_burst_when_jump: press_release('d', delay=0.6)
+  if data['is_paused']: return
+  release('right')
   if not is_web_left and data['next_web'] < datetime.now():
     press_release('4')
     data['next_web'] = datetime.now() + timedelta(minutes=3)
-  time.sleep(3)
+  time.sleep(2.5)
+  press('left', delay=0.7)
+  release('left')
+  if not bolt_burst_when_jump:
+    press_release('d')
+  time.sleep(0.7)
 
   if data['is_paused']: return
   jump_up(delayAfter=1)
   rng = random.random()
   if rng > 0.5:
     press_release('left')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
     press_release('right')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
   else:
     press_release('right')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
     press_release('left')
+    if data['is_paused']: return
     q_and_surgebolt(afterDelay=0.7)
-  time.sleep(0.75)
-  
+  if data['is_paused']: return
+  time.sleep(0.5)
+  press('right', delay=0.6)
+  release('right')
+  time.sleep(1)
+
+  if data['is_paused']: return
   press_release('x', delay=0.7)
   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.2, 1.4))
 
@@ -561,7 +600,7 @@ def buff():
   cur = datetime.now()
   rng = random.random()
   if cur > data['next_feed_pet']:
-    data['next_feed_pet'] = datetime.now() + timedelta(minutes=uniform(1, 3))
+    data['next_feed_pet'] = datetime.now() + timedelta(minutes=uniform(2, 3))
     press_release('f10')
   if cur > data['next_sharpeye']:
     data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(150, 300))
@@ -587,7 +626,7 @@ def erda_fountain():
     press('down')
     press_release('f')
     press_release('f')
-    release('down', delay=0.4)
+    release('down', delay=0.6)
     data['next_erda_fountain'] = datetime.now() + timedelta(minutes=1.05)
     
 def flash_jump(jumpDelay=0.2, delayAfter=0.7):
@@ -618,12 +657,23 @@ def jump_up(delayAfter=1):
 def jump_down(delayAfter=1):
   if logging:
     print('jump_down')
-  press('down')
+  press('down', 0.1)
   press('alt')
   time.sleep(0.2)
   release('alt')
   release('down')
   time.sleep(delayAfter)
+
+def jump_down_attack(attackDelay=0.05, delayAfter=1):
+  if logging:
+    print('jump_down_attack')
+  press('down', 0.1)
+  press('alt')
+  time.sleep(attackDelay)
+  press_release('q')
+  time.sleep(delayAfter-0.1)
+  release('alt')
+  release('down')
 
 def jump_down_and_fj(delayAfter=1):
   jump_down(delayAfter=uniform(0.3, 0.5))
@@ -648,29 +698,18 @@ def q_and_surgebolt(afterDelay=0.7):
     press_release('q')
   time.sleep(afterDelay)
     
-
-def jump_down_attack(attackDelay=0.05, delayAfter=1):
-  if logging:
-    print('jump_down_attack')
-  press('down')
-  press('alt')
-  time.sleep(attackDelay)
-  press_release('q')
-  time.sleep(delayAfter-0.1)
-  release('alt')
-  release('down')
-
-
 def pause():
   print('Pause')
   data['is_paused'] = True
-  release('left', delay=0.05)
-  release('right', delay=0.05)
-  release('alt', delay=0.05)
 
 def start():
   print('Start')
   data['is_paused'] = False
+
+def release_all():
+  release('left', delay=0.05)
+  release('right', delay=0.05)
+  release('alt', delay=0.05)
 
 def press(key, delay=0.05):
   keyboard.press(key)
