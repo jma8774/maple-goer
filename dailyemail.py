@@ -16,11 +16,16 @@ data = {
   'current_split_ends_at': datetime.now(),
   'next_surgebolt': datetime.now(),
   'next_loot': datetime.now() + timedelta(minutes=1.2),
+  'next_loot_2': datetime.now() + timedelta(minutes=1.2),
+  'next_loot_3': datetime.now() + timedelta(minutes=1.2),
   'next_blink_setup': None,
   'next_bully_clear_middle': datetime.now() + timedelta(minutes=0.5),
   'next_web': datetime.now(),
   'next_feed_pet': datetime.now() + timedelta(minutes=1),
   'next_erda_fountain': datetime.now(),
+  'next_bird': datetime.now(),
+  'next_bolt_burst': datetime.now(),
+  'x_and_down_x': False
 }
 
 def main():
@@ -31,17 +36,206 @@ def main():
     keyboard.wait(START_KEY)
     data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.1, 1.45))
     data['next_blink_setup'] = None
-    thread = threading.Thread(target=mirror_touch_2_macro)
+    thread = threading.Thread(target=mf3_macro)
     thread.start()
     thread.join()
     release_all()
+
+def mf3_macro():
+  print("Starting Mysterious Fog 3 macro")
+  while not data['is_paused']:
+    buff()
+    mf3_rotation()
+    mf3_loot()
+
+def mf3_rotation():
+  rng = random.random()
+  if datetime.now() > data['next_erda_fountain']:
+    if data['is_paused']: return
+    press('left')
+    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=1)
+    if data['is_paused']: return
+    release('left')
+    if data['is_paused']: return
+    if data['is_paused']: return
+    if rng > 0.5 and datetime.now() > data['next_bolt_burst']:
+      jump_down(delayAfter=0.15)
+      bolt_burst(delayAfter=0.5)
+    else:
+      jump_down(delayAfter=0.35)
+      press_release('q', delay=0.3)
+    if data['is_paused']: return
+    press('left', delay=1)
+    if data['is_paused']: return
+    release('left')
+    erda_fountain()
+    if data['is_paused']: return
+    time.sleep(0.5)
+    if data['is_paused']: return
+    press_release('x')
+    press_release('x', 0.8)
+
+  # start from top
+  if rng > 0.3:
+    if data['is_paused']: return
+    press_release('left')
+    if data['is_paused']: return
+    q_and_surgebolt(afterDelay=0.6)
+    if data['is_paused']: return
+    press_release('right')
+    if data['is_paused']: return
+    jump_down_attack(delayAfter=0.45)
+    if data['is_paused']: return
+    q_and_surgebolt(afterDelay=0.45)
+  else:
+    if data['is_paused']: return
+    press_release('right')
+    if data['is_paused']: return
+    q_and_surgebolt(afterDelay=0.6)
+    if data['is_paused']: return
+    press_release('left')
+    if data['is_paused']: return
+    jump_down_attack(delayAfter=0.05)
+    if data['is_paused']: return
+    press('right', delay=0.45)
+    if data['is_paused']: return
+    q_and_surgebolt(afterDelay=0.05)
+    if data['is_paused']: return
+    release('right', delay=0.45)
+
+  # land on middle
+  rng = random.random()
+  now = datetime.now()
+  if datetime.now() > data['next_web']: 
+    jump_down(delayAfter=0.05)
+    web(delayAfter=0.6 if now > data['next_loot_2'] else 0.2)
+  else:
+    jump_down(delayAfter=0.6 if now > data['next_loot_2'] else 0.2)
+
+  # falling to bottom
+  if now > data['next_loot_2']:
+    if data['is_paused']: return
+    jump_down_attack(attackDelay=0.2, delayAfter=0.6)
+    press('left')
+    if data['is_paused']: return
+    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.95)
+    release('left')
+    if data['is_paused']: return
+    data['next_loot_2'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.5))
+  else:
+    if rng > 0.7 and datetime.now() > data['next_bolt_burst']: # 30% chance
+      time.sleep(0.4)
+      if data['is_paused']: return
+      jump_down(delayAfter=0.05)
+      if data['is_paused']: return
+      bolt_burst(delayAfter=0.6)
+    else:
+      press_release('left', delay=0.4)
+      if data['is_paused']: return
+      jump_down_attack(attackDelay=0.2, delayAfter=0.6)
+      if data['is_paused']: return
+    press('right')
+    if data['is_paused']: return
+    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.63)
+    if data['is_paused']: return
+    if datetime.now() > data['next_loot_3']:
+      jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=1)
+      data['next_loot_3'] = datetime.now() + timedelta(minutes=0.8)
+    release('right')
+  if data['is_paused']: return
+  press_release('x')
+  press_release('x', 0.8)
+
+def mf3_loot():
+  if datetime.now() < data['next_loot']:
+    return
+  rng = random.random()
+  if data['is_paused']: return
+  press('right')
+  if data['is_paused']: return
+  jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.63)
+  if data['is_paused']: return
+  release('right')
+  if data['is_paused']: return
+  if data['is_paused']: return
+  if rng > 0.5 and datetime.now() > data['next_bolt_burst']:
+    jump_down(delayAfter=0.2)
+    bolt_burst(delayAfter=1.15)
+  else:
+    jump_down(delayAfter=0.35)
+    press_release('q', delay=1)
+  if data['is_paused']: return
+  press_release('x')
+  if data['is_paused']: return
+  press_release('x', 0.8)
+  if data['is_paused']: return
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.55))
+
+def plunging_3_macro():
+  print("Starting Plunging Depth 3 macro")
+  while not data['is_paused']:
+    buff()
+    plunging_3_loot()
+    plunging_3_rotation()
+
+def plunging_3_rotation():
+  rng = random.random()
+  press_release('left')
+  q_and_surgebolt(afterDelay=0.64)
+  press_release('right')
+  press('down')
+  press_release('alt')
+  release('down')
+  press_release('q', delay=0.6)
+  press_release('q', delay=0.7)
+  press_release('left')
+  if rng > 0.5 and data['next_bolt_burst'] < datetime.now():
+    bolt_burst(delayAfter=0.6)
+  else:
+    q_and_surgebolt(afterDelay=0.64)
+  jump_down(delayAfter=0.4)
+  if rng > 0.7:
+    press_release('right')
+    q_and_surgebolt(afterDelay=0.64)
+  press('left')
+  jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.63)
+  jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0)
+  release('left', delay=0.63)
+  if data['next_erda_fountain'] < datetime.now():
+    if data['next_bolt_burst'] < datetime.now():
+      press_release('c', delay=1.2)
+      bolt_burst(delayAfter=0.8)
+    else:
+      press_release('c', delay=2)
+    press('left', 0.5)
+    release('left')
+    erda_fountain()
+    q_and_surgebolt(afterDelay=0.64)
+    press('right')
+    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.63)
+    release('right', 0.3)
+  elif rng > 0.9:
+    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.63)
+  press_release('x')
+  press_release('x', delay=0.7)
+
+def plunging_3_loot():
+  if datetime.now() < data['next_loot']:
+    return
+  press_release('right')
+  flash_jump(jumpDelay=0.4, delayAfter=0.5)
+  jump_down(delayAfter=0.7)
+  press_release('x')
+  press_release('x', delay=0.7)
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.2, 1.4))
 
 def mirror_touch_2_macro():
   print("Starting Mirror Touch 2 macro")
   while not data['is_paused']:
     buff()
     mirror_touch_2_rotation()
-    mirror_touch_2_loot()
+    # mirror_touch_2_loot()
+    mirror_touch_2_loot_vac()
 
 def mirror_touch_2_rotation():
   rng = random.random()
@@ -73,12 +267,27 @@ def mirror_touch_2_rotation():
   release('right')
   press_release('x', delay=0.7)
 
+def mirror_touch_2_loot_vac():
+  if datetime.now() < data['next_loot']:
+    return
+  press('left')
+  flash_jump(delayAfter=1.5)
+  release('left')
+  press_release('x', 0.7)
+  press('right')
+  flash_jump(delayAfter=1.3)
+  release('right')
+  time.sleep(0.9)
+  press_release('x', 0.7)
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.2, 1.4))
+
 def mirror_touch_2_loot():
   if datetime.now() < data['next_loot']:
     return
   rng = random.random()
   is_web_left = rng > 0.5
 
+  # vac comment
   press('left', delay=0.5)
   if data['is_paused']: return
   flash_jump(jumpDelay=0.1, delayAfter=0.05)
@@ -86,21 +295,21 @@ def mirror_touch_2_loot():
   press('up', delay=2.2)
   release('up')
   release('left')
-  rng = random.random()
-  if rng > 0.5:
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.8)
-    press_release('right')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)
-  else:
-    press_release('right')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.8)
-    press_release('left')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7) 
-  time.sleep(0.3)
+  # rng = random.random()
+  # if rng > 0.5:
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.8)
+  #   press_release('right')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)
+  # else:
+  #   press_release('right')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.8)
+  #   press_release('left')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7) 
+  # time.sleep(0.3)
 
   if data['is_paused']: return
   jump_down(delayAfter=0.8)
@@ -108,20 +317,21 @@ def mirror_touch_2_loot():
   if is_web_left and data['next_web'] < datetime.now():
     press_release('4', delay=1.3)
     data['next_web'] = datetime.now() + timedelta(minutes=3)
-  elif rng > 0.5:
-    press_release('left')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.8)
-    press_release('right')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)
-  else:
-    press_release('right')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)
-    press_release('left')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)  
+  # vac comment
+  # elif rng > 0.5:
+  #   press_release('left')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.8)
+  #   press_release('right')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)
+  # else:
+  #   press_release('right')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)
+  #   press_release('left')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)  
   time.sleep(0.6)
 
   if data['is_paused']: return
@@ -170,27 +380,28 @@ def mirror_touch_2_loot():
   time.sleep(0.7)
 
   if data['is_paused']: return
-  jump_up(delayAfter=1)
-  rng = random.random()
-  if rng > 0.5:
-    press_release('left')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)
-    press_release('right')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)
-  else:
-    press_release('right')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)
-    press_release('left')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.7)
-  if data['is_paused']: return
-  time.sleep(0.5)
-  press('right', delay=0.6)
-  release('right')
-  time.sleep(1)
+  # vac comment
+  # jump_up(delayAfter=1)
+  # rng = random.random()
+  # if rng > 0.5:
+  #   press_release('left')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)
+  #   press_release('right')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)
+  # else:
+  #   press_release('right')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)
+  #   press_release('left')
+  #   if data['is_paused']: return
+  #   q_and_surgebolt(afterDelay=0.7)
+  # if data['is_paused']: return
+  # time.sleep(0.5)
+  # press('right', delay=0.6)
+  # release('right')
+  # time.sleep(1)
 
   if data['is_paused']: return
   press_release('x', delay=0.7)
@@ -598,7 +809,15 @@ def rev2_rotation():
 
 def buff():
   cur = datetime.now()
-  rng = random.random()
+  if data['x_and_down_x']:
+    press_release('x')
+    press_release('x', 0.8)
+    press('down')
+    press_release('x')
+    press_release('x')
+    release('down')
+    time.sleep(0.7)
+    data['x_and_down_x'] = False
   if cur > data['next_feed_pet']:
     data['next_feed_pet'] = datetime.now() + timedelta(minutes=uniform(2, 3))
     press_release('f10')
@@ -609,6 +828,9 @@ def buff():
     data['next_split'] = datetime.now() + timedelta(seconds=uniform(120, 140))
     data['current_split_ends_at'] = datetime.now() + timedelta(seconds=71)
     press_release('2', 1)
+  if cur > data['next_bird']:
+    press_release('5', 0.7)
+    data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 125))
   if data['next_blink_setup'] == None:
     press_release('x')
     press_release('x', 0.7)
@@ -620,6 +842,7 @@ def buff():
     release('down')
     time.sleep(0.7)
     data['next_blink_setup'] = datetime.now() + timedelta(seconds=uniform(40, 59))
+  
 
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
@@ -627,8 +850,16 @@ def erda_fountain():
     press_release('f')
     press_release('f')
     release('down', delay=0.6)
-    data['next_erda_fountain'] = datetime.now() + timedelta(minutes=1.05)
-    
+    data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
+
+def bolt_burst(delayAfter=0.05):
+  press_release('d', delay=delayAfter)
+  data['next_bolt_burst'] = datetime.now() + timedelta(seconds=7)
+
+def web(delayAfter=0.3):
+  press_release('4', delay=delayAfter)
+  data['next_web'] = datetime.now() + timedelta(seconds=251)
+
 def flash_jump(jumpDelay=0.2, delayAfter=0.7):
   press_release('alt')
   time.sleep(jumpDelay)
@@ -646,20 +877,20 @@ def jump_attack(attackDelay=0.2, jumpDelay=0.05, delayAfter=0.7):
 
 
 def jump_up(delayAfter=1):
-  keyboard.send('alt')
-  time.sleep(0.2)
-  keyboard.send('up')
-  time.sleep(0.05)
-  keyboard.send('up')
+  press('up')
+  press_release('alt', 0.2)
+  press_release('alt')
+  press_release('alt')
+  release('up')
   time.sleep(delayAfter)
   
 
 def jump_down(delayAfter=1):
   if logging:
     print('jump_down')
-  press('down', 0.1)
+  press('down', 0.15)
   press('alt')
-  time.sleep(0.2)
+  time.sleep(0.15)
   release('alt')
   release('down')
   time.sleep(delayAfter)
@@ -667,11 +898,11 @@ def jump_down(delayAfter=1):
 def jump_down_attack(attackDelay=0.05, delayAfter=1):
   if logging:
     print('jump_down_attack')
-  press('down', 0.1)
+  press('down')
   press('alt')
   time.sleep(attackDelay)
   press_release('q')
-  time.sleep(delayAfter-0.1)
+  time.sleep(delayAfter)
   release('alt')
   release('down')
 
@@ -701,6 +932,7 @@ def q_and_surgebolt(afterDelay=0.7):
 def pause():
   print('Pause')
   data['is_paused'] = True
+  data['x_and_down_x'] = True
 
 def start():
   print('Start')
