@@ -11,7 +11,7 @@ logging = False
 thread = None
 data = {
   'is_paused': True,
-  'next_loot': datetime.now() + timedelta(minutes=1.7),
+  'next_loot': datetime.now() + timedelta(1.3),
   'next_monsoon': datetime.now(),
   'next_sphere': datetime.now(),
   'next_merciless_wind': datetime.now(),
@@ -35,57 +35,34 @@ def lh6_macro():
   print("Starting Last Horizon 6 macro")
   while not data['is_paused']:
     lh6_rotation()
-    # lh6_loot()
+    lh6_loot()
 
 def lh6_rotation():
   rng = random.random()
   press_release('right')
   if datetime.now() > data['next_sphere']:
     if data['is_paused']: return
-    sphere(delayAfter=0.8)
+    sphere(delayAfter=1)
   else:
     if data['is_paused']: return
-    howling_gale(delayAfter=0.8)
+    howling_gale(delayAfter=1)
 
-  if rng < 0.3:
-    if data['is_paused']: return
-    press('right', 1.15)
-    if data['is_paused']: return
-    release('right', 0.05)
-  elif rng > 0.3 and rng < 0.6:
-    if data['is_paused']: return
-    press('right')
-    if data['is_paused']: return
-    press_release('space', 1.1)
-    if data['is_paused']: return
-    release('right', 0.05)
-  else:
-    if data['is_paused']: return
-    press_release('s', 0.5)
-    if data['is_paused']: return
-    press('left', 0.2)
-    release('left')
-    if data['is_paused']: return
-    press_release('right')
-  if data['is_paused']: return
-  press_release('up')
-  if data['is_paused']: return
-  press_release('up', 0.5)
+  lh6_tele_up()
 
   if data['is_paused']: return
   jump_down_attack(attackDelay=0.4, delayAfter=0.45)
   if data['is_paused']: return
   press('right', delay=0.3)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.6)
+  jump_attack(delayAfter=0.65)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.6)
+  jump_attack(delayAfter=0.65)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.6)
+  jump_attack(delayAfter=0.65)
   just_used_fountain = False
   if datetime.now() > data['next_erda_fountain']:
     if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.65)
     if data['is_paused']: return
     release('right')
     if data['is_paused']: return
@@ -105,54 +82,90 @@ def lh6_rotation():
     flash_jump(delayAfter=0.55)
     if data['is_paused']: return
     press_release('left', 1.2)
+    press('left')
     if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.65)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.65)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.65)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.65)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
-    if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.9)
+    release('left')
   elif rng > 0.5:
+    rng = random.random()
     if data['is_paused']: return
-    press_release('left')
+    press('left', 0.3)
+    release('left')
     if data['is_paused']: return
     jump_down_attack(attackDelay=0.4, delayAfter=0.05)
     if data['is_paused']: return
     time.sleep(0.4)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.65)
     if data['is_paused']: return
-    flash_jump(jumpDelay=uniform(0.33, 0.4), delayAfter=0.7)
-    if data['is_paused']: return
-    jump_down_attack(attackDelay=0.4, delayAfter=0.4)
-    if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
-    if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    flash_jump(jumpDelay=0.2, delayAfter=0.9)
+    if rng > 0.5:
+      if data['is_paused']: return
+      jump_down_attack(attackDelay=0.4, delayAfter=0.4)
+      if data['is_paused']: return
+      jump_attack(delayAfter=0.65)
+      if data['is_paused']: return
+      jump_attack(delayAfter=0.65)
+    else:
+      if data['is_paused']: return
+      press('left', 0.7)
+      if data['is_paused']: return
+      jump_down_attack(attackDelay=0.4, delayAfter=0.4)
+      if data['is_paused']: return
+      jump_attack(delayAfter=0.8)
+      if data['is_paused']: return
+      release('left')
   else:
     if data['is_paused']: return
-    press_release('left')
-    if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
-    if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
-    if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
-    if data['is_paused']: return
-    jump_down_attack(attackDelay=0.4, delayAfter=0.4)
-    if data['is_paused']: return
-    jump_down_attack(attackDelay=0.4, delayAfter=0.4)
-    if data['is_paused']: return
-    jump_attack(delayAfter=0.6)
+    press_release('left', 0.3)
+    lh6_tr_to_tl()
 
 def lh6_loot():
-  if False and datetime.now() < data['next_loot']:
+  if datetime.now() > data['next_loot']:
     return
+  rng = random.random()
+  press_release('right')
+  if datetime.now() > data['next_sphere']:
+    if data['is_paused']: return
+    sphere(delayAfter=1)
+  else:
+    if data['is_paused']: return
+    howling_gale(delayAfter=1)
+  lh6_tele_up()
+  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.65)
+  press_release('left', delay=0.05)
+  jump_down_attack(attackDelay=0.4, delayAfter=0.5)
+
+  press('left', 0.8)
+  if data['is_paused']: return
+  jump_attack(delayAfter=0.65)
+  if data['is_paused']: return
+  jump_attack(delayAfter=0.65)
+  if data['is_paused']: return
+  jump_down_attack(attackDelay=0.4, delayAfter=0.3)
+  time.sleep(0.4)
+  if data['is_paused']: return
+  jump_down_attack(attackDelay=0.4, delayAfter=0.5)
+  if data['is_paused']: return
+  jump_attack(delayAfter=0.65)
+  if data['is_paused']: return
+  time.sleep(0.8)
+  release('left')
+
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.5, 1.8))
+
+def lh6_tele_up():
   rng = random.random()
   press_release('right')
   if rng < 0.3:
@@ -163,18 +176,28 @@ def lh6_loot():
     press_release('space', 1.1)
     release('right', 0.05)
   else:
-    press_release('s', 0.5)
-    press('left', 0.2)
+    press_release('s', 0.7)
+    press('left', 0.3)
     release('left')
     press_release('right')
   press_release('up')
+  press_release('up')
   press_release('up', 0.5)
   press_release('right')
-  jump_attack(delayAfter=0.6)
-  jump_attack(delayAfter=0.6)
-  jump_attack(delayAfter=0.6)
-  jump_attack(delayAfter=0.6)
-  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.9))
+
+def lh6_tr_to_tl():
+  if data['is_paused']: return
+  jump_attack(delayAfter=0.65)
+  if data['is_paused']: return
+  jump_attack(delayAfter=0.65)
+  if data['is_paused']: return
+  jump_attack(delayAfter=0.65)
+  if data['is_paused']: return
+  jump_down_attack(attackDelay=0.4, delayAfter=0.4)
+  if data['is_paused']: return
+  jump_down_attack(attackDelay=0.4, delayAfter=0.4)
+  if data['is_paused']: return
+  jump_attack(delayAfter=0.8)
 
 def buff():
   pass
@@ -192,6 +215,7 @@ def monsoon(delayAfter=0.3):
   data['next_monsoon'] = datetime.now() + timedelta(seconds=30)
 
 def sphere(delayAfter=0.3):
+  press_release('y', delay=0.05)
   press_release('y', delay=delayAfter)
   data['next_sphere'] = datetime.now() + timedelta(seconds=30)
 
@@ -200,6 +224,7 @@ def merciless_winds(delayAfter=0.3):
   data['next_merciless_wind'] = datetime.now() + timedelta(seconds=10)
 
 def howling_gale(delayAfter=0.3):
+  press_release('t', delay=0.05)
   press_release('t', delay=delayAfter)
   data['next_howling'] = datetime.now() + timedelta(seconds=10)
   
@@ -211,6 +236,7 @@ def flash_jump(jumpDelay=0.2, delayAfter=0.7):
 
 def jump_attack(attackDelay=0.2, jumpDelay=0.05, delayAfter=0.7):
   press_release('space', jumpDelay)
+  press_release('space')
   press_release('space', attackDelay)
   keyboard.send('d')
   time.sleep(delayAfter)

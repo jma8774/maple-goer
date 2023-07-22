@@ -108,7 +108,7 @@ def mf3_rotation():
   now = datetime.now()
   if datetime.now() > data['next_web']: 
     jump_down(delayAfter=0.05)
-    web(delayAfter=0.6 if now > data['next_loot_2'] else 0.2)
+    web(delayAfter=1 if now > data['next_loot_2'] else 0.25)
   else:
     jump_down(delayAfter=0.6 if now > data['next_loot_2'] else 0.2)
 
