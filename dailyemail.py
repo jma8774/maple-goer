@@ -2,8 +2,18 @@ import time
 import keyboard
 import random
 import threading
+import sys
 from datetime import datetime, timedelta
 
+TEAMVIEW_LEFT = 'f1'
+TEAMVIEW_RIGHT = 'f2'
+TEAMVIEW_JUMP_DOWN = 'f3'
+TEAMVIEW_JUMP_UP = 'f4'
+
+JIAMING_KEY = 'f5'
+JIAMING_PW_KEY = 'alt+f5'
+JIMMY_KEY = 'f6'
+JIMMY_PW_KEY = 'alt+f6'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
@@ -25,13 +35,31 @@ data = {
   'next_erda_fountain': datetime.now(),
   'next_bird': datetime.now(),
   'next_bolt_burst': datetime.now(),
-  'x_and_down_x': False
+  'x_and_down_x': False,
+
+  'is_teamviewer_enabled': False,
 }
 
 def main():
+  # Save commandline args
+  for arg in sys.argv:
+    data['is_teamviewer_enabled'] = data['is_teamviewer_enabled'] or arg == 'teamviewer' or arg == 'tv'
+
+  # Register hotkeys for teamviewer if arg is specified
+  if data['is_teamviewer_enabled']:
+    tv = Teamviewer()
+    keyboard.add_hotkey(TEAMVIEW_LEFT, tv.left)
+    keyboard.add_hotkey(TEAMVIEW_RIGHT, tv.right)
+    keyboard.add_hotkey(TEAMVIEW_JUMP_DOWN, tv.jump_down)
+    keyboard.add_hotkey(TEAMVIEW_JUMP_UP, tv.jump_up)
+
   commands()
   keyboard.add_hotkey(PAUSE_KEY, pause)
   keyboard.add_hotkey(START_KEY, start)
+  keyboard.add_hotkey(JIAMING_KEY, writeJiamingEmail)
+  keyboard.add_hotkey(JIAMING_PW_KEY, writeJiamingPw)
+  keyboard.add_hotkey(JIMMY_KEY, writeJimmyEmail)
+  keyboard.add_hotkey(JIMMY_PW_KEY, writeJimmyPw)
   while True:
     keyboard.wait(START_KEY)
     data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.1, 1.45))
@@ -875,7 +903,6 @@ def jump_attack(attackDelay=0.2, jumpDelay=0.05, delayAfter=0.7):
     send('e')
   time.sleep(delayAfter)
 
-
 def jump_up(delayAfter=1):
   press('up')
   press_release('alt', 0.2)
@@ -963,12 +990,77 @@ def press_release(key, delay=0.05):
   keyboard.release(key)
   time.sleep(delay)
   
+def write(word, delay=0.05):
+  keyboard.write(word)
+  time.sleep(delay)
+
+def writeJimmyEmail():
+  print('Writing jimmyma1991@gmail.com')
+  write('jimmyma1991@gmail.com')
+
+def writeJimmyPw():
+  print('Writing PW')
+  write('Aicilla1!!')
+
+def writeJiamingEmail():
+  print('Writing jiamingma1998@gmail.com')
+  write('jiamingma1998@gmail.com')
+
+def writeJiamingPw():
+  print('Writing PW')
+  write('Aicilla1!')
+
 def uniform(a, b):
   return random.uniform(a, b)
 
+
+class MoveState:
+  STILL = 0
+  LEFT = 1
+  RIGHT = 2
+
+class Teamviewer:
+  def __init__(self):
+    self.move_state = MoveState.STILL
+    
+  def left(self):
+    if self.move_state == MoveState.RIGHT: release('right')
+    if self.move_state == MoveState.LEFT:
+      self.move_state = MoveState.STILL
+      release('left')
+    else:
+      self.move_state = MoveState.LEFT
+      press('left')
+
+  def right(self):
+    if self.move_state == MoveState.LEFT: release('left')
+    if self.move_state == MoveState.RIGHT:
+      self.move_state = MoveState.STILL
+      release('right')
+    else:
+      self.move_state = MoveState.RIGHT
+      press('right')
+
+  def jump_down(self):
+    jump_down()
+
+  def jump_up(self):
+    jump_up()
+
 def commands():
   print("Commands:")
+  print(f"  {JIAMING_KEY} - write jiaming email")
+  print(f"  {JIAMING_PW_KEY} - write jiaming pw")
+  print(f"  {JIMMY_KEY} - write jimmy email")
+  print(f"  {JIMMY_PW_KEY} - write jimmy pw")
   print(f"  {START_KEY} - start")
   print(f"  {PAUSE_KEY} - pause")
+  if data['is_teamviewer_enabled']:
+    print()
+    print("Teamviewer Commands:")
+    print(f"  {TEAMVIEW_LEFT} - move left")
+    print(f"  {TEAMVIEW_RIGHT} - move right")
+    print(f"  {TEAMVIEW_JUMP_DOWN} - jump down")
+    print(f"  {TEAMVIEW_JUMP_UP} - jump up")
 
 main()

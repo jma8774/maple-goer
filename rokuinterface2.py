@@ -7,11 +7,12 @@ from datetime import datetime, timedelta
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
+
 logging = False
 thread = None
 data = {
   'is_paused': True,
-  'next_loot': datetime.now() + timedelta(1.3),
+  'next_loot': datetime.now() + timedelta(minutes=1.3),
   'next_monsoon': datetime.now(),
   'next_sphere': datetime.now(),
   'next_merciless_wind': datetime.now(),
@@ -129,7 +130,7 @@ def lh6_rotation():
     lh6_tr_to_tl()
 
 def lh6_loot():
-  if datetime.now() > data['next_loot']:
+  if datetime.now() < data['next_loot']:
     return
   rng = random.random()
   press_release('right')
@@ -162,7 +163,6 @@ def lh6_loot():
   if data['is_paused']: return
   time.sleep(0.8)
   release('left')
-
   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.5, 1.8))
 
 def lh6_tele_up():
