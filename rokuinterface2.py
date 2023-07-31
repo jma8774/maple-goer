@@ -36,7 +36,7 @@ def lh6_macro():
   print("Starting Last Horizon 6 macro")
   while not data['is_paused']:
     lh6_rotation()
-    lh6_loot()
+    # lh6_loot()
 
 def lh6_rotation():
   rng = random.random()
@@ -55,15 +55,15 @@ def lh6_rotation():
   if data['is_paused']: return
   press('right', delay=0.3)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   just_used_fountain = False
   if datetime.now() > data['next_erda_fountain']:
     if data['is_paused']: return
-    jump_attack(delayAfter=0.65)
+    jump_attack(delayAfter=0.55)
     if data['is_paused']: return
     release('right')
     if data['is_paused']: return
@@ -85,13 +85,13 @@ def lh6_rotation():
     press_release('left', 1.2)
     press('left')
     if data['is_paused']: return
-    jump_attack(delayAfter=0.65)
+    jump_attack(delayAfter=0.55)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.65)
+    jump_attack(delayAfter=0.55)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.65)
+    jump_attack(delayAfter=0.55)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.65)
+    jump_attack(delayAfter=0.55)
     if data['is_paused']: return
     jump_attack(delayAfter=0.9)
     release('left')
@@ -105,16 +105,16 @@ def lh6_rotation():
     if data['is_paused']: return
     time.sleep(0.4)
     if data['is_paused']: return
-    jump_attack(delayAfter=0.65)
+    jump_attack(delayAfter=0.55)
     if data['is_paused']: return
     flash_jump(jumpDelay=0.2, delayAfter=0.9)
     if rng > 0.5:
       if data['is_paused']: return
       jump_down_attack(attackDelay=0.4, delayAfter=0.4)
       if data['is_paused']: return
-      jump_attack(delayAfter=0.65)
+      jump_attack(delayAfter=0.55)
       if data['is_paused']: return
-      jump_attack(delayAfter=0.65)
+      jump_attack(delayAfter=0.55)
     else:
       if data['is_paused']: return
       press('left', 0.7)
@@ -141,25 +141,25 @@ def lh6_loot():
     if data['is_paused']: return
     howling_gale(delayAfter=1)
   lh6_tele_up()
-  jump_attack(delayAfter=0.65)
-  jump_attack(delayAfter=0.65)
-  jump_attack(delayAfter=0.65)
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
+  jump_attack(delayAfter=0.55)
+  jump_attack(delayAfter=0.55)
+  jump_attack(delayAfter=0.55)
   press_release('left', delay=0.05)
   jump_down_attack(attackDelay=0.4, delayAfter=0.5)
 
   press('left', 0.8)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
   jump_down_attack(attackDelay=0.4, delayAfter=0.3)
   time.sleep(0.4)
   if data['is_paused']: return
   jump_down_attack(attackDelay=0.4, delayAfter=0.5)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
   time.sleep(0.8)
   release('left')
@@ -187,11 +187,11 @@ def lh6_tele_up():
 
 def lh6_tr_to_tl():
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
-  jump_attack(delayAfter=0.65)
+  jump_attack(delayAfter=0.55)
   if data['is_paused']: return
   jump_down_attack(attackDelay=0.4, delayAfter=0.4)
   if data['is_paused']: return
