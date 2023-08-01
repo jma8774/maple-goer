@@ -2,22 +2,27 @@ import pyautogui as pag
 import keyboard
 import time
 import threading
+from PIL import Image
+
+def openImage(file):
+  return Image.open(f"images/{file}")
 
 # Images
 class Images:
-  CRAFT           = 'craft.png'
-  OK_START        = 'ok_start.png'
-  OK_END          = 'ok_end.png'
-  CANCEL          = "cancel.png"
-  HERBALISM       = "herbalism.png"
-  EXTRACT_UP      = "extract_up.png"
-  CONFIRM         = "confirm.png"
-  HERB_BAG        = "herb_bag.png"
-  SORT            = "sort.png"
-  ENHANCE_STAR    = "enhance_star.png"
-  ENHANCE_ENHANCE = "enhance_enhance.png"
-  ENHANCE_OK      = "enhance_ok.png"
-  CUBE_ONEMORETRY = "cube_onemoretry.png"
+  CRAFT           = openImage('craft.png')
+  OK_START        = openImage('ok_start.png')
+  OK_END          = openImage('ok_end.png')
+  CANCEL          = openImage("cancel.png")
+  HERBALISM       = openImage("herbalism.png")
+  EXTRACT_UP      = openImage("extract_up.png")
+  CONFIRM         = openImage("confirm.png")
+  HERB_BAG        = openImage("herb_bag.png")
+  SORT            = openImage("sort.png")
+  ENHANCE_STAR    = openImage("enhance_star.png")
+  ENHANCE_ENHANCE = openImage("enhance_enhance.png")
+  ENHANCE_OK      = openImage("enhance_ok.png")
+  CUBE_ONEMORETRY = openImage("cube_onemoretry.png")
+  ASCENDION       = openImage("ascendion.png")
 
 class Scripts:
   def __init__(self, obj):
@@ -57,17 +62,21 @@ def main():
     thread.start()
     thread.join()
 
+def test(scripts):
+  while True:
+    location = pag.locateOnScreen(Images.ASCENDION, confidence=0.8)
+    pag.moveTo(location)
+    print(location)
+    time.sleep(2)
+    if data["target"] != scripts.ENHANCE:
+      break
+    
+
 def enhance(scripts):
   location = pag.locateOnScreen(Images.ENHANCE_ENHANCE, confidence=0.8)
   while True:
     pag.click(location)
     time.sleep(0.01)
-    # clickIfFound(Images.ENHANCE_ENHANCE)
-    # time.sleep(0.01)
-    # moveToIfFound(Images.ENHANCE_STAR)
-    # time.sleep(0.01)
-    # clickIfFound(Images.ENHANCE_OK)
-    # time.sleep(0.01)
     if data["target"] != scripts.ENHANCE:
       break
     
@@ -123,8 +132,6 @@ def craftWAP(scripts):
     time.sleep(0.05)
     clickIfFound(Images.OK_END)
     time.sleep(0.05)
-    # clickIfFound(Images.CANCEL)
-    # time.sleep(0.05)
     moveToIfFound(Images.HERBALISM)
     if data["target"] != scripts.WAP_CRAFT:
       break
@@ -141,17 +148,17 @@ def toggleScript(msg, scriptId):
   else:
     print(f"Stop {msg}")
 
-def moveToIfFound(image, confidence=0.8):
-  executeIfFound(image, pag.moveTo, confidence=confidence)
+def moveToIfFound(image, confidence=0.8, greyscale=True):
+  executeIfFound(image, pag.moveTo, confidence=confidence, greyscale=greyscale)
 
-def clickIfFound(image, confidence=0.8):
-  executeIfFound(image, pag.click, confidence=confidence)
+def clickIfFound(image, confidence=0.8, greyscale=True):
+  executeIfFound(image, pag.click, confidence=confidence, greyscale=greyscale)
 
-def doubleClickIfFound(image, confidence=0.8):
-  executeIfFound(image, pag.doubleClick, confidence=confidence)
+def doubleClickIfFound(image, confidence=0.8, greyscale=True):
+  executeIfFound(image, pag.doubleClick, confidence=confidence, greyscale=greyscale)
 
-def executeIfFound(image, fn, confidence=0.8):
-  location = pag.locateOnScreen(image, confidence=confidence)
+def executeIfFound(image, fn, confidence=0.8, greyscale=True):
+  location = pag.locateOnScreen(image, confidence=confidence, greyscale=greyscale)
   if location:
     fn(location)
 
@@ -163,4 +170,5 @@ def commands():
   print(f"  {ENHANCE_KEY} - start/end gear enhancement")
   print(f"  {CUBE_LEGENDARY_KEY} - start/end cube to legendary")
 
-main()
+if __name__=="__main__":
+  main()

@@ -3,12 +3,9 @@ import keyboard
 import random
 import threading
 import sys
+import pyautogui as pag
 from datetime import datetime, timedelta
-
-TEAMVIEW_LEFT = 'f1'
-TEAMVIEW_RIGHT = 'f2'
-TEAMVIEW_JUMP_DOWN = 'f3'
-TEAMVIEW_JUMP_UP = 'f4'
+from marketplace import Images
 
 JIAMING_KEY = 'f5'
 JIAMING_PW_KEY = 'alt+f5'
@@ -25,34 +22,22 @@ data = {
   'next_split': datetime.now(),
   'current_split_ends_at': datetime.now(),
   'next_surgebolt': datetime.now(),
-  'next_loot': datetime.now() + timedelta(minutes=1.2),
-  'just_looted': datetime.now() + timedelta(seconds=5),
+
+  'next_loot': datetime.now() + timedelta(minutes=1.5),
   'next_loot_2': datetime.now() + timedelta(minutes=1.2),
   'next_loot_3': datetime.now() + timedelta(minutes=1.2),
+
   'next_blink_setup': None,
   'next_web': datetime.now(),
-  'next_feed_pet': datetime.now() + timedelta(minutes=1),
-  'next_erda_fountain': datetime.now(),
   'next_bird': datetime.now(),
-  'next_bolt_burst': datetime.now(),
+  'next_high_speed': datetime.now(),
   'x_and_down_x': False,
 
-  'is_teamviewer_enabled': False,
+  'next_erda_fountain': datetime.now(),
+  'next_bolt_burst': datetime.now(),
 }
 
 def main():
-  # Save commandline args
-  for arg in sys.argv:
-    data['is_teamviewer_enabled'] = data['is_teamviewer_enabled'] or arg == 'teamviewer' or arg == 'tv'
-
-  # Register hotkeys for teamviewer if arg is specified
-  if data['is_teamviewer_enabled']:
-    tv = Teamviewer()
-    keyboard.add_hotkey(TEAMVIEW_LEFT, tv.left)
-    keyboard.add_hotkey(TEAMVIEW_RIGHT, tv.right)
-    keyboard.add_hotkey(TEAMVIEW_JUMP_DOWN, tv.jump_down)
-    keyboard.add_hotkey(TEAMVIEW_JUMP_UP, tv.jump_up)
-
   commands()
   keyboard.add_hotkey(PAUSE_KEY, pause)
   keyboard.add_hotkey(START_KEY, start)
@@ -64,7 +49,6 @@ def main():
     keyboard.read_key()
     if data['is_paused'] == True:
       continue
-    data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 2))
     data['next_blink_setup'] = None
     thread = threading.Thread(target=midpoint3_macro)
     thread.start()
@@ -77,11 +61,18 @@ def midpoint3_macro():
     buff()
     midpoint3_rotation()
     midpoint3_loot()
+    release_all()
 
 def midpoint3_rotation():
+  mob_loc = None
+  rng = random.random()
   if datetime.now() > data['next_erda_fountain']:
     if data['is_paused']: return
     press_release('shift', 1)
+    press('right', 0.3)
+    release('right')
+    if data['is_paused']: return
+    press_release('left')
     if data['is_paused']: return
     jump_down_attack(delayAfter=0.5)
     if data['is_paused']: return
@@ -90,247 +81,130 @@ def midpoint3_rotation():
     press_release('x')
     if data['is_paused']: return
     press_release('x', 0.7) 
-  elif datetime.now() > data['just_looted']:
+  
+  # Find mob before starting rotation
+  start_wait = datetime.now()
+  mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8)
+  while mob_loc == None:
     if data['is_paused']: return
-    time.sleep(uniform(1, 3))
+    mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8)
+    time.sleep(0.5)
+    if datetime.now() - start_wait > timedelta(seconds=9):
+      break
+  if mob_loc == None:
+    print(f"Couldn't find mob after 9 secs, continuing rotation")
+  else:
+    print(f"Found mob at {mob_loc}, continuing rotation")
+
   if data['is_paused']: return
   jump_down_attack(delayAfter=0.55)
   if data['is_paused']: return
   q_and_surgebolt(afterDelay=0.55)
   if data['is_paused']: return
-  q_and_surgebolt(afterDelay=0.63)
+  q_and_surgebolt(afterDelay=0.65)
   if data['is_paused']: return
   press_release('right')
-  q_and_surgebolt(afterDelay=0.63)
-  if data['is_paused']: return
-  press_release('left')
-  if data['is_paused']: return
-  press_release('left', 0.2)
-  if data['is_paused']: return
-  press_release('x')
-  if data['is_paused']: return
-  press_release('x')
-  press_release('x', 0.7)
+  if not high_speed_shot(0.8, rng > 0.8):
+    q_and_surgebolt(afterDelay=0.63)
 
 def midpoint3_loot():
+  loot_variation = int(random.random() * 3)
+  
+  def face_left_teleport_reset():
+    if data['is_paused']: return
+    press_release('left')
+    if data['is_paused']: return
+    press_release('left', 0.2)
+    if data['is_paused']: return
+    teleport_reset(0.7)
+
   if datetime.now() < data['next_loot']:
+    face_left_teleport_reset()
     return
+  
   rng = random.random()
-  if data['is_paused']: return
-  press_release('shift', 1)
-  if data['is_paused']: return
-  jump_down(delayAfter=0.1)
-  if data['is_paused']: return
-  if not bolt_burst(0.7, rng < 0.5):
-    q_and_surgebolt(afterDelay=0.7)
-  if data['is_paused']: return
-  erda_fountain()
-  if data['is_paused']: return
-  jump_down_attack(delayAfter=1)
-  if data['is_paused']: return
-  jump_down_attack(delayAfter=1)
-  if data['is_paused']: return
-  jump_down_attack(delayAfter=0.6)
-  press_release('right', 0.1)
-  if data['is_paused']: return
-  if not jump_web(delayAfter=1.5):
+  rng2 = random.random()
+  def right_part():
     if data['is_paused']: return
-    jump_down_attack(delayAfter=1.5)
-  if data['is_paused']: return
-  press_release('left')
-  if data['is_paused']: return
-  press_release('x')
-  if data['is_paused']: return
-  press_release('x')
-  if data['is_paused']: return
-  press_release('x', 0.7) 
-
-  if data['is_paused']: return
-  q_and_surgebolt(afterDelay=0.5)
-  if data['is_paused']: return
-  press('left', 1.2)
-  if data['is_paused']: return
-  release('left', 1)
-  press_release('right')
-  if data['is_paused']: return
-  if not jump_web(delayAfter=1.2):
+    press_release('shift', 1)
+    press('right', 0.3)
+    release('right')
     if data['is_paused']: return
-    jump_down_attack(delayAfter=1.2)
-  if data['is_paused']: return
-  jump_down_attack(delayAfter=0.7)
-  if data['is_paused']: return
-  jump_down_attack(delayAfter=0.7)
-  if data['is_paused']: return
-  press_release('left')
-  if data['is_paused']: return
-  jump_down(delayAfter=0.1)
-  if data['is_paused']: return
-  if not bolt_burst(1.4, rng >= 0.5):
+    press_release('left')
     if data['is_paused']: return
-    q_and_surgebolt(afterDelay=1.4)
-  if data['is_paused']: return
-  press_release('x')
-  if data['is_paused']: return
-  press_release('x')
-  if data['is_paused']: return
-  press_release('x', 0.8) 
-  data['just_looted'] = datetime.now() + timedelta(seconds=5)
-  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 2))
-
-
-def mf3_macro():
-  print("Starting Mysterious Fog 3 macro")
-  while not data['is_paused']:
-    buff()
-    mf3_rotation()
-    mf3_loot()
-
-def mf3_rotation():
-  rng = random.random()
-  if datetime.now() > data['next_erda_fountain']:
-    press('left')
-    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=1)
+    jump_down(delayAfter=0.1)
     if data['is_paused']: return
-    release('left')
+    if not bolt_burst(0.6, rng < 0.5):
+      q_and_surgebolt(afterDelay=0.6)
     if data['is_paused']: return
-    if data['is_paused']: return
-    if rng > 0.5 and datetime.now() > data['next_bolt_burst']:
-      jump_down(delayAfter=0.15)
-      bolt_burst(delayAfter=0.5)
-    else:
-      jump_down(delayAfter=0.35)
-      press_release('q', delay=0.3)
-    if data['is_paused']: return
-    press('left', delay=1)
-    if data['is_paused']: return
-    release('left')
     erda_fountain()
     if data['is_paused']: return
-    time.sleep(0.5)
+    jump_down_attack(delayAfter=1)
     if data['is_paused']: return
-    press_release('x')
-    press_release('x', 0.8)
-
-  # start from top
-  if rng > 0.3:
+    jump_down_attack(delayAfter=0.7)
+    if data['is_paused']: return
+    if not jump_high_speed_shot(delayAfter=0.5, isGo=rng2 > 0.5):
+      jump_down_attack(delayAfter=0.5)
+    press_release('right', 0.1)
+    if data['is_paused']: return
+    if not jump_web(delayAfter=1.5):
+      if data['is_paused']: return
+      jump_down_attack(delayAfter=1.5)
     if data['is_paused']: return
     press_release('left')
     if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.6)
+    teleport_reset(0.7)
+
+  def left_part():
     if data['is_paused']: return
+    q_and_surgebolt(afterDelay=0.5)
+    if data['is_paused']: return
+    press('left', 1.2)
+    if data['is_paused']: return
+    release('left', 0.5)
     press_release('right')
     if data['is_paused']: return
-    jump_down_attack(delayAfter=0.45)
+    if not jump_web(delayAfter=1):
+      if data['is_paused']: return
+      jump_down_attack(delayAfter=1)
     if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.45)
-  else:
+    jump_down_attack(delayAfter=0.7)
     if data['is_paused']: return
-    press_release('right')
-    if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.6)
+    jump_down_attack(delayAfter=0.6)
     if data['is_paused']: return
     press_release('left')
+    press_release('left')
     if data['is_paused']: return
-    jump_down_attack(delayAfter=0.05)
+    jump_down(delayAfter=0.1)
     if data['is_paused']: return
-    press('right', delay=0.45)
+    if not bolt_burst(1.5, rng >= 0.5):
+      if data['is_paused']: return
+      q_and_surgebolt(afterDelay=1.5)
     if data['is_paused']: return
-    q_and_surgebolt(afterDelay=0.05)
-    if data['is_paused']: return
-    release('right', delay=0.45)
+    teleport_reset(0.7)
 
-  # land on middle
-  rng = random.random()
-  now = datetime.now()
-  if datetime.now() > data['next_web']: 
-    jump_down(delayAfter=0.05)
-    web(delayAfter=1 if now > data['next_loot_2'] else 0.25)
+  if loot_variation == 0:
+    face_left_teleport_reset()
+    right_part()
+    left_part()
+  elif loot_variation == 1:
+    face_left_teleport_reset()
+    left_part()
+    right_part()
   else:
-    jump_down(delayAfter=0.6 if now > data['next_loot_2'] else 0.2)
+    press('left', 1.5)
+    release('left', 0.7)
+    press_release('c', 1.4)
+    if not bolt_burst(0.7):
+      q_and_surgebolt(afterDelay=0.7)
+    press_release('right')
+    jump_down_attack(delayAfter=0.55)
+    press_release('left')
+    jump_down_attack(delayAfter=0.7)
+    teleport_reset(0.7)
+    right_part()
 
-  # falling to bottom
-  if now > data['next_loot_2']:
-    if data['is_paused']: return
-    jump_down_attack(attackDelay=0.2, delayAfter=0.6)
-    press('left')
-    if data['is_paused']: return
-    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.95)
-    release('left')
-    if data['is_paused']: return
-    data['next_loot_2'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.5))
-  else:
-    if rng > 0.7 and datetime.now() > data['next_bolt_burst']: # 30% chance
-      time.sleep(0.4)
-      if data['is_paused']: return
-      jump_down(delayAfter=0.05)
-      if data['is_paused']: return
-      bolt_burst(delayAfter=0.6)
-    else:
-      press_release('left', delay=0.4)
-      if data['is_paused']: return
-      jump_down_attack(attackDelay=0.2, delayAfter=0.6)
-      if data['is_paused']: return
-    press('right')
-    if data['is_paused']: return
-    jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.63)
-    if data['is_paused']: return
-    if datetime.now() > data['next_loot_3']:
-      jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=1)
-      data['next_loot_3'] = datetime.now() + timedelta(minutes=0.8)
-    release('right')
-  if data['is_paused']: return
-  press_release('x')
-  press_release('x', 0.8)
-
-def mf3_loot():
-  if datetime.now() < data['next_loot']:
-    return
-  rng = random.random()
-  if data['is_paused']: return
-  press('right')
-  if data['is_paused']: return
-  jump_attack(jumpDelay=0.2, attackDelay=0.15, delayAfter=0.63)
-  if data['is_paused']: return
-  release('right')
-  if data['is_paused']: return
-  if data['is_paused']: return
-  if rng > 0.5 and datetime.now() > data['next_bolt_burst']:
-    jump_down(delayAfter=0.2)
-    bolt_burst(delayAfter=1.15)
-  else:
-    jump_down(delayAfter=0.35)
-    press_release('q', delay=1)
-  if data['is_paused']: return
-  press_release('x')
-  if data['is_paused']: return
-  press_release('x', 0.8)
-  if data['is_paused']: return
-  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.55))
-  rng = random.random()
-  press('right')
-  if data['is_paused']: return
-  jump_attack(attackDelay=uniform(0.1, 0.2), jumpDelay=uniform(0.06, 0.09), delayAfter=uniform(0.68, 0.73))
-  if data['is_paused']: return
-  jump_attack(attackDelay=uniform(0.1, 0.2), jumpDelay=uniform(0.05, 0.09), delayAfter=uniform(0.68, 0.73))
-  if data['is_paused']: return
-  jump_attack(delayAfter=1)
-  if data['is_paused']: return
-  release('right')
-  if data['is_paused']: return
-  press('left')
-  if data['is_paused']: return
-  jump_attack(attackDelay=uniform(0.1, 0.2), jumpDelay=uniform(0.06, 0.09), delayAfter=uniform(0.68, 0.73))
-  if data['is_paused']: return
-  jump_attack(attackDelay=uniform(0.1, 0.2), jumpDelay=uniform(0.06, 0.09), delayAfter=uniform(0.68, 0.73))
-  if data['is_paused']: return
-  jump_attack(attackDelay=uniform(0.1, 0.2), jumpDelay=uniform(0.06, 0.09), delayAfter=uniform(0.68, 0.73))
-  if data['is_paused']: return
-  if rng > 0.6: 
-    jump_attack(attackDelay=uniform(0.1, 0.2), jumpDelay=uniform(0.06, 0.09), delayAfter=uniform(0.68, 0.73))
-  if data['is_paused']: return
-  release('left', delay=uniform(0.1, 0.3))
-  if data['is_paused']: return
-  send('x', 0.7)
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.5, 1.7))
 
 def buff():
   cur = datetime.now()
@@ -343,9 +217,7 @@ def buff():
     release('down')
     time.sleep(0.7)
     data['x_and_down_x'] = False
-  if cur > data['next_feed_pet']:
-    data['next_feed_pet'] = datetime.now() + timedelta(minutes=uniform(2, 3))
-    press_release('f10')
+    data['next_blink_setup'] = datetime.now() + timedelta(seconds=uniform(40, 59))
   if cur > data['next_sharpeye']:
     data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(200, 300))
     press_release('page down', 2)
@@ -383,11 +255,10 @@ def bolt_burst(delayAfter=0.05, isGo=True):
     return True
   return False
 
-def jump_web(jumpDelay=0.5, delayAfter=0.3):
+def jump_web(jumpDelay=0.2, delayAfter=0.3):
   if datetime.now() > data['next_web']:
     jump_down(delayAfter=jumpDelay)
-    press_release('4', delay=delayAfter)
-    data['next_web'] = datetime.now() + timedelta(seconds=251)
+    web(delayAfter=delayAfter)
     return True
   return False
 
@@ -395,6 +266,20 @@ def web(delayAfter=0.3):
   if datetime.now() > data['next_web']:
     press_release('4', delay=delayAfter)
     data['next_web'] = datetime.now() + timedelta(seconds=251)
+    return True
+  return False
+
+def jump_high_speed_shot(jumpDelay=0.2, delayAfter=0.3, isGo=True):
+  if isGo and datetime.now() > data['next_high_speed']:
+    jump_down(delayAfter=jumpDelay)
+    high_speed_shot(delayAfter=delayAfter)
+    return True
+  return False
+
+def high_speed_shot(delayAfter=0.3, isGo=True):
+  if isGo and datetime.now() > data['next_high_speed']:
+    press_release('r', delay=delayAfter)
+    data['next_high_speed'] = datetime.now() + timedelta(seconds=15)
     return True
   return False
 
@@ -464,7 +349,15 @@ def q_and_surgebolt(afterDelay=0.7):
   else:
     press_release('q')
   time.sleep(afterDelay)
-    
+
+def teleport_reset(delayAfter=0.7):
+  if data['is_paused']: return
+  press_release('x')
+  if data['is_paused']: return
+  press_release('x')
+  if data['is_paused']: return
+  press_release('x', delayAfter)
+
 def pause():
   print('Pause')
   data['is_paused'] = True
@@ -475,12 +368,28 @@ def start():
   data['is_paused'] = False
 
 def release_all():
-  release('left', delay=0.05)
-  release('right', delay=0.05)
-  release('up', delay=0.05)
-  release('down', delay=0.05)
-  release('ctrl', delay=0.05)
-  release('alt', delay=0.05)
+  if keyboard.is_pressed('left'):
+    release('left', delay=0.05)
+  if keyboard.is_pressed('right'):
+    release('right', delay=0.05)
+  if keyboard.is_pressed('up'):
+    release('up', delay=0.05)
+  if keyboard.is_pressed('down'):
+    release('down', delay=0.05)
+  if keyboard.is_pressed('ctrl'):
+    release('ctrl', delay=0.05)
+  if keyboard.is_pressed('alt'):
+    release('alt', delay=0.05)
+  if keyboard.is_pressed('f7'):
+    release('f7', delay=0.05)
+  if keyboard.is_pressed('f8'):
+    release('f8', delay=0.05)
+  if keyboard.is_pressed('q'):
+    release('q', delay=0.05)
+  if keyboard.is_pressed('e'):
+    release('e', delay=0.05)
+  if keyboard.is_pressed('d'):
+    release('d', delay=0.05)
 
 def press(key, delay=0.05):
   keyboard.press(key)
@@ -525,40 +434,6 @@ def writeJiamingPw():
 def uniform(a, b):
   return random.uniform(a, b)
 
-
-class MoveState:
-  STILL = 0
-  LEFT = 1
-  RIGHT = 2
-
-class Teamviewer:
-  def __init__(self):
-    self.move_state = MoveState.STILL
-    
-  def left(self):
-    if self.move_state == MoveState.RIGHT: release('right')
-    if self.move_state == MoveState.LEFT:
-      self.move_state = MoveState.STILL
-      release('left')
-    else:
-      self.move_state = MoveState.LEFT
-      press('left')
-
-  def right(self):
-    if self.move_state == MoveState.LEFT: release('left')
-    if self.move_state == MoveState.RIGHT:
-      self.move_state = MoveState.STILL
-      release('right')
-    else:
-      self.move_state = MoveState.RIGHT
-      press('right')
-
-  def jump_down(self):
-    jump_down()
-
-  def jump_up(self):
-    jump_up()
-
 def commands():
   print("Commands:")
   print(f"  {JIAMING_KEY} - write jiaming email")
@@ -567,12 +442,6 @@ def commands():
   print(f"  {JIMMY_PW_KEY} - write jimmy pw")
   print(f"  {START_KEY} - start")
   print(f"  {PAUSE_KEY} - pause")
-  if data['is_teamviewer_enabled']:
-    print()
-    print("Teamviewer Commands:")
-    print(f"  {TEAMVIEW_LEFT} - move left")
-    print(f"  {TEAMVIEW_RIGHT} - move right")
-    print(f"  {TEAMVIEW_JUMP_DOWN} - jump down")
-    print(f"  {TEAMVIEW_JUMP_UP} - jump up")
 
-main()
+if __name__=="__main__":
+  main()

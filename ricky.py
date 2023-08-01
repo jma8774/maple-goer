@@ -3,6 +3,14 @@ import keyboard
 import random
 import threading
 from datetime import datetime, timedelta
+import pyautogui as pag
+from PIL import Image
+
+def openImage(file):
+  return Image.open(f"images/{file}")
+
+class Images:
+  FOREBERION      = openImage('foreberion.png')
 
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
@@ -11,13 +19,14 @@ logging = False
 thread = None
 data = {
   'is_paused': True,
-  'next_loot': datetime.now() + timedelta(minutes=1.2),
-  'next_loot_2': datetime.now() + timedelta(minutes=1.2),
-  'next_loot_3': datetime.now() + timedelta(minutes=1.2),
+  'next_loot': datetime.now() + timedelta(minutes=1.5),
+
   'next_fire_floor': datetime.now(),
   'next_erda_fountain': datetime.now(),
   'next_fire_breath': datetime.now(),
   'next_dark_fog': datetime.now(),
+  'next_onyx_dragon': datetime.now(),
+  'next_web': datetime.now(),
 }
 
 def main():
@@ -28,7 +37,6 @@ def main():
     keyboard.read_key()
     if data['is_paused'] == True:
       continue
-    data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.3, 1.7))
     thread = threading.Thread(target=liminia_1_5_macro)
     thread.start()
     thread.join()
@@ -38,8 +46,23 @@ def liminia_1_5_macro():
   print("Starting 1-5 macro")
   while not data['is_paused']:
     liminia_1_5_rotation()
+    release_all()
 
 def liminia_1_5_rotation():
+  # Find mob before starting rotation
+  start_wait = datetime.now()
+  mob_loc = pag.locateOnScreen(Images.FOREBERION, confidence=0.8)
+  while mob_loc == None:
+    if data['is_paused']: return
+    mob_loc = pag.locateOnScreen(Images.FOREBERION, confidence=0.8)
+    time.sleep(0.5)
+    if datetime.now() - start_wait > timedelta(seconds=7):
+      break
+  if mob_loc == None:
+    print(f"Couldn't find mob after 7 secs, continuing rotation")
+  else:
+    print(f"Found mob at {mob_loc}, continuing rotation")
+
   if datetime.now() > data['next_fire_breath']:
     fire_breath()
     if datetime.now() > data['next_fire_floor']:
@@ -109,39 +132,59 @@ def liminia_1_5_loot():
   if data['is_paused']: return
   teleport()
   if data['is_paused']: return
-  teleport()
-  if data['is_paused']: return
   release('up')
   if data['is_paused']: return
-  press('left', 1)
+  press('left', 2)
   if data['is_paused']: return
   release('left')
-  if data['is_paused']: return
-  jump_down(delayAfter=1.5)
-  press_release('delete', 0.8)
-  if data['is_paused']: return
-  jump_down(delayAfter=1.5)
-  if data['is_paused']: return
-  press('left')
-  if data['is_paused']: return
-  teleport()
-  if data['is_paused']: return
-  release('left')
-  if data['is_paused']: return
-  jump_down(1)
+
+  # Use spider web or onyx on top
+  if not summon_web():
+    if datetime.now() > data['next_onyx_dragon']:
+      press('up')
+      teleport()
+      release('up')
+      summon_onyx()
+      press('down')
+      teleport()
+      release('down')
+
   if data['is_paused']: return
   press('down')
   if data['is_paused']: return
   teleport()
-  if data['is_paused']: return
   release('down')
+  # jump_down(delayAfter=2)
+  # if data['is_paused']: return
+  # jump_down(delayAfter=1.5)
+  # if data['is_paused']: return
+  # press('left')
+  # if data['is_paused']: return
+  # teleport()
+  # if data['is_paused']: return
+  # release('left')
+  # if data['is_paused']: return
+  # press('right')
+  # if data['is_paused']: return
+  # teleport()
+  # if data['is_paused']: return
+  # release('right')
+  # if data['is_paused']: return
+  # jump_down(0.5)
+  # if data['is_paused']: return
+  # press('down')
+  # if data['is_paused']: return
+  # teleport()
+  # if data['is_paused']: return
+  # release('down')
+  if data['is_paused']: return
   press('right')
   if data['is_paused']: return
   teleport()
   if data['is_paused']: return
   teleport()
-  if data['is_paused']: return
-  teleport()
+  # # if data['is_paused']: return
+  # # teleport()
   if data['is_paused']: return
   release('right')
   if data['is_paused']: return
@@ -163,6 +206,22 @@ def fire_breath():
 def wind_breath():
   press_release('a')
   press_release('f', 0.7)
+
+def summon_onyx():
+  if datetime.now() > data['next_onyx_dragon']:
+    press_release('4')
+    press_release('4', 0.8)
+    data['next_onyx_dragon'] = datetime.now() + timedelta(seconds=80)
+    return True
+  return False
+
+def summon_web():
+  if datetime.now() > data['next_web']:
+    press_release('delete')
+    press_release('delete', 0.8)
+    data['next_web'] = datetime.now() + timedelta(seconds=250)
+    return True
+  return False
 
 def teleport():
   press_release('d', 0.65)
@@ -203,12 +262,22 @@ def start():
   data['is_paused'] = False
 
 def release_all():
-  release('left', delay=0.05)
-  release('right', delay=0.05)
-  release('up', delay=0.05)
-  release('down', delay=0.05)
-  release('ctrl', delay=0.05)
-  release('w', delay=0.05)
+  if keyboard.is_pressed('left'):
+    release('left', delay=0.05)
+  if keyboard.is_pressed('right'):
+    release('right', delay=0.05)
+  if keyboard.is_pressed('up'):
+    release('up', delay=0.05)
+  if keyboard.is_pressed('down'):
+    release('down', delay=0.05)
+  if keyboard.is_pressed('ctrl'):
+    release('ctrl', delay=0.05)
+  if keyboard.is_pressed('alt'):
+    release('alt', delay=0.05)
+  if keyboard.is_pressed('f7'):
+    release('f7', delay=0.05)
+  if keyboard.is_pressed('f8'):
+    release('f8', delay=0.05)
 
 def press(key, delay=0.05):
   keyboard.press(key)
