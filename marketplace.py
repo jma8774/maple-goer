@@ -23,6 +23,11 @@ class Images:
   ENHANCE_OK      = openImage("enhance_ok.png")
   CUBE_ONEMORETRY = openImage("cube_onemoretry.png")
   ASCENDION       = openImage("ascendion.png")
+  WHITESCREEN     = openImage("whitescreen.png")
+  BLACKSCREEN     = openImage("blackscreen.png")
+  ZAKUM           = openImage("zakum.png")
+  MS_ICON         = openImage("ms_icon.png")
+  LIMINIA_ICON    = openImage("liminia_icon.png")
 
 class Scripts:
   def __init__(self, obj):
@@ -85,7 +90,6 @@ def cube_to_legendary(scripts):
   location = pag.locateOnScreen(Images.CUBE_ONEMORETRY, confidence=0.8)
   while True:
     pag.click(location)
-    time.sleep(0.01)
     if data["target"] != scripts.ENHANCE:
       keyboard.release('enter')
       break
@@ -148,17 +152,17 @@ def toggleScript(msg, scriptId):
   else:
     print(f"Stop {msg}")
 
-def moveToIfFound(image, confidence=0.8, greyscale=True):
-  executeIfFound(image, pag.moveTo, confidence=confidence, greyscale=greyscale)
+def moveToIfFound(image, confidence=0.8, grayscale=True):
+  executeIfFound(image, pag.moveTo, confidence=confidence, grayscale=grayscale)
 
-def clickIfFound(image, confidence=0.8, greyscale=True):
-  executeIfFound(image, pag.click, confidence=confidence, greyscale=greyscale)
+def clickIfFound(image, confidence=0.8, grayscale=True):
+  executeIfFound(image, pag.click, confidence=confidence, grayscale=grayscale)
 
-def doubleClickIfFound(image, confidence=0.8, greyscale=True):
-  executeIfFound(image, pag.doubleClick, confidence=confidence, greyscale=greyscale)
+def doubleClickIfFound(image, confidence=0.8, grayscale=True):
+  executeIfFound(image, pag.doubleClick, confidence=confidence, grayscale=grayscale)
 
-def executeIfFound(image, fn, confidence=0.8, greyscale=True):
-  location = pag.locateOnScreen(image, confidence=confidence, greyscale=greyscale)
+def executeIfFound(image, fn, confidence=0.8, grayscale=True):
+  location = pag.locateOnScreen(image, confidence=confidence, grayscale=grayscale)
   if location:
     fn(location)
 
