@@ -20,16 +20,17 @@ JIMMY_PW_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
-ascendion_region = (0, 200, 700, 500)
+ascendion_region = (0, 200, 575, 500)
 minimap_rune_region = (0, 0, 200, 200)
-rune_region = (370, 200, 80, 80)
+minimap_map_icon_region = (5, 15, 40, 40)
+
 thread = None
 stop_flag = [False]
-audio = { "rune": "images/slaves.mp3", "whiteroom": "images/tyler1autism.mp3" }
+audio = { "rune": "images/spiritedaway.mp3", "whiteroom": "images/tyler1autism.mp3" }
 data = {
   'is_paused': True,
   'is_changed_map': False,
-  'next_loot': datetime.now() + timedelta(minutes=1.5),
+  'next_loot': datetime.now() + timedelta(minutes=1.7),
   'x_and_down_x': False,
 
   'next_sharpeye': datetime.now(),
@@ -42,9 +43,8 @@ data = {
   'next_erda_fountain': datetime.now(),
   'next_bolt_burst': datetime.now(),
 
+  'rune_playing': False,
   'next_rune_check': datetime.now(),
-  'next_region_check': datetime.now() - timedelta(seconds=10),
-  'minimap_region': None,
 }
 randomCache = {
   "idx": 0,
@@ -80,7 +80,6 @@ def main():
 
       # Setup for each new run
       data['next_blink_setup'] = None
-      data['next_region_check'] = datetime.now()
       data['is_changed_map'] = False
       thread = threading.Thread(target=midpoint3_macro)
       thread.start()
@@ -89,20 +88,16 @@ def main():
 
       # Play sound if whiteroomed
       if data['is_changed_map']:
-        print(f"Map change detected, playing audio: Press {PAUSE_KEY} to stop")
+        print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
         play_audio(audio['whiteroom'])
   except KeyboardInterrupt:
     print("Exiting...")
     stop_flag[0] = True
     
 def midpoint3_macro():
-  def update():
-    tryRegenerateRandomDelays(-0.02, 0.01)
-    tryRefreshRegions()
-    return True
-
   print("Started World's Sorrow Midpoint 3 macro")
-  while update() and not should_pause():
+  while not should_pause():
+    tryRegenerateRandomDelays(-0.02, 0.01)
     buff_setup()
     midpoint3_rotation()
     midpoint3_loot()
@@ -132,7 +127,7 @@ def midpoint3_rotation():
   while mob_loc == None:
     if should_pause(): return
     mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8, grayscale=True, region=ascendion_region)
-    time.sleep(0.4)
+    time.sleep(0.3)
     count += 1
     if count > 20: break
   if mob_loc == None:
@@ -169,7 +164,7 @@ def midpoint3_loot():
   def right_part():
     if should_pause(): return
     press_release('shift', 1)
-    press('right', 0.3)
+    press('right', 0.1)
     release('right')
     if should_pause(): return
     press_release('left')
@@ -259,17 +254,15 @@ def midpoint3_loot():
     if should_pause(): return
     right_part()
 
-  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.5, 1.7))
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.7))
 
 def buff_setup():
-  # If rune is up, play some sound
-  # if datetime.now() > data['next_rune_check'] and pag.locateOnScreen(Images.RUNE, confidence=0.8, grayscale=True, region=rune_region):
-  #   play_audio(audio['rune'])
-  #   data['next_rune_check'] = datetime.now() + timedelta(seconds=10)
-
-  if datetime.now() > data['next_rune_check'] and pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.8, region=minimap_rune_region):
-    play_audio(audio['rune'])
-    data['next_rune_check'] = datetime.now() + timedelta(seconds=uniform(50, 60))
+  if datetime.now() > data['next_rune_check']:
+    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.8, region=minimap_rune_region):
+      if not data['rune_playing']:
+        play_audio(audio['rune'])
+        data['rune_playing'] = True
+    data['next_rune_check'] = datetime.now() + timedelta(seconds=30)
 
   cur = datetime.now()
   if data['x_and_down_x']:
@@ -416,28 +409,6 @@ def teleport_reset(delayAfter=0.8):
   if should_pause(): return
   press_release('x', delayAfter)
 
-def tryRefreshRegions():
-  if datetime.now() >= data['next_region_check']:
-    print("Refreshing regions (180s)")
-    minimapLoc = pag.locateOnScreen(Images.MINIMAP, confidence=0.8, grayscale=True)
-    data['minimap_region'] = getMinimapRegion(minimapLoc)
-    data['next_region_check'] = datetime.now() + timedelta(seconds=180)
-  return True
-
-def getMinimapRegion(minimapLoc):
-  region = None
-  (width, height) = pag.size()
-  if not minimapLoc:
-    print(" Minimap text not found, returning full screen")
-    return (0, 0, width, height)
-  x, y = minimapLoc.left, minimapLoc.top
-  region = (
-      max(0, x-20), max(0, y-20),
-      min(55, width-x), min(55, height-y)
-    )
-  print(" Minimap region: " + str(region))
-  return region
-
 def setup_audio(volume=1):
   pygame.init()
   pygame.mixer.init()
@@ -457,12 +428,11 @@ def should_pause():
   return data['is_paused']
 
 def pause_if_change_map(map):
-  isSeeMap = pag.locateOnScreen(map, confidence=0.8, region=data['minimap_region'], grayscale=True)
+  isSeeMap = pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True)
   if not isSeeMap:
     # Double check
     print("Double checking minimap region")
-    tryRefreshRegions()
-    if pag.locateOnScreen(map, confidence=0.8, region=data['minimap_region'], grayscale=True):
+    if pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True):
       return False
     data['is_paused'] = True
     return True
@@ -471,6 +441,7 @@ def pause_if_change_map(map):
 def pause():
   print('Pausing')
   data['is_paused'] = True
+  data['rune_playing'] = False
   data['x_and_down_x'] = True
   pause_audio()
 

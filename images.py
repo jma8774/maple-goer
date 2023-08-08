@@ -18,6 +18,7 @@ class Images:
   ENHANCE_ENHANCE = openImage("enhance.png")
   ENHANCE_OK      = openImage("e_ok.png")
 
+  FOREBERION      = openImage("foreberion.png")
   ASCENDION       = openImage("mob.png")
   LIMINIA_ICON    = openImage("liminia_icon.png")
   RUNE_MINIMAP    = openImage("rune_minimap.png")

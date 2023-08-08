@@ -46,6 +46,7 @@ def main():
   kl.add(EXTRACT_KEY, lambda: toggleScript("equipment extraction", scripts.EXTRACT))
   kl.add(OPEN_HERB_BAGS_KEY, lambda: toggleScript("open herb bags", scripts.OPEN_HERB_BAGS))
   kl.add(ENHANCE_KEY, lambda: toggleScript("enhance gear", scripts.ENHANCE))
+  kl.add(ENHANCE_KEY, lambda: toggleScript("enhance gear", scripts.ENHANCE))
   kl.run()
 
   commands()
