@@ -25,5 +25,9 @@ class Images:
   RUNE_MSG        = openImage("rune_msg.png")
   MINIMAP         = openImage("minimap.png")
 
+  # Boss
+  LUCID           = openImage("lucid.png")
+  WILL            = openImage("will.png")
+
   def get(key, suffix):
     return getattr(Images, f"{key}{suffix}")

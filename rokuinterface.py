@@ -25,6 +25,7 @@ data = {
   'is_changed_map': False,
 
   'next_loot': datetime.now() + timedelta(minutes=1.3),
+  # 'next_loot': datetime.now() + timedelta(minutes=0),
   'next_gale_barrier': datetime.now(),
   'next_monsoon': datetime.now(),
   'next_sphere': datetime.now(),
@@ -53,8 +54,8 @@ def main():
   kl.add(START_KEY, start)
   kl.run()
 
-  commands()
   try:
+    commands()
     while True:
       if data['is_paused'] == True:
         time.sleep(2)
@@ -82,7 +83,6 @@ def end_1_5_macro():
     #   play_audio(audio['rune'])
     #   data['next_rune_check'] = datetime.now() + timedelta(seconds=20)
     end_1_5_rotation()
-    end_1_5_looting()
     release_all()
   print("Paused End of World 1-5 macro")
 
@@ -102,28 +102,31 @@ def end_1_5_rotation():
   if should_pause(): return
   web()
   if rng > 0.5:
-    press_release('d', 0.8)
+    press_release('d', 0.6)
   if should_pause(): return
-  press('a', 3)
-  if should_pause(): return
-  mob_loc = None
-  while not mob_loc:
+  if datetime.now() > data['next_loot']:
+    end_1_5_looting()
+  else:
+    press('a', 3)
     if should_pause(): return
-    time.sleep(0.2)
-    mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.9, grayscale=True, region=monster_region)
-  print(f"Found a mob at location {mob_loc}")
-  if should_pause(): return
-  release('a')
-  if should_pause(): return
+    mob_loc = None
+    while not mob_loc:
+      if should_pause(): return
+      time.sleep(0.2)
+      mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8, grayscale=True, region=monster_region)
+    print(f"Found a mob at location {mob_loc}")
+    if should_pause(): return
+    release('a')
+    if should_pause(): return
 
 def end_1_5_looting():
   if datetime.now() > data['next_loot']:
     if should_pause(): return
     press('left')
     if should_pause(): return
-    jump_attack()
+    jump_attack(delayAfter=0.7)
     if should_pause(): return
-    jump_attack()
+    jump_attack(delayAfter=0.74)
     if should_pause(): return
     jump_attack()
     if should_pause(): return
@@ -137,7 +140,7 @@ def end_1_5_looting():
     if should_pause(): return
     jump_attack()
     if should_pause(): return
-    jump_attack()
+    jump_attack(jumpDelay=0.3)
     if should_pause(): return
     jump_attack()
     if should_pause(): return
@@ -145,12 +148,11 @@ def end_1_5_looting():
     if should_pause(): return
     release('right')
     if should_pause(): return
-    jump_up(jumpDelay=0.4, delayAfter=0.6)
-    if should_pause(): return
-    press_release('left')
+    jump_up(jumpDelay=0.3, delayAfter=0.6)
     if should_pause(): return
     press_release('left')
     data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.6))
+    # data['next_loot'] = datetime.now() + timedelta(minutes=0.2)
 
 def setup_audio(volume=1):
   pygame.init()
@@ -168,7 +170,6 @@ def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
     press('down')
     press_release('f4')
-    press_release('f4')
     release('down', delay=0.6)
     data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
     return True
@@ -176,7 +177,6 @@ def erda_fountain():
 
 def gale_barrier(delayAfter=0.8):
   if datetime.now() > data['next_gale_barrier']:
-    press_release('e')
     press_release('e', delay=delayAfter)
     data['next_gale_barrier'] = datetime.now() + timedelta(seconds=90)
     return True
@@ -184,7 +184,6 @@ def gale_barrier(delayAfter=0.8):
 
 def monsoon(delayAfter=1.1):
   if datetime.now() > data['next_monsoon']:
-    press_release('r')
     press_release('r', delay=delayAfter)
     data['next_monsoon'] = datetime.now() + timedelta(seconds=29.7)
     return True
@@ -192,7 +191,6 @@ def monsoon(delayAfter=1.1):
 
 def sphere(delayAfter=0.9):
   if datetime.now() > data['next_sphere']:
-    press_release('y')
     press_release('y', delay=delayAfter)
     data['next_sphere'] = datetime.now() + timedelta(seconds=29.7)
     return True
@@ -200,7 +198,6 @@ def sphere(delayAfter=0.9):
 
 def merciless_winds(delayAfter=0.7):
   if datetime.now() > data['next_merciless_wind']:
-    press_release('f')
     press_release('f', delay=delayAfter)
     data['next_merciless_wind'] = datetime.now() + timedelta(seconds=10)
     return True
@@ -208,7 +205,6 @@ def merciless_winds(delayAfter=0.7):
 
 def howling_gale(delayAfter=0.9):
   if datetime.now() > data['next_howling']:
-    press_release('t')
     press_release('t', delay=delayAfter)
     data['next_howling'] = datetime.now() + timedelta(seconds=5)
     return True
@@ -216,7 +212,6 @@ def howling_gale(delayAfter=0.9):
 
 def phalanx_charge(delayAfter=0.8):
   if datetime.now() > data['next_phalanx_charge']:
-    press_release('g')
     press_release('g', delay=delayAfter)
     data['next_phalanx_charge'] = datetime.now() + timedelta(seconds=30)
     return True
@@ -224,7 +219,6 @@ def phalanx_charge(delayAfter=0.8):
 
 def web(delayAfter=0.6):
   if datetime.now() > data['next_web']:
-    press_release('shift')
     press_release('shift', delay=delayAfter)
     data['next_web'] = datetime.now() + timedelta(seconds=250)
     return True
@@ -237,11 +231,11 @@ def should_pause():
   return data['is_paused']
 
 def pause_if_change_map(map):
-  isSeeMap = pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True)
+  isSeeMap = pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True)
   if not isSeeMap:
     # Double check
     print("Double checking minimap region")
-    if pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True):
+    if pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):
       return False
     data['is_paused'] = True
     return True
@@ -251,16 +245,14 @@ def flash_jump(jumpDelay=0.2, delayAfter=0.7):
   press_release('space', jumpDelay)
   press_release('space', delayAfter)
 
-def jump_attack(attackDelay=0.1, jumpDelay=0.05, delayAfter=0.7):
+def jump_attack(attackDelay=0.05, jumpDelay=0.03, delayAfter=0.55):
   press_release('space', jumpDelay)
-  press_release('space')
   press_release('space', attackDelay)
   press_release('d', delayAfter)
 
 def jump_up(jumpDelay=0.2, delayAfter=1):
   press('up')
   press_release('space', jumpDelay)
-  press_release('space')
   press_release('space')
   release('up', delayAfter)
   
@@ -321,7 +313,7 @@ def release_all():
     release('a', delay=0.05)
 
 def isPressed(key):
-  return key not in key_pressed or key_pressed[key] == False
+  return key in key_pressed and key_pressed[key] == True
 
 def press(key, delay=0.05):
   interception.key_down(key)

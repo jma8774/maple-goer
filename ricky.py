@@ -49,8 +49,8 @@ def main():
   kl.add(START_KEY, start)
   kl.run()
 
-  commands()
   try:
+    commands()
     while True:
       if data['is_paused'] == True:
         time.sleep(2)
@@ -284,11 +284,11 @@ def should_pause():
   return data['is_paused']
 
 def pause_if_change_map(map):
-  isSeeMap = pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True)
+  isSeeMap = pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True)
   if not isSeeMap:
     # Double check
     print("Double checking minimap region")
-    if pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True):
+    if pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):
       return False
     data['is_paused'] = True
     return True
@@ -322,7 +322,7 @@ def release_all():
     release('f8', delay=0.05)
 
 def isPressed(key):
-  return key not in key_pressed or key_pressed[key] == False
+  return key in key_pressed and key_pressed[key] == True
 
 def press(key, delay=0.05):
   interception.key_down(key)

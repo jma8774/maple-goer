@@ -20,7 +20,7 @@ JIMMY_PW_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
-ascendion_region = (0, 200, 575, 500)
+ascendion_region = (0, 200, 505, 500)
 minimap_rune_region = (0, 0, 200, 200)
 minimap_map_icon_region = (5, 15, 40, 40)
 
@@ -35,13 +35,14 @@ data = {
 
   'next_sharpeye': datetime.now(),
   'next_split': datetime.now(),
-  'next_surgebolt': datetime.now(),
   'next_blink_setup': None,
-  'next_web': datetime.now(),
   'next_bird': datetime.now(),
+
+  'next_surgebolt': datetime.now(),
+  'next_web': datetime.now(),
   'next_high_speed': datetime.now(),
-  'next_erda_fountain': datetime.now(),
   'next_bolt_burst': datetime.now(),
+  'next_erda_fountain': datetime.now(),
 
   'rune_playing': False,
   'next_rune_check': datetime.now(),
@@ -69,18 +70,17 @@ def main():
   kl.add(START_KEY, start)
   kl.run()
 
-  tryRegenerateRandomDelays(-0.02, 0.01)
-  commands()
   # Bot loop
   try:
+    tryRegenerateRandomDelays(-0.02, 0.01)
+    commands()
     while True:
       if data['is_paused'] == True:
         time.sleep(1)
         continue
 
       # Setup for each new run
-      data['next_blink_setup'] = None
-      data['is_changed_map'] = False
+      setup()
       thread = threading.Thread(target=midpoint3_macro)
       thread.start()
       thread.join()
@@ -94,11 +94,19 @@ def main():
     print("Exiting...")
     stop_flag[0] = True
     
+def setup():
+  data['next_blink_setup'] = None
+  data['is_changed_map'] = False
+  data['next_split'] = datetime.now() + timedelta(seconds=uniform(120, 130))
+  data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(180, 220))
+  data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
+  
 def midpoint3_macro():
   print("Started World's Sorrow Midpoint 3 macro")
   while not should_pause():
     tryRegenerateRandomDelays(-0.02, 0.01)
-    buff_setup()
+    if data['x_and_down_x'] or datetime.now() < data['next_erda_fountain']:
+      buff_setup()
     midpoint3_rotation()
     midpoint3_loot()
     release_all()
@@ -120,30 +128,29 @@ def midpoint3_rotation():
     erda_fountain()
     if should_pause(): return
     teleport_reset()
-    if should_pause(): return
-  
-  # Find mob before starting rotation
-  count = 0
-  while mob_loc == None:
-    if should_pause(): return
-    mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8, grayscale=True, region=ascendion_region)
-    time.sleep(0.3)
-    count += 1
-    if count > 20: break
-  if mob_loc == None:
-    print(f"Couldn't find mob after 20 tries, continuing rotation")
   else:
-    print(f"Found mob at {mob_loc}, continuing rotation")
+    # Find mob before starting rotation
+    count = 0
+    while mob_loc == None:
+      if should_pause(): return
+      mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.75, grayscale=True, region=ascendion_region)
+      time.sleep(0.3)
+      count += 1
+      if count > 20: break
+    if mob_loc == None:
+      print(f"Couldn't find mob after {count} tries, continuing rotation")
+    else:
+      print(f"Found mob at {mob_loc}, continuing rotation")
 
   if should_pause(): return
   jump_down_attack(delayAfter=0.4)
   if should_pause(): return
-  q_and_surgebolt(afterDelay=0.55)
+  q_and_surgebolt(afterDelay=0.46)
   if should_pause(): return
-  q_and_surgebolt(afterDelay=0.65)
+  q_and_surgebolt(afterDelay=0.63)
   if should_pause(): return
   press_release('right')
-  if not high_speed_shot(0.8, rng > 0.8):
+  if not high_speed_shot(0.75, rng > 0.8):
     q_and_surgebolt(afterDelay=0.65)
 
 def midpoint3_loot():
@@ -257,48 +264,52 @@ def midpoint3_loot():
   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.7))
 
 def buff_setup():
-  if datetime.now() > data['next_rune_check']:
-    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.8, region=minimap_rune_region):
+  cur = datetime.now()
+  rng = int(random.random() * 3)
+  if cur > data['next_rune_check']:
+    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
       if not data['rune_playing']:
         play_audio(audio['rune'])
         data['rune_playing'] = True
-    data['next_rune_check'] = datetime.now() + timedelta(seconds=30)
+    data['next_rune_check'] = cur + timedelta(seconds=45)
 
-  cur = datetime.now()
   if data['x_and_down_x']:
     press_release('x')
-    press_release('x', 0.8)
+    press_release('x', 0.7)
     press('down')
     press_release('x')
     press_release('x')
-    release('down')
-    time.sleep(0.7)
+    release('down', 0.7)
     data['x_and_down_x'] = False
-    data['next_blink_setup'] = datetime.now() + timedelta(seconds=uniform(40, 59))
-  if should_pause(): return
-  if cur > data['next_sharpeye']:
-    data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(200, 300))
-    press_release('pagedown', 2)
-  if should_pause(): return
-  if cur > data['next_split']:
-    data['next_split'] = datetime.now() + timedelta(seconds=uniform(120, 140))
-    press_release('2', 1)
-  if should_pause(): return
-  if cur > data['next_bird']:
-    press_release('5', 0.7)
-    data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 125))
-  if should_pause(): return
+    data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
+    return
+
   if data['next_blink_setup'] == None:
     press_release('x')
     press_release('x', 0.7)
-    data['next_blink_setup'] = datetime.now() + timedelta(seconds=uniform(40, 59))
-  elif datetime.now() > data['next_blink_setup']:
+    data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
+    return
+  elif cur > data['next_blink_setup']:
     press('down')
     press_release('x')
     press_release('x')
-    release('down')
-    time.sleep(0.7)
-    data['next_blink_setup'] = datetime.now() + timedelta(seconds=uniform(40, 59))
+    release('down', 0.7)
+    data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
+    return
+
+  if cur > data['next_split']:
+    data['next_split'] = cur + timedelta(seconds=uniform(120, 140))
+    press_release('2', 0.7)
+    return
+
+  if cur > data['next_sharpeye']:
+    data['next_sharpeye'] = cur + timedelta(seconds=uniform(180, 220))
+    press_release('pagedown', 1.55)
+    return
+
+  if cur > data['next_bird']:
+    press_release('5', 0.7)
+    data['next_bird'] = cur + timedelta(seconds=uniform(116, 125))
   
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
@@ -340,72 +351,63 @@ def jump_high_speed_shot(jumpDelay=0.2, delayAfter=0.3, isGo=True):
 
 def high_speed_shot(delayAfter=0.3, isGo=True):
   if isGo and datetime.now() > data['next_high_speed']:
-    press_release('r', delay=delayAfter)
+    press_release('a', delay=delayAfter)
     data['next_high_speed'] = datetime.now() + timedelta(seconds=15)
     return True
   return False
 
 def flash_jump(jumpDelay=0.2, delayAfter=0.7):
-  press_release('alt', jumpDelay)
-  press_release('alt', delayAfter)
+  press_release('e', jumpDelay)
+  press_release('e', delayAfter)
 
 def jump_attack(attackDelay=0.2, jumpDelay=0.05, delayAfter=0.7):
   rng = random.random()
-  press_release('alt', jumpDelay)
-  press_release('alt', attackDelay)
+  press_release('e', jumpDelay)
+  press_release('e', attackDelay)
   press_release('q')
   if rng > 0.7:
-    press_release('e')
+    press_release('r')
   time.sleep(delayAfter + getRandomDelay())
 
 def jump_up(delayAfter=1):
   press('up')
-  press_release('alt', 0.2)
-  press_release('alt')
-  press_release('alt')
+  press_release('e', 0.2)
+  press_release('e')
+  press_release('e')
   release('up', delayAfter)
 
 def jump_down(delayAfter=1):
   press('down', 0.15)
-  press('alt', 0.15)
-  release('alt')
+  press('e', 0.15)
+  release('e')
   release('down', delayAfter)
 
 def jump_down_attack(attackDelay=0.05, delayAfter=1):
   press('down')
-  press('alt', attackDelay)
+  press('e', attackDelay)
   press_release('q')
-  release('alt')
+  release('e')
   release('down', delayAfter)
 
 def jump_down_and_fj(delayAfter=1):
   jump_down(delayAfter=uniform(0.3, 0.5))
-  press('alt')
-  release('alt')
-  press('alt')
-  release('alt', delayAfter)
+  press('e')
+  release('e')
+  press('e')
+  release('e', delayAfter)
 
 def q_and_surgebolt(afterDelay=0.7):
   if datetime.now() > data['next_surgebolt']:
     press('q', delay=0.02)
-    press_release('e')
+    press_release('r')
     release('q', afterDelay)
     data['next_surgebolt'] = datetime.now() + timedelta(seconds=uniform(10, 13))
   else:
     press_release('q', afterDelay)
 
-def teleport_reset(delayAfter=0.8):
-  rng = random.random()
+def teleport_reset(delayAfter=0.7):
   if should_pause(): return
   press_release('x')
-  if should_pause(): return
-  press_release('x')
-  if rng > 0.33:
-    if should_pause(): return
-    press_release('x')
-  if rng > 0.66:
-    if should_pause(): return
-    press_release('x')
   if should_pause(): return
   press_release('x', delayAfter)
 
@@ -428,11 +430,11 @@ def should_pause():
   return data['is_paused']
 
 def pause_if_change_map(map):
-  isSeeMap = pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True)
+  isSeeMap = pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True)
   if not isSeeMap:
     # Double check
     print("Double checking minimap region")
-    if pag.locateOnScreen(map, confidence=0.8, region=minimap_map_icon_region, grayscale=True):
+    if pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):
       return False
     data['is_paused'] = True
     return True
@@ -460,21 +462,21 @@ def release_all():
     release('down', delay=0.05)
   if isPressed('ctrl'):
     release('ctrl', delay=0.05)
-  if isPressed('alt'):
-    release('alt', delay=0.05)
+  if isPressed('e'):
+    release('e', delay=0.05)
   if isPressed('f7'):
     release('f7', delay=0.05)
   if isPressed('f8'):
     release('f8', delay=0.05)
   if isPressed('q'):
     release('q', delay=0.05)
-  if isPressed('e'):
-    release('e', delay=0.05)
+  if isPressed('r'):
+    release('r', delay=0.05)
   if isPressed('d'):
     release('d', delay=0.05)
 
 def isPressed(key):
-  return key not in key_pressed or key_pressed[key] == False
+  return key in key_pressed and key_pressed[key] == True
 
 def press(key, delay=0.05):
   interception.key_down(key)
