@@ -4,6 +4,7 @@ import threading
 import pygame
 from datetime import datetime, timedelta
 from images import Images
+import os 
 
 # Create own custom classes to simulate these classes... they use win32/user32 microsoft libraries which flags the events as LowLevelKeyHookInjected
 import pyautogui as pag
@@ -13,12 +14,9 @@ import interception
 from listener import KeyListener
 key_pressed = {}
 
-JIAMING_KEY = 'f1'
-JIAMING_PW_KEY = 'f2'
-JIMMY_KEY = 'f3'
-JIMMY_PW_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
+RESET_LOOT_TIMER_KEY = 'f9'
 
 ascendion_region = (0, 200, 505, 500)
 minimap_rune_region = (0, 0, 200, 200)
@@ -26,7 +24,7 @@ minimap_map_icon_region = (5, 15, 40, 40)
 
 thread = None
 stop_flag = [False]
-audio = { "rune": "images/spiritedaway.mp3", "whiteroom": "images/tyler1autism.mp3" }
+audio = { "rune": "images/amongus.mp3", "whiteroom": "images/tyler1autism.mp3" }
 data = {
   'is_paused': True,
   'is_changed_map': False,
@@ -53,7 +51,7 @@ randomCache = {
 }
 
 def main():
-  print()
+  clear()
 
   # Pygame Audio Setup
   setup_audio(volume=1)
@@ -63,11 +61,13 @@ def main():
   mdevice = interception.listen_to_mouse()
   interception.inputs.keyboard = kdevice
   interception.inputs.mouse = mdevice
+  clear()
 
   # Interception Key Listener Setup (seperate thread)
   kl = KeyListener(stop_flag)
   kl.add(PAUSE_KEY, pause)
   kl.add(START_KEY, start)
+  kl.add(RESET_LOOT_TIMER_KEY, reset_loot_timer)
   kl.run()
 
   # Bot loop
@@ -91,7 +91,7 @@ def main():
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
         play_audio(audio['whiteroom'])
   except KeyboardInterrupt:
-    print("Exiting...")
+    print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
     
 def setup():
@@ -261,11 +261,10 @@ def midpoint3_loot():
     if should_pause(): return
     right_part()
 
-  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.7))
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))
 
 def buff_setup():
   cur = datetime.now()
-  rng = int(random.random() * 3)
   if cur > data['next_rune_check']:
     if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
       if not data['rune_playing']:
@@ -451,6 +450,10 @@ def start():
   print('\nStarting')
   data['is_paused'] = False
 
+def reset_loot_timer():
+  print('\nResetting loot timer')
+  data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
+
 def release_all():
   if isPressed('left'):
     release('left', delay=0.05)
@@ -490,8 +493,7 @@ def release(key, delay=0.05):
 
 def press_release(key, delay=0.05):
   press(key)
-  release(key)
-  time.sleep(delay + getRandomDelay())
+  release(key, delay)
   
 def uniform(a, b):
   rng = random.random()
@@ -516,7 +518,10 @@ def commands():
   print("Commands:")
   print(f"  {START_KEY} - start")
   print(f"  {PAUSE_KEY} - pause")
-  
+  print(f"  {RESET_LOOT_TIMER_KEY} - reset loot timer")
+
+def clear():
+  os.system('cls' if os.name == 'nt' else 'clear')
 
 if __name__=="__main__":
   main()

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import pyautogui as pag
 import pygame
 from images import Images
+import os
 
 # Interception library to simulate events without flagging them as LowLevelKeyHookInjected
 import interception
@@ -14,17 +15,23 @@ key_pressed = {}
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
-audio = { "rune": "images/slaves.mp3", "whiteroom": "images/tyler1autism.mp3" }
-monster_region = (800, 15, 560, 290)
+audio = { "rune": "images/amongus.mp3", "whiteroom": "images/tyler1autismsss.mp3" }
+monster_region = (550, 20, 810, 290)
 minimap_map_icon_region = (5, 15, 40, 40)
+minimap_rune_region = (0, 0, 200, 200)
 
 thread = None
 stop_flag = [False]
 data = {
   'is_paused': True,
   'is_changed_map': False,
-  'next_loot': datetime.now() + timedelta(minutes=0.1),
+  # 'next_loot': datetime.now() + timedelta(minutes=0.1),
+  'next_loot': datetime.now() + timedelta(minutes=1.5),
 
+  'rune_playing': False,
+  'next_rune_check': datetime.now(),
+
+  'dragon_finished_action': datetime.now(),
   'next_fire_floor': datetime.now(),
   'next_erda_fountain': datetime.now(),
   'next_fire_breath': datetime.now(),
@@ -35,6 +42,8 @@ data = {
 }
 
 def main():
+  clear()
+  
   setup_audio(volume=1)
   
   # Interception Setup for main loop
@@ -42,6 +51,7 @@ def main():
   mdevice = interception.listen_to_mouse()
   interception.inputs.keyboard = kdevice
   interception.inputs.mouse = mdevice
+  clear()
 
   # Interception Key Listener Setup (seperate thread)
   kl = KeyListener(stop_flag)
@@ -66,27 +76,28 @@ def main():
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
         play_audio(audio['whiteroom'])
   except KeyboardInterrupt:
-    print("Exiting...")
+    print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
 
 def liminia_1_5_macro():
   print("Starting 1-5 macro")
   while not should_pause():
+    check_rune()
     liminia_1_5_rotation()
     release_all()
 
 def liminia_1_5_rotation():
   # Find mob before starting rotation
-  start_wait = datetime.now()
-  mob_loc = pag.locateOnScreen(Images.FOREBERION, region=monster_region, confidence=0.8)
+  count = 0
+  mob_loc = None
   while mob_loc == None:
     if should_pause(): return
-    mob_loc = pag.locateOnScreen(Images.FOREBERION, region=monster_region, confidence=0.8)
+    mob_loc = pag.locateOnScreen(Images.FOREBERION, confidence=0.75, grayscale=True, region=monster_region)
     time.sleep(0.3)
-    if datetime.now() - start_wait > timedelta(seconds=7):
-      break
+    count += 1
+    if count > 20: break
   if mob_loc == None:
-    print(f"Couldn't find mob after 7 secs, continuing rotation")
+    print(f"Couldn't find mob after {count} tries, continuing rotation")
   else:
     print(f"Found mob at {mob_loc}, continuing rotation")
 
@@ -143,17 +154,17 @@ def liminia_1_5_rotation():
       data['next_fire_floor'] = datetime.now() + timedelta(seconds=uniform(15, 20))
     else:
       dark_fog()
-      liminia_1_5_loot()
+      if not liminia_1_5_loot():
+        time.sleep(2)
   else:
     wind_breath()
     dark_fog()
-    liminia_1_5_loot()
-  time.sleep(1)
-
+    if not liminia_1_5_loot():
+      time.sleep(2)
 
 def liminia_1_5_loot():
   if datetime.now() < data['next_loot']:
-    return
+    return False
   if should_pause(): return
   press('up')
   if should_pause(): return
@@ -203,6 +214,14 @@ def liminia_1_5_loot():
   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.3, 1.7))
   return True
 
+def check_rune():
+  if datetime.now() > data['next_rune_check']:
+    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
+      if not data['rune_playing']:
+        play_audio(audio['rune'])
+        data['rune_playing'] = True
+    data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
+  
 def dark_fog():
   if datetime.now() < data['next_dark_fog']:
     return
@@ -211,17 +230,24 @@ def dark_fog():
   
 def fire_breath():
   if datetime.now() > data['next_fire_breath']:
+    if datetime.now() < data['dragon_finished_action']:
+      press_release('ctrl')
     press_release('g')
     press_release('t', 0.7)
     data['next_fire_breath'] = datetime.now() + timedelta(seconds=10)
+    data['dragon_finished_action'] = datetime.now() + timedelta(seconds=5)
     return True
   return False
   
 def wind_breath():
   if datetime.now() > data['next_wind_breath']:
+    if datetime.now() < data['dragon_finished_action']:
+      data['next_fire_breath'] = datetime.now()
+      press_release('ctrl')
     press_release('a')
     press_release('f', 0.7)
     data['next_wind_breath'] = datetime.now() + timedelta(seconds=8)
+    data['dragon_finished_action'] = datetime.now() + timedelta(seconds=5)
     return True
   return False
 
@@ -284,11 +310,11 @@ def should_pause():
   return data['is_paused']
 
 def pause_if_change_map(map):
-  isSeeMap = pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True)
+  isSeeMap = pag.locateOnScreen(map, confidence=0.55, region=minimap_map_icon_region, grayscale=True)
   if not isSeeMap:
     # Double check
     print("Double checking minimap region")
-    if pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):
+    if pag.locateOnScreen(map, confidence=0.55, region=minimap_map_icon_region, grayscale=True):
       return False
     data['is_paused'] = True
     return True
@@ -297,6 +323,7 @@ def pause_if_change_map(map):
 def pause():
   print('Pause')
   data['is_paused'] = True
+  data['rune_playing'] = False
   pause_audio()
 
 def start():
@@ -347,5 +374,8 @@ def commands():
   print("Commands:")
   print(f"  {START_KEY} - start")
   print(f"  {PAUSE_KEY} - pause")
+
+def clear():
+  os.system('cls' if os.name == 'nt' else 'clear')
 
 main()

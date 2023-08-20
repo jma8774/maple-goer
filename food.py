@@ -51,7 +51,7 @@ def main():
       thread.start()
       thread.join()
   except KeyboardInterrupt:
-    print("Exiting...")
+    print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
 
 def lucid():

@@ -46,7 +46,6 @@ def main():
   kl.add(EXTRACT_KEY, lambda: toggleScript("equipment extraction", scripts.EXTRACT))
   kl.add(OPEN_HERB_BAGS_KEY, lambda: toggleScript("open herb bags", scripts.OPEN_HERB_BAGS))
   kl.add(ENHANCE_KEY, lambda: toggleScript("enhance gear", scripts.ENHANCE))
-  kl.add(ENHANCE_KEY, lambda: toggleScript("enhance gear", scripts.ENHANCE))
   kl.run()
 
   commands()
@@ -59,7 +58,7 @@ def main():
       thread.start()
       thread.join()
   except KeyboardInterrupt:
-    print("Exiting...")
+    print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
 
 def enhance(scripts):
@@ -107,15 +106,15 @@ def craftWAP(scripts):
   while True:
     time.sleep(0.05)
     clickIfFound(Images.CRAFT)
-    time.sleep(0.05)
+    time.sleep(0.3)
     clickIfFound(Images.OK_START)
-    time.sleep(0.05)
+    time.sleep(3)
     clickIfFound(Images.OK_END)
     time.sleep(0.05)
     moveToIfFound(Images.TAB_RESET)
     if data["target"] != scripts.WAP_CRAFT:
       break
-    time.sleep(30)
+    time.sleep(10)
     if data["target"] != scripts.WAP_CRAFT:
       break
 

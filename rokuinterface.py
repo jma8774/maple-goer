@@ -5,6 +5,7 @@ import pygame
 import pyautogui as pag
 from images import Images
 from datetime import datetime, timedelta
+import os
 
 # Interception library to simulate events without flagging them as LowLevelKeyHookInjected
 import interception
@@ -40,6 +41,7 @@ data = {
 }
 
 def main():
+  clear()
   setup_audio(volume=1)
 
   # Interception Setup for main loop
@@ -47,6 +49,7 @@ def main():
   mdevice = interception.listen_to_mouse()
   interception.inputs.keyboard = kdevice
   interception.inputs.mouse = mdevice
+  clear()
 
   # Interception Key Listener Setup (seperate thread)
   kl = KeyListener(stop_flag)
@@ -72,7 +75,7 @@ def main():
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
         play_audio(audio['whiteroom'])
   except KeyboardInterrupt:
-    print("Exiting...")
+    print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
 
 def end_1_5_macro():
@@ -109,12 +112,19 @@ def end_1_5_rotation():
   else:
     press('a', 3)
     if should_pause(): return
+    # Find mob before continuing
+    count = 0
     mob_loc = None
-    while not mob_loc:
+    while mob_loc == None:
       if should_pause(): return
-      time.sleep(0.2)
       mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8, grayscale=True, region=monster_region)
-    print(f"Found a mob at location {mob_loc}")
+      time.sleep(0.3)
+      count += 1
+      if count > 20: break
+    if mob_loc == None:
+      print(f"Couldn't find mob after {count} tries, continuing rotation")
+    else:
+      print(f"Found mob at {mob_loc}, continuing rotation")
     if should_pause(): return
     release('a')
     if should_pause(): return
@@ -338,5 +348,8 @@ def commands():
   print("Commands:")
   print(f"  {START_KEY} - start")
   print(f"  {PAUSE_KEY} - pause")
+
+def clear():
+  os.system('cls' if os.name == 'nt' else 'clear')
 
 main()
