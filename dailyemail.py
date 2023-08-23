@@ -24,7 +24,7 @@ minimap_map_icon_region = (5, 15, 40, 40)
 
 thread = None
 stop_flag = [False]
-audio = { "rune": "images/amongus.mp3", "whiteroom": "images/tyler1autism.mp3" }
+audio = { "rune": "images/amongus.mp3", "whiteroom": "images/tyler1autism.mp3", "ping": "images/ping.mp3" }
 data = {
   'is_paused': True,
   'is_changed_map': False,
@@ -44,6 +44,7 @@ data = {
 
   'rune_playing': False,
   'next_rune_check': datetime.now(),
+  'next_elite_box_check': datetime.now(),
 }
 randomCache = {
   "idx": 0,
@@ -265,6 +266,10 @@ def midpoint3_loot():
 
 def buff_setup():
   cur = datetime.now()
+  if cur > data['next_elite_box_check']:
+    if pag.locateOnScreen(Images.ELITE_BOX, confidence=0.9):
+      play_audio(audio['ping'], loops=1)
+    data['next_elite_box_check'] = cur + timedelta(seconds=45)
   if cur > data['next_rune_check']:
     if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
       if not data['rune_playing']:
@@ -415,9 +420,9 @@ def setup_audio(volume=1):
   pygame.mixer.init()
   pygame.mixer.music.set_volume(volume)
 
-def play_audio(audio_file_path):
+def play_audio(audio_file_path, loops=-1):
   pygame.mixer.music.load(audio_file_path)
-  pygame.mixer.music.play(loops=-1)
+  pygame.mixer.music.play(loops=loops)
 
 def pause_audio():
   pygame.mixer.music.pause()

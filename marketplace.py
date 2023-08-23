@@ -63,34 +63,33 @@ def main():
 
 def enhance(scripts):
   location = pag.locateCenterOnScreen(Images.ENHANCE_ENHANCE, confidence=0.8)
-  while True:
+  while data["target"] == scripts.ENHANCE:
     click(location)
     time.sleep(0.01)
-    if data["target"] != scripts.ENHANCE:
-      break
     
 def openHerbBags(scripts):
+  seq = 0
   herbLocation = None
   okLocation = None
   sortLocation = None
-  while True:
-    if herbLocation is None:
+  while data["target"] == scripts.OPEN_HERB_BAGS:
+    if seq % 10 == 0 or herbLocation is None:
       herbLocation = pag.locateCenterOnScreen(Images.BAG, confidence=0.8)
     if okLocation is None:
       okLocation = pag.locateCenterOnScreen(Images.OK_START, confidence=0.8)
     if sortLocation is None:
       sortLocation = pag.locateCenterOnScreen(Images.SORT, confidence=0.8)
-    doubleclick(herbLocation)
+    if herbLocation:
+      doubleclick(herbLocation)
     time.sleep(0.02)
     click(okLocation)
     time.sleep(0.01)
     moveto(sortLocation)
     time.sleep(0.015)
-    if data["target"] != scripts.OPEN_HERB_BAGS:
-      break
+    seq += 1
     
 def extract(scripts):
-  while True:
+  while data["target"] == scripts.EXTRACT:
     clickIfFound(Images.EXTRACT_UP)
     time.sleep(0.05)
     clickIfFound(Images.CONFIRM)
@@ -99,11 +98,9 @@ def extract(scripts):
     time.sleep(0.05)
     clickIfFound(Images.OK_END)
     time.sleep(0.05)
-    if data["target"] != scripts.EXTRACT:
-      break
 
 def craftWAP(scripts):
-  while True:
+  while data["target"] == scripts.WAP_CRAFT:
     time.sleep(0.05)
     clickIfFound(Images.CRAFT)
     time.sleep(0.3)
@@ -115,8 +112,6 @@ def craftWAP(scripts):
     if data["target"] != scripts.WAP_CRAFT:
       break
     time.sleep(10)
-    if data["target"] != scripts.WAP_CRAFT:
-      break
 
 def toggleScript(msg, scriptId):
   if data["target"] is not None and data["target"] != scriptId:

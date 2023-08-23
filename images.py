@@ -24,6 +24,7 @@ class Images:
   RUNE_MINIMAP      = openImage("rune_minimap.png")
   RUNE_MSG          = openImage("rune_msg.png")
   MINIMAP           = openImage("minimap.png")
+  ELITE_BOX         = openImage("elite_box.png")
 
   # Boss  
   LUCID             = openImage("lucid.png")
@@ -55,6 +56,8 @@ class Images:
   FAM_50_STACK      = openImage("fam_50_stack.png")
   FAM_75_STACK      = openImage("fam_75_stack.png")
   FAM_100_STACK     = openImage("fam_100_stack.png")
+  FAM_50_STACK_RARE = openImage("fam_50_stack_rare.png")
+  FAM_100_STACK_RARE = openImage("fam_100_stack_rare.png")
 
   FAM_EQUIP         = openImage("fam_equip.png")
   FAM_FUSION        = openImage("fam_fusion.png")
@@ -66,6 +69,13 @@ class Images:
   FAM_RANK_UP       = openImage("fam_rank_up.png")
   FAM_RARE_FULL_POINTS = openImage("fam_rare_full_points.png")
   FAM_EPIC_FULL_POINTS = openImage("fam_epic_full_points.png")
+  FAM_0_POINTS      = openImage("fam_0_points.png")
+  FAM_25_POINTS     = openImage("fam_25_points.png")
+  FAM_50_POINTS     = openImage("fam_50_points.png")
+  FAM_0_150_POINTS  = openImage("fam_0_150_points.png")
+  FAM_50_150_POINTS = openImage("fam_50_150_points.png")
+  FAM_75_150_POINTS = openImage("fam_75_150_points.png")
+  FAM_100_150_POINTS = openImage("fam_100_150_points.png")
   
 
 
