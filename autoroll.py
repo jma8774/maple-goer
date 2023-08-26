@@ -2,16 +2,14 @@ import time
 import threading
 import pygame
 from datetime import datetime, timedelta
-from images import Images
 import pyautogui as pag
 import os
-
-# Interception library to simulate events without flagging them as LowLevelKeyHookInjected
+from base import Images, Audio, KeyListener
 import interception
-from listener import KeyListener
 
 EDIT_COMBINATIONS_KEY = 'f1'
 START_CUBING_KEY = 'f2'
+CUBE_TO_EPIC = 'f3'
 
 thread = None
 stop_flag = [False]
@@ -37,6 +35,7 @@ def main():
   kl = KeyListener(stop_flag)
   kl.add(EDIT_COMBINATIONS_KEY, lambda: script(edit_combinations.__name__, edit_combinations))
   kl.add(START_CUBING_KEY, lambda: script(cube.__name__, cube))
+  kl.add(CUBE_TO_EPIC, lambda: script(cube.__name__, cube_to_epic))
   kl.run()
 
   # Bot loop
@@ -56,8 +55,10 @@ def main():
 def script(key, fn):
   if data['script'] and data['script'][0] == key:
     data['script'] = None
+    clear()
+    print_combinations()
+    commands()
   else:
-    print()
     print("Starting script:", key)
     data['script'] = (key, fn)
 
@@ -156,7 +157,10 @@ def refresh_mouse_position():
   data['corner_pos'] = pag.locateOnScreen(Images.CUBE_RESULT, confidence=0.8, grayscale=True)
   print(f"Top left corner of the inner cube ui box is at: {data['corner_pos']}")
 
-def cube():
+def cube_to_epic():
+  cube(tier_to=Images.EPIC_POT)
+
+def cube(tier_to=None):
   refresh_mouse_position()
   if not data['corner_pos']:
     raise Exception("Can't find cubing ui box, exiting...")
@@ -182,7 +186,7 @@ def cube():
   def check_for_lines():
     # TODO: maybe make this part multi-threaded so it's faster
     for stat in lines_found:
-      locs = pag.locateAllOnScreen(STATS[stat]["image"], confidence=0.95, grayscale=True, region=box_region)
+      locs = pag.locateAllOnScreen(STATS[stat]["image"], confidence=0.95, region=box_region)
       lines_found[stat] = len(list(locs)) if locs else 0
 
     for combination in combinations:
@@ -195,12 +199,17 @@ def cube():
         return True
     return True if len(combination) == 0 else False
   
+  def check_for_tier():
+    print("Checking for tier up...")
+    return pag.locateOnScreen(tier_to, confidence=0.8, grayscale=True, region=box_region)
+  
   # WIDTH = 195, HEIGHT = 110
-  box_region = (data['corner_pos'][0], data['corner_pos'][1], 210, 110)
+  box_region = (data['corner_pos'][0]-15, data['corner_pos'][1], 225, 110)
   ok_loc = None
   while data['script'] and data['script'][0] == cube.__name__:
-    if not check_for_lines():
-      if pag.locateOnScreen(Images.OK_START, confidence=0.8, grayscale=True, region=box_region):
+    if (not tier_to and not check_for_lines()) or (tier_to and not check_for_tier()):
+      ok_loc = pag.locateOnScreen(Images.OK_START, confidence=0.8, grayscale=True, region=box_region)
+      if ok_loc:
         interception.click(ok_loc, delay=0.1)
       try_again()
     else:
@@ -253,6 +262,7 @@ def commands():
   print("Commands:")
   print(f"  {EDIT_COMBINATIONS_KEY} - edit stat combinations to stop at")
   print(f"  {START_CUBING_KEY} - start/stop cubing")
+  print(f"  {CUBE_TO_EPIC} - start/stop cubing to epic")
   print("")
   print("PLEASE MAKE SURE YOUR MAPLESTORY IS IN 1920x1080!")
   print("TO TEST IF THE CUBING WORKS ON YOUR MAPLESTORY, TRY AN EASY COMBINATION LIKE 1L OF ATTACK AND SEE IF IT STOPS!")

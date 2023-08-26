@@ -1,5 +1,10 @@
 from PIL import Image
+import random
+import threading
+import interception
+from interception._keycodes import KEYBOARD_MAPPING
 
+#region ASSESTS
 def openImage(file):
   return Image.open(f"images/{file}")
 
@@ -18,9 +23,12 @@ class Images:
   ENHANCE_ENHANCE   = openImage("enhance.png")
   ENHANCE_OK        = openImage("e_ok.png")
 
+  MONTO             = openImage("monto.png")
+  MONTO2            = openImage("monto2.png")
   FOREBERION        = openImage("foreberion.png")
   ASCENDION         = openImage("mob.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")
+  REVERSE_ICON      = openImage("reverse_icon.png")
   RUNE_MINIMAP      = openImage("rune_minimap.png")
   RUNE_MSG          = openImage("rune_msg.png")
   MINIMAP           = openImage("minimap.png")
@@ -34,6 +42,7 @@ class Images:
   CUBE_RESULT       = openImage("cube_result.png")
   ONEMORETRY        = openImage("one_more_try.png")
   ATT_INCREASE      = openImage("att_increase.png")
+  EPIC_POT          = openImage("epic_pot.png")
 
   # Stats TODO: get the actual images
   MAGIC_ATTACk      = openImage("magic_attack.png")
@@ -44,7 +53,7 @@ class Images:
   INT               = openImage("int.png")
   LUK               = openImage("luk.png")
   CRIT_DMG          = openImage("dex.png") # TODO: crit dmg pic
-  BOSS              = openImage("dex.png") # TODO: boss dmg pic
+  BOSS              = openImage("boss_dmg.png")
   IED               = openImage("ied.png")
   MESO_OBTAINED     = openImage("meso_obtained.png")
   ITEM_DROP         = openImage("item_drop.png")
@@ -52,10 +61,12 @@ class Images:
   # Familiar
     # Speific Familiars - Ascendion
   FAM_ASCENDION     = openImage("fam_ascendion.png")
+  FAM_ASCENDION_NAME = openImage("fam_ascendion_name.png")
   FAM_25_STACK      = openImage("fam_25_stack.png")
   FAM_50_STACK      = openImage("fam_50_stack.png")
   FAM_75_STACK      = openImage("fam_75_stack.png")
   FAM_100_STACK     = openImage("fam_100_stack.png")
+  FAM_25_STACK_RARE = openImage("fam_25_stack_rare.png")
   FAM_50_STACK_RARE = openImage("fam_50_stack_rare.png")
   FAM_100_STACK_RARE = openImage("fam_100_stack_rare.png")
 
@@ -77,8 +88,69 @@ class Images:
   FAM_75_150_POINTS = openImage("fam_75_150_points.png")
   FAM_100_150_POINTS = openImage("fam_100_150_points.png")
   
-
-
-
   def get(key, suffix):
     return getattr(Images, f"{key}{suffix}")
+  
+class Audio:
+  TYLER1_AUTISM     = "images/tyler1autism.mp3"
+  PING              = "images/ping.mp3"
+  AMOGUS            = "images/amogus.mp3"
+  AUGH              = "images/augh.mp3"
+  BRUH              = "images/bruh.mp3"
+  LETMEDOITFORYOU   = "images/let me do it for you.mp3"
+  TYLER1_MACHINEGUN = "images/t1 machine.mp3"
+  WHYAREYOUGAY      = "images/why are you gay.mp3"
+  
+  def get_random_rune_audio():
+    return random.choice([Audio.PING, Audio.AMOGUS, Audio.AUGH, Audio.BRUH, Audio.LETMEDOITFORYOU, Audio.TYLER1_MACHINEGUN, Audio.WHYAREYOUGAY])
+#endregion ASSESTS
+
+#region LISTENER
+'''
+This class is used to listen for key presses and releases. It uses the interception library to do so.
+If the key pressed is a key that we are listening for, then we call the callback function associated with that key and also not send the key to the OS. (Like we never pressed it)
+Avoid popular libaries like pyautogui, keyboard, pynput, etc. because they use virtual keycodes which are different from the actual keycodes that the OS uses. (Can be detectable by other anticheat but I doubt MS cares)
+'''
+class KeyListener:
+  
+  def __init__(self, stop_flag):
+    self.stop_flag = stop_flag
+    self.events = {}
+
+  def add(self, key, cb):
+    self.events[KEYBOARD_MAPPING[key]] = cb
+
+  def beginListeningForPresses(self):
+    context = interception.Interception()
+    context.set_filter(context.is_keyboard, interception.FilterKeyState.FILTER_KEY_DOWN)
+    while True:
+      if self.stop_flag[0]:
+        return
+      
+      device = context.wait()
+      stroke = context.receive(device)
+
+      if stroke.code in self.events:
+        self.events[stroke.code]()
+      else:
+        context.send(device, stroke)
+
+  def beginListeningForReleases(self):
+    context = interception.Interception()
+    context.set_filter(context.is_keyboard, interception.FilterKeyState.FILTER_KEY_DOWN)
+    while True:
+      if self.stop_flag[0]:
+        return
+      
+      device = context.wait()
+      stroke = context.receive(device)
+
+      if not stroke.code in self.events:
+        context.send(device, stroke)
+
+  def run(self):
+    t1 = threading.Thread(target=self.beginListeningForPresses)
+    t1.start()
+    t2 = threading.Thread(target=self.beginListeningForReleases)
+    t2.start()
+#endregion LISTENER

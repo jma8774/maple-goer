@@ -2,12 +2,10 @@ import time
 import threading
 import pygame
 from datetime import datetime, timedelta
-from images import Images
 import pyautogui as pag
-
-# Interception library to simulate events without flagging them as LowLevelKeyHookInjected
+from base import Images, Audio, KeyListener
 import interception
-from listener import KeyListener
+
 key_pressed = {}
 
 REFRESH_MOUSE_POSITION_KEY = 'f1'

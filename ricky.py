@@ -4,18 +4,15 @@ import threading
 from datetime import datetime, timedelta
 import pyautogui as pag
 import pygame
-from images import Images
 import os
-
-# Interception library to simulate events without flagging them as LowLevelKeyHookInjected
+from base import Images, Audio, KeyListener
 import interception
-from listener import KeyListener
+
 key_pressed = {}
 
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
-audio = { "rune": "images/amongus.mp3", "whiteroom": "images/tyler1autismsss.mp3" }
 monster_region = (550, 20, 810, 290)
 minimap_map_icon_region = (5, 15, 40, 40)
 minimap_rune_region = (0, 0, 200, 200)
@@ -74,7 +71,7 @@ def main():
       # Play sound if whiteroomed
       if data['is_changed_map']:
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
-        play_audio(audio['whiteroom'])
+        play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
@@ -218,7 +215,7 @@ def check_rune():
   if datetime.now() > data['next_rune_check']:
     if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
       if not data['rune_playing']:
-        play_audio(audio['rune'])
+        play_audio(Audio.get_random_rune_audio())
         data['rune_playing'] = True
     data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
   

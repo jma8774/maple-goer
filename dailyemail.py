@@ -3,7 +3,7 @@ import random
 import threading
 import pygame
 from datetime import datetime, timedelta
-from images import Images
+from base import Images, Audio, KeyListener
 import os 
 
 # Create own custom classes to simulate these classes... they use win32/user32 microsoft libraries which flags the events as LowLevelKeyHookInjected
@@ -11,7 +11,6 @@ import pyautogui as pag
 
 # Interception library to simulate events without flagging them as LowLevelKeyHookInjected
 import interception
-from listener import KeyListener
 key_pressed = {}
 
 START_KEY = 'f7'
@@ -24,7 +23,6 @@ minimap_map_icon_region = (5, 15, 40, 40)
 
 thread = None
 stop_flag = [False]
-audio = { "rune": "images/amongus.mp3", "whiteroom": "images/tyler1autism.mp3", "ping": "images/ping.mp3" }
 data = {
   'is_paused': True,
   'is_changed_map': False,
@@ -70,7 +68,7 @@ def main():
   kl.add(START_KEY, start)
   kl.add(RESET_LOOT_TIMER_KEY, reset_loot_timer)
   kl.run()
-
+  
   # Bot loop
   try:
     tryRegenerateRandomDelays(-0.02, 0.01)
@@ -90,7 +88,7 @@ def main():
       # Play sound if whiteroomed
       if data['is_changed_map']:
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
-        play_audio(audio['whiteroom'])
+        play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
@@ -266,14 +264,24 @@ def midpoint3_loot():
 
 def buff_setup():
   cur = datetime.now()
+  
   if cur > data['next_elite_box_check']:
-    if pag.locateOnScreen(Images.ELITE_BOX, confidence=0.9):
-      play_audio(audio['ping'], loops=1)
+    boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+    print(boxloc)
+    played = False
+    while boxloc != None:
+      if not played: 
+        play_audio(Audio.PING, loops=1)
+        played = True
+      interception.click(x=boxloc.x, y=boxloc.y, clicks=3)
+      time.sleep(0.5)
+      boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
     data['next_elite_box_check'] = cur + timedelta(seconds=45)
+
   if cur > data['next_rune_check']:
     if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
       if not data['rune_playing']:
-        play_audio(audio['rune'])
+        threading.Timer(uniform(210, 240), lambda: play_audio(Audio.get_random_rune_audio())).start()
         data['rune_playing'] = True
     data['next_rune_check'] = cur + timedelta(seconds=45)
 

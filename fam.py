@@ -3,13 +3,11 @@ import time
 import threading
 import pygame
 from datetime import datetime, timedelta
-from images import Images
 import pyautogui as pag
 import os
-
-# Interception library to simulate events without flagging them as LowLevelKeyHookInjected
+from base import Images, Audio, KeyListener
 import interception
-from listener import KeyListener
+
 
 START_STOP_KEY = 'f1'
 
@@ -89,14 +87,14 @@ def fuse_familiars():
       print("Found familiar to stop at")
       i = 100000
       return False
-    if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True, region=fam_ui_region_expanded):
+    if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True, region=fam_ui_region_expanded) or not pag.locateOnScreen(Images.FAM_ASCENDION_NAME, confidence=0.9, grayscale=True, region=fam_ui_region_expanded):
       return False
     print("Found valid")
     return True
   
   def cancel():
     nonlocal fam_cancel
-    interception.move_to(fam_ui_region)
+    interception.move_to(fam_fusion_loc)
     time.sleep(0.2)
     if not fam_cancel:
       fam_cancel = pag.locateCenterOnScreen(Images.FAM_CANCEL, confidence=0.8, grayscale=True, region=fam_ui_region)
@@ -137,10 +135,11 @@ def fuse_familiars():
       return pag.locateOnScreen(image, confidence=0.95, grayscale=True, region=fam_ui_region)
     
     def open(stackloc, amt):
-      interception.click(stackloc)
-      interception.click(stackloc)
-      interception.click(stackloc)
-      time.sleep(0.25)
+      while not pag.locateOnScreen(Images.OK_START, confidence=0.9, grayscale=True):
+        interception.click(stackloc)
+        interception.click(stackloc)
+        interception.click(stackloc)
+        time.sleep(0.25)
       write(amt)
       if not can_continue(): return
       press_release("enter")
@@ -150,12 +149,12 @@ def fuse_familiars():
 
     def open_up_to(up_to_points):
       cache = { }
-      order = [100, 75, 50, 25]
+      order = [150, 100, 75, 50, 25]
       steps = {
         150:  [ ("100 rare", Images.FAM_100_STACK_RARE, "75") ],
         100:  [ ("50 rare", Images.FAM_50_STACK_RARE, "50"), ("100 rare", Images.FAM_100_STACK_RARE, "50") ],
         75:   [ ("75 common", Images.FAM_75_STACK, "75"), ("100 common", Images.FAM_100_STACK, "75") ],
-        50:   [ ("50 common", Images.FAM_50_STACK, "50"), ("75 common", Images.FAM_75_STACK, "50"), ("100 common", Images.FAM_100_STACK, "50") ],
+        50:   [ ("50 common", Images.FAM_50_STACK, "50"), ("75 common", Images.FAM_75_STACK, "50"), ("100 common", Images.FAM_100_STACK, "50"), ("25 rare", Images.FAM_25_STACK_RARE, "25") ],
         25:   [ ("25 common", Images.FAM_25_STACK, "25"), ("50 common", Images.FAM_50_STACK, "25"), ("75 common", Images.FAM_75_STACK, "25"), ("100 common", Images.FAM_100_STACK, "25") ]
       }
       for _, points_to_open in enumerate(order):
@@ -169,14 +168,19 @@ def fuse_familiars():
       raise Exception("Could not find 100, 75, 50, 25 familiar stacks to open in inventory")
 
     if find_exp_points(Images.FAM_0_150_POINTS):
+      print("Opening up to 150")
       open_up_to(150)
     elif find_exp_points(Images.FAM_0_POINTS) or find_exp_points(Images.FAM_50_150_POINTS):
+      print("Opening up to 100")
       open_up_to(100)
     elif find_exp_points(Images.FAM_25_POINTS) or find_exp_points(Images.FAM_75_150_POINTS):
+      print("Opening up to 75")
       open_up_to(75)
     elif find_exp_points(Images.FAM_100_150_POINTS) or find_exp_points(Images.FAM_50_POINTS):
+      print("Opening up to 50")
       open_up_to(50)
     else:
+      print("Opening up to 25")
       open_up_to(25)
   
   def rank_up():
@@ -205,6 +209,7 @@ def fuse_familiars():
         print("Ranked up")
       else:
         print("Failed to rank up")
+        interception.move_to(fam_fusion_loc)
       return ranked_up
     return False
   

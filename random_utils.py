@@ -1,14 +1,9 @@
 import pyautogui as pag
 import time
 import threading
-from images import Images
-
-# Create own custom classes to simulate these classes... they use win32/user32 microsoft libraries which flags the events as LowLevelKeyHookInjected
+from base import Images, Audio, KeyListener
 import pyautogui as pag
-
-# Interception library to simulate  events without flagging them as LowLevelKeyHookInjected
 import interception
-from listener import KeyListener
 
 class Scripts:
   def __init__(self, obj):
