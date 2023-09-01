@@ -1,0 +1,7 @@
+pygame
+discord
+flask
+python-dotenv
+opencv-python
+pyautogui
+requests

@@ -56,6 +56,6 @@ def handle_started():
     bot_safe(send("bot-spam", f"Started his bot at :clock1: **{datetime.now().strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
     return "Success", 200
 
-# Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH
+# Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS
 def bot_safe(coro):
     asyncio.run_coroutine_threadsafe(coro, client.loop)

@@ -3,6 +3,10 @@ import random
 import threading
 import interception
 from interception._keycodes import KEYBOARD_MAPPING
+import os
+from dotenv import load_dotenv
+import requests
+
 
 #region ASSESTS
 def openImage(file):
@@ -156,3 +160,16 @@ class KeyListener:
     t2 = threading.Thread(target=self.beginListeningForReleases)
     t2.start()
 #endregion LISTENER
+
+#region DISCORD REQUEST
+load_dotenv()
+API_KEY = os.getenv('FLASK_API_KEY')
+
+def post_status(route, user="jeemong"):
+  headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+  user_data = {'user': user}
+  try:
+    requests.post(f"http://localhost:5000/{route}", headers=headers, josn=user_data)
+  except:
+    pass
+#endregion DISCORD REQUEST

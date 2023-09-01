@@ -8,7 +8,8 @@ from threading import Thread
 if __name__ == '__main__':
   try:
     # Run Flask to handle HTTP requests 
-    flaskThread = Thread(target=lambda: app.run(use_reloader=False))
+    # Need to run it on a thread because it is blocking
+    flaskThread = Thread(target=lambda: app.run(use_reloader=False, debug=False, host="0.0.0.0", port=8080))
     flaskThread.daemon = True
     flaskThread.start()
 
