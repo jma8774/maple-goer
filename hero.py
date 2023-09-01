@@ -13,8 +13,8 @@ key_pressed = {}
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
-monster_region1 = (575, 45, 1100-575, 500-45)
-monster_region2 = (880, 165, 1359-800, 505-165)
+monster_region1 = (285, 280, 791-285, 400-280)
+monster_region2 = (177, 151, 1355-177, 400-151)
 minimap_rune_region = (0, 0, 200, 200)
 minimap_map_icon_region = (5, 15, 40, 40)
 
@@ -25,6 +25,9 @@ data = {
   'is_changed_map': False,
 
   'next_erda_fountain': datetime.now(),
+  'next_burning_sword': datetime.now(),
+  'expire_burning_sword': datetime.now(),
+  'next_buff': datetime.now(),
 
   'rune_playing': False,
   'next_rune_check': datetime.now(),
@@ -65,7 +68,7 @@ def main():
 
       # Setup for each new run
       setup()
-      thread = threading.Thread(target=subway3_macro)
+      thread = threading.Thread(target=hidden_macro)
       thread.start()
       thread.join()
       release_all()
@@ -81,6 +84,102 @@ def main():
 def setup():
   data['is_changed_map'] = False
   
+def hidden_macro():
+  print("Started Hidden Research Train macro")
+  while not should_pause():
+    tryRegenerateRandomDelays(-0.02, 0.01)
+    buff_setup()
+    hidden_rotation()
+    release_all()
+  print("Paused Hidden Research Train macro")
+    
+def hidden_rotation():
+  def wait_for_spawn(region):
+    # Find mob before starting rotation
+    mob_loc = None
+    count = 0
+    while mob_loc == None:
+      if should_pause(): return
+      mob_loc = pag.locateOnScreen(Images.DRONE_A, confidence=0.75, grayscale=True, region=region) or pag.locateOnScreen(Images.DRONE_B, confidence=0.75, grayscale=True, region=region)
+      time.sleep(0.2)
+      count += 1
+      if count > 30: break
+    if mob_loc == None:
+      print(f"Couldn't find mob after {count} tries, continuing rotation")
+    else:
+      print(f"Found mob at {mob_loc}, continuing rotation")
+
+  rng = random.random()
+  wait_for_spawn(region=monster_region1)
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  press_release('right')
+
+  place_stationary = datetime.now() > data['expire_burning_sword'] and (datetime.now() > data['next_erda_fountain'] or datetime.now() > data['next_burning_sword'])
+  if place_stationary:
+    jump_attack()
+    if should_pause(): return
+    press_release('x', 1.1)
+    if should_pause(): return
+    if not burning_sword():
+      erda_fountain()
+    if should_pause(): return
+    jump_down_attack(delayAfter=0.5)
+  else:
+    if should_pause(): return
+    wait_for_spawn(region=monster_region2)
+    if should_pause(): return
+    jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if should_pause(): return
+  jump_attack()
+  if rng > 0.7:
+    jump_attack()
+  press_release('left')
+
+def buff_setup():
+  cur = datetime.now()
+  
+  if cur > data['next_elite_box_check']:
+    boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+    print(boxloc)
+    played = False
+    while boxloc != None:
+      if not played: 
+        play_audio(Audio.PING, loops=1)
+        played = True
+      interception.click(x=boxloc.x, y=boxloc.y, clicks=3)
+      time.sleep(0.5)
+      boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+    data['next_elite_box_check'] = cur + timedelta(seconds=45)
+
+  if cur > data['next_rune_check']:
+    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
+      if not data['rune_playing']:
+        play_audio(Audio.get_random_rune_audio())
+        data['rune_playing'] = True
+    if pag.locateOnScreen(Images.BOUNTY_MINIMAP, region=minimap_rune_region):
+      play_audio(Audio.PING, loops=1)
+    data['next_rune_check'] = cur + timedelta(seconds=45)
+
+  if cur > data['next_buff']:
+    press_release('pagedown', 2)
+    data['next_buff'] = cur + timedelta(seconds=190)
+    
 def subway3_macro():
   print("Started Subway Tunnel 3 macro")
   while not should_pause():
@@ -144,29 +243,6 @@ def subway3_rotation():
     jump_attack()
   press_release('left')
 
-def buff_setup():
-  cur = datetime.now()
-  
-  if cur > data['next_elite_box_check']:
-    boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
-    print(boxloc)
-    played = False
-    while boxloc != None:
-      if not played: 
-        play_audio(Audio.PING, loops=1)
-        played = True
-      interception.click(x=boxloc.x, y=boxloc.y, clicks=3)
-      time.sleep(0.5)
-      boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
-    data['next_elite_box_check'] = cur + timedelta(seconds=45)
-
-  if cur > data['next_rune_check']:
-    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
-      if not data['rune_playing']:
-        play_audio(Audio.get_random_rune_audio())
-        data['rune_playing'] = True
-    data['next_rune_check'] = cur + timedelta(seconds=45)
-  
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
     press('down')
@@ -174,6 +250,15 @@ def erda_fountain():
     press_release('f4')
     release('down', delay=0.6)
     data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
+    return True
+  return False
+
+def burning_sword():
+  if datetime.now() > data['next_burning_sword']:
+    press_release('3', 0.8)
+    press_release('3', 0.8)
+    data['expire_burning_sword'] = datetime.now() + timedelta(seconds=63)
+    data['next_burning_sword'] = datetime.now() + timedelta(seconds=120)
     return True
   return False
 

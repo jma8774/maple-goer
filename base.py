@@ -25,12 +25,14 @@ class Images:
 
   MONTO             = openImage("monto.png")
   MONTO2            = openImage("monto2.png")
+  DRONE_A           = openImage("drone_a.png")
+  DRONE_B           = openImage("drone_b.png")
   FOREBERION        = openImage("foreberion.png")
   ASCENDION         = openImage("mob.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")
   REVERSE_ICON      = openImage("reverse_icon.png")
   RUNE_MINIMAP      = openImage("rune_minimap.png")
-  RUNE_MSG          = openImage("rune_msg.png")
+  BOUNTY_MINIMAP    = openImage("bounty_minimap.png")
   MINIMAP           = openImage("minimap.png")
   ELITE_BOX         = openImage("elite_box.png")
 
@@ -102,7 +104,7 @@ class Audio:
   WHYAREYOUGAY      = "images/why are you gay.mp3"
   
   def get_random_rune_audio():
-    return random.choice([Audio.PING, Audio.AMOGUS, Audio.AUGH, Audio.BRUH, Audio.LETMEDOITFORYOU, Audio.TYLER1_MACHINEGUN, Audio.WHYAREYOUGAY])
+    return random.choice([Audio.AMOGUS, Audio.AUGH, Audio.BRUH, Audio.LETMEDOITFORYOU, Audio.WHYAREYOUGAY])
 #endregion ASSESTS
 
 #region LISTENER

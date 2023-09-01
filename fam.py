@@ -1,4 +1,3 @@
-# TODO: handle rare familiars, prob just use 50 at a time if possible when we are at 0/100 or 0/150, then proceed to commons as usual
 import time
 import threading
 import pygame
@@ -111,10 +110,10 @@ def fuse_familiars():
       raise Exception("Could not find select all button")
     interception.click(fam_select_all, delay=0.25)
     if not fam_fuse:
-      fam_fuse = pag.locateCenterOnScreen(Images.FAM_FUSE_ACTIVE, confidence=0.9, grayscale=True, region=fam_ui_region)
+      fam_fuse = pag.locateCenterOnScreen(Images.FAM_FUSE_ACTIVE, confidence=0.85, grayscale=True, region=fam_ui_region)
     if not fam_fuse:
       raise Exception("Could not find fuse button")
-    while can_continue() and pag.locateOnScreen(Images.FAM_ASCENDION, confidence=0.9, grayscale=True, region=fam_ui_region):
+    while can_continue() and pag.locateOnScreen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True, region=fam_ui_region):
       interception.click(fam_fuse)
       interception.click(fam_fuse, delay=0.25)
       if not can_continue(): break
@@ -132,7 +131,7 @@ def fuse_familiars():
       return cache[name] != None
   
     def find_exp_points(image):
-      return pag.locateOnScreen(image, confidence=0.95, grayscale=True, region=fam_ui_region)
+      return pag.locateOnScrene(image, confidence=0.95, grayscale=True, region=fam_ui_region)
     
     def open(stackloc, amt):
       while not pag.locateOnScreen(Images.OK_START, confidence=0.9, grayscale=True):

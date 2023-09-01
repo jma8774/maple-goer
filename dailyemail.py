@@ -144,7 +144,7 @@ def midpoint3_rotation():
   if should_pause(): return
   jump_down_attack(delayAfter=0.4)
   if should_pause(): return
-  q_and_surgebolt(afterDelay=0.46)
+  q_and_surgebolt(afterDelay=0.5)
   if should_pause(): return
   q_and_surgebolt(afterDelay=0.63)
   if should_pause(): return
@@ -157,7 +157,7 @@ def midpoint3_loot():
   
   def face_left_teleport_reset():
     if should_pause(): return
-    press_release('left', 0.3)
+    press_release('left')
     if should_pause(): return
     teleport_reset()
 
@@ -182,7 +182,7 @@ def midpoint3_loot():
     if should_pause(): return
     erda_fountain()
     if should_pause(): return
-    jump_down_attack(delayAfter=1)
+    jump_down(delayAfter=0.8)
     if should_pause(): return
     jump_down_attack(delayAfter=0.7)
     if should_pause(): return
@@ -192,13 +192,14 @@ def midpoint3_loot():
     if should_pause(): return
     if not jump_web(delayAfter=1.5):
       if should_pause(): return
-      jump_down_attack(delayAfter=1.5)
+      jump_down(delayAfter=1.5)
     if should_pause(): return
     face_left_teleport_reset()
 
   def left_part():
     if should_pause(): return
-    q_and_surgebolt(afterDelay=0.5)
+    if pag.locateOnScreen(Images.ASCENDION, confidence=0.75, grayscale=True, region=ascendion_region):
+      q_and_surgebolt(afterDelay=0.5)
     if should_pause(): return
     press('left', 1.4)
     if should_pause(): return
@@ -207,11 +208,11 @@ def midpoint3_loot():
     if should_pause(): return
     if not jump_web(delayAfter=1):
       if should_pause(): return
-      jump_down_attack(delayAfter=1)
+      jump_down(delayAfter=1)
     if should_pause(): return
     jump_down_attack(delayAfter=0.7)
     if should_pause(): return
-    jump_down_attack(delayAfter=0.6)
+    jump_down(delayAfter=0.6)
     if should_pause(): return
     press_release('left')
     press_release('left')
@@ -250,11 +251,11 @@ def midpoint3_loot():
       q_and_surgebolt(afterDelay=0.7)
     press_release('right')
     if should_pause(): return
-    jump_down_attack(delayAfter=0.55)
+    jump_down(delayAfter=0.55)
     if should_pause(): return
     press_release('left')
     if should_pause(): return
-    jump_down_attack(delayAfter=0.7)
+    jump_down(delayAfter=0.7)
     if should_pause(): return
     teleport_reset()
     if should_pause(): return
@@ -273,15 +274,14 @@ def buff_setup():
       if not played: 
         play_audio(Audio.PING, loops=1)
         played = True
-      interception.click(x=boxloc.x, y=boxloc.y, clicks=3)
-      time.sleep(0.5)
+      press_release('f6')
       boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
     data['next_elite_box_check'] = cur + timedelta(seconds=45)
 
   if cur > data['next_rune_check']:
     if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
       if not data['rune_playing']:
-        threading.Timer(uniform(210, 240), lambda: play_audio(Audio.get_random_rune_audio())).start()
+        play_audio(Audio.get_random_rune_audio())
         data['rune_playing'] = True
     data['next_rune_check'] = cur + timedelta(seconds=45)
 

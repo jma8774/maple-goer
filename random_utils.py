@@ -64,24 +64,15 @@ def enhance(scripts):
     
 def openHerbBags(scripts):
   seq = 0
-  herbLocation = None
-  okLocation = None
-  sortLocation = None
   while data["target"] == scripts.OPEN_HERB_BAGS:
-    if seq % 10 == 0 or herbLocation is None:
-      herbLocation = pag.locateCenterOnScreen(Images.BAG, confidence=0.8)
-    if okLocation is None:
-      okLocation = pag.locateCenterOnScreen(Images.OK_START, confidence=0.8)
-    if sortLocation is None:
-      sortLocation = pag.locateCenterOnScreen(Images.SORT, confidence=0.8)
-    if herbLocation:
-      doubleclick(herbLocation)
-    time.sleep(0.02)
-    click(okLocation)
-    time.sleep(0.01)
-    moveto(sortLocation)
-    time.sleep(0.015)
+    if seq % 10 == 0 and not pag.locateCenterOnScreen(Images.BAG, confidence=0.8):
+      data["target"] = None
+    press_release('f9')
+    time.sleep(0.20)
+    press_release('y')
+    time.sleep(0.25)
     seq += 1
+    print(seq)
     
 def extract(scripts):
   while data["target"] == scripts.EXTRACT:
@@ -138,6 +129,18 @@ def executeIfFound(image, fn, confidence=0.8, grayscale=True):
   location = pag.locateCenterOnScreen(image, confidence=confidence, grayscale=grayscale)
   if location:
     fn(location)
+
+def press(key, delay=0.05):
+  interception.key_down(key)
+  time.sleep(delay)
+  
+def release(key, delay=0.05):
+  interception.key_up(key)
+  time.sleep(delay)
+
+def press_release(key, delay=0.05):
+  press(key)
+  release(key, delay)
 
 def commands():
   print("Commands:")
