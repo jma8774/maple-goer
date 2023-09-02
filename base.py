@@ -175,5 +175,14 @@ def post_status(route, user="jeemong"):
     requests.post(f"{URL}/{route}", headers=headers, json=user_data)
   except Exception as e:
     print(f"Error posting status to {URL}/{route}: {e}")
+
+def get_status(route, user="jeemong"):
+  print(f"Getting status to {URL}/{route}")
+  headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+  user_data = {'user': user}
+  try:
+    requests.get(f"{URL}/{route}", headers=headers, json=user_data)
+  except Exception as e:
+    print(f"Error posting status to {URL}/{route}: {e}")
     
 #endregion DISCORD REQUEST

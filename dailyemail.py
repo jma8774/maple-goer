@@ -3,7 +3,7 @@ import random
 import threading
 import pygame
 from datetime import datetime, timedelta
-from base import Images, Audio, KeyListener, post_status
+from base import Images, Audio, KeyListener, post_status, get_status
 import os 
 
 # Create own custom classes to simulate these classes... they use win32/user32 microsoft libraries which flags the events as LowLevelKeyHookInjected

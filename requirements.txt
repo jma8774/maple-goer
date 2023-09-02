@@ -1,8 +1,9 @@
 pygame
 discord
-flask
+flask[async]
 python-dotenv
 opencv-python
 pyautogui
 requests
 pytz
+asgiref

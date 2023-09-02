@@ -30,38 +30,34 @@ def before_request():
         return "Invalid API key", 401
 
 @app.route('/hello', methods=['GET'])
-def handle_hello():
-    bot_safe(send("bot-spam", "hello!"))
+async def handle_hello():
+    await send("bot-spam", "hello!")
     return "hi!", 200
 
 @app.route('/whiteroom', methods=['POST'])
-def handle_whiteroom():
+async def handle_whiteroom():
     body = request.json
-    bot_safe(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    bot_safe(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    bot_safe(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    bot_safe(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    bot_safe(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
+    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
+    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
+    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
+    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
     return "Success", 200
 
 @app.route('/rune', methods=['POST'])
-def handle_rune():
+async def handle_rune():
     body = request.json
-    bot_safe(send("bot-spam", "Rune is up :robot:", body["user"]))
+    await send("bot-spam", "Rune is up :robot:", body["user"])
     return "Success", 200
 
 @app.route('/someone_entered_map', methods=['POST'])
-def handle_someone_entered_map():
+async def handle_someone_entered_map():
     body = request.json
-    bot_safe(send("bot-spam", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"]))
+    await send("bot-spam", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"])
     return "Success", 200
 
 @app.route('/started', methods=['POST'])
-def handle_started():
+async def handle_started():
     body = request.json
-    bot_safe(send("bot-spam", f"Started his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
+    await send("bot-spam", f"Started his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"])
     return "Success", 200
-
-# Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS
-def bot_safe(coro):
-    asyncio.run_coroutine_threadsafe(coro, client.loop)
