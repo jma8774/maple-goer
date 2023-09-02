@@ -31,6 +31,7 @@ def before_request():
 
 @app.route('/hello', methods=['GET'])
 def handle_hello():
+    bot_safe(send("bot-spam", "hello!"))
     return "hi!", 200
 
 @app.route('/whiteroom', methods=['POST'])

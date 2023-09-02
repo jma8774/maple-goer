@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pyautogui as pag
 import pygame
 import os
-from base import Images, Audio, KeyListener
+from base import Images, Audio, KeyListener, post_status
 import interception
 
 key_pressed = {}
@@ -56,6 +56,8 @@ def main():
   kl.add(START_KEY, start)
   kl.run()
 
+  post_status("started", "ricky")
+
   try:
     commands()
     while True:
@@ -71,6 +73,7 @@ def main():
       # Play sound if whiteroomed
       if data['is_changed_map']:
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
+        post_status("started", "ricky")
         play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")

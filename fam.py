@@ -131,7 +131,7 @@ def fuse_familiars():
       return cache[name] != None
   
     def find_exp_points(image):
-      return pag.locateOnScrene(image, confidence=0.95, grayscale=True, region=fam_ui_region)
+      return pag.locateOnScreen(image, confidence=0.95, grayscale=True, region=fam_ui_region)
     
     def open(stackloc, amt):
       while not pag.locateOnScreen(Images.OK_START, confidence=0.9, grayscale=True):

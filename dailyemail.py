@@ -96,6 +96,7 @@ def main():
     print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
     
+    
 def setup():
   data['next_blink_setup'] = None
   data['is_changed_map'] = False

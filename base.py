@@ -163,7 +163,7 @@ class KeyListener:
 
 #region DISCORD REQUEST
 load_dotenv()
-URL = "http://ms-discord-bot-fd16a56d7c26.herokuapp.com"
+URL = "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
 # URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
 
