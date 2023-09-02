@@ -163,7 +163,7 @@ class KeyListener:
 
 #region DISCORD REQUEST
 load_dotenv()
-API_KEY = os.getenv('FLASK_API_KEY')
+API_KEY = os.getenv('FLASK_KEY_API')
 
 def post_status(route, user="jeemong"):
   headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}

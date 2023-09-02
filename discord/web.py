@@ -9,7 +9,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 load_dotenv()
-TOKEN = os.getenv('FLAKS_API_KEY')
+TOKEN = os.getenv('FLASK_KEY_API')
 
 @app.errorhandler(Exception) 
 def handle_error(e):
