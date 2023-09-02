@@ -20,8 +20,10 @@ def handle_error(e):
 
 @app.before_request
 def before_request():
+    def ok():
+        return request.path == "/hello"
     key = request.headers.get('x-api-key')
-    if key != TOKEN:
+    if not ok() and key != TOKEN:
         return "Invalid API key", 401
 
 @app.route('/hello', methods=['GET'])
