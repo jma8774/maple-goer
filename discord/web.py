@@ -7,8 +7,6 @@ import os
 from datetime import datetime
 import pytz
 
-print(datetime.now(pytz.timezone("America/New_York")))
-
 app = Flask(__name__)
 
 load_dotenv()
@@ -30,34 +28,39 @@ def before_request():
         return "Invalid API key", 401
 
 @app.route('/hello', methods=['GET'])
-async def handle_hello():
-    await send("bot-spam", "hello!")
+def handle_hello():
+    client_event(send("bot-spam", "hello!"))
     return "hi!", 200
 
 @app.route('/whiteroom', methods=['POST'])
-async def handle_whiteroom():
+def handle_whiteroom():
     body = request.json
-    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
-    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
-    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
-    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
-    await send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"])
+    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
     return "Success", 200
 
 @app.route('/rune', methods=['POST'])
-async def handle_rune():
+def handle_rune():
     body = request.json
-    await send("bot-spam", "Rune is up :robot:", body["user"])
+    client_event(send("bot-spam", "Rune is up :robot:", body["user"]))
     return "Success", 200
 
 @app.route('/someone_entered_map', methods=['POST'])
-async def handle_someone_entered_map():
+def handle_someone_entered_map():
     body = request.json
-    await send("bot-spam", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"])
+    client_event(send("bot-spam", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"]))
     return "Success", 200
 
 @app.route('/started', methods=['POST'])
-async def handle_started():
+def handle_started():
     body = request.json
-    await send("bot-spam", f"Started his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"])
+    client_event(send("bot-spam", f"Started his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
     return "Success", 200
+
+# Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS
+# Flask does not allow us to await the discord client's functions, so we need to use this function to put the discord client's functions on the client's event loop to run asynchronously
+def client_event(coro):
+    asyncio.run_coroutine_threadsafe(coro, client.loop)
