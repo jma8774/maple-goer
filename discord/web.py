@@ -5,6 +5,9 @@ from werkzeug.exceptions import HTTPException
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+import pytz
+
+print(datetime.now(pytz.timezone("America/New_York")))
 
 app = Flask(__name__)
 
@@ -55,7 +58,7 @@ def handle_someone_entered_map():
 @app.route('/started', methods=['POST'])
 def handle_started():
     body = request.json
-    bot_safe(send("bot-spam", f"Started his bot at :clock1: **{datetime.now().strftime('%H:%M:%S')} PST** :clock1:", body["user"]))
+    bot_safe(send("bot-spam", f"Started his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
     return "Success", 200
 
 # Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS
