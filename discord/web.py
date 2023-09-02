@@ -57,13 +57,28 @@ def handle_someone_entered_map():
 @app.route('/started', methods=['POST'])
 def handle_started():
     body = request.json
-    client_event(send("bot-spam", f"Started his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
+    client_event(send("bot-spam", f"Started his cousin at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
     return "Success", 200
 
 @app.route('/stopped', methods=['POST'])
 def handle_stopped():
+    def secondsToDisplay(secs):
+        hours = int(secs // 3600)
+        mins = int((secs % 3600) // 60)
+        s = ""
+        if hours > 0:
+            s += f"{hours} {'hours' if hours > 1 else 'hour'} "
+        if mins > 0:
+            s += f"{mins} {'minutes' if mins > 1 else 'minute'} "
+        return s.strip()
     body = request.json
-    client_event(send("bot-spam", f"Stopped his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
+    mph = 420000000
+    duration = body["duration"]
+    mesos = format(int(duration * (mph / 3600)), ",")
+    client_event(send("bot-spam", 
+                      f"Stopped his cousin at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1: \n\nAssuming a rate of 420m mesos per hour, they earned {mesos} mesos from this {secondsToDisplay(duration)} long session! :tada: :tada: :tada:", 
+                      body["user"])
+                )
     return "Success", 200
 
 # Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS

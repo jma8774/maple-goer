@@ -6,7 +6,7 @@ from interception._keycodes import KEYBOARD_MAPPING
 import os
 from dotenv import load_dotenv
 import requests
-
+from datetime import datetime
 
 #region ASSESTS
 def openImage(file):
@@ -184,4 +184,13 @@ def get_status(route, data={ "user": "jeemong" }):
   except Exception as e:
     print(f"Error posting status to {URL}/{route}: {e}")
     
+def post_status_stopped(start, user):
+  print(f"Posting bot run time to {URL}/stopped")
+  headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+  try:
+    if start is None:
+      raise Exception("Start time is None")
+    requests.post(f"{URL}/stopped", headers=headers, json={ "user": user, "duration": (datetime.now() - start).total_seconds() })
+  except Exception as e:
+    print(f"Error posting time to {URL}/stopped: {e}")
 #endregion DISCORD REQUEST

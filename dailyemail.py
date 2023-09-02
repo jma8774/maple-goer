@@ -3,7 +3,7 @@ import random
 import threading
 import pygame
 from datetime import datetime, timedelta
-from base import Images, Audio, KeyListener, post_status, get_status
+from base import Images, Audio, KeyListener, post_status, get_status, post_status_stopped
 import os 
 
 # Create own custom classes to simulate these classes... they use win32/user32 microsoft libraries which flags the events as LowLevelKeyHookInjected
@@ -25,7 +25,8 @@ thread = None
 stop_flag = [False]
 data = {
   'is_paused': True,
-  'time_paused': 0,
+  'duration_paused': 0,
+  'time_started': None,
   'is_changed_map': False,
   'next_loot': datetime.now() + timedelta(minutes=1.7),
   'x_and_down_x': False,
@@ -70,23 +71,27 @@ def main():
   kl.add(PAUSE_KEY, pause)
   kl.add(START_KEY, start)
   kl.add(RESET_LOOT_TIMER_KEY, reset_loot_timer)
-  kl.add("f10", check_person_entered_map)
   kl.run()
   
-
   # Bot loop
   try:
     tryRegenerateRandomDelays(-0.02, 0.01)
     commands()
     while True:
       if data['is_paused'] == True:
+        if data['duration_paused'] > 60:
+          print("Bot has been paused for 3 minutes, ending current session and posting to discord")
+          data['duration_paused'] = float('-inf')
+          post_running_time()
         time.sleep(1)
-        data['time_paused'] += 1
+        data['duration_paused'] += 1
         continue
       
-      post_status("started")
-      data['time_paused'] = 0
-      
+      if data['time_started'] == None:
+        post_status("started")
+        data['time_started'] = datetime.now()
+      data['duration_paused'] = 0
+
       # Setup for each new run
       setup()
       thread = threading.Thread(target=midpoint3_macro)
@@ -100,9 +105,9 @@ def main():
         post_status("whiteroom")
         play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
-    print("Exiting... (Try spamming CTRL + C)")
     stop_flag[0] = True
-    
+    post_running_time()
+    print("Exiting... (Try spamming CTRL + C)")
     
 def setup():
   data['next_blink_setup'] = None
@@ -321,6 +326,11 @@ def buff_setup():
     press_release('5', 0.7)
     data['next_bird'] = cur + timedelta(seconds=uniform(116, 125))
   
+def post_running_time():
+  if data['time_started'] != None:
+    post_status_stopped(data['time_started'], "jeemong")
+    data['time_started'] = None
+
 def check_elite_box():
   cur = datetime.now()
   if cur > data['next_elite_box_check']:

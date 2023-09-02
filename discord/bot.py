@@ -1,8 +1,11 @@
 import discord
+from dotenv import load_dotenv
+import os
 
 client = discord.Client(intents=discord.Intents.default())
 channels = {}
 users = {}
+isDebug = False
 
 @client.event
 async def on_ready():
@@ -19,9 +22,17 @@ async def on_ready():
   }
 
 async def send(channel, message, user=None):
+  global channels, isDebug
   print(f"Sending message to {channel}: {message}")
-  global channels
+  debug = "**[Debug]** " if isDebug else ""
   if user:
-    await channels[channel].send(f"<@{users[user]}> " + message)
+    await channels[channel].send(debug + f"<@{users[user]}> " + message)
   else:
-    await channels[channel].send(message)
+    await channels[channel].send(debug + message)
+
+def runClient(port):
+  global isDebug
+  isDebug = port == 5000
+  load_dotenv()
+  TOKEN = os.getenv('DISCORD_TOKEN')
+  client.run(TOKEN)
