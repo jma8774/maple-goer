@@ -69,7 +69,7 @@ def main():
   kl.add(RESET_LOOT_TIMER_KEY, reset_loot_timer)
   kl.run()
   
-  post_status("/started")
+  post_status("started")
 
   # Bot loop
   try:
@@ -90,7 +90,7 @@ def main():
       # Play sound if whiteroomed
       if data['is_changed_map']:
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
-        post_status("/whiteroom")
+        post_status("whiteroom")
         play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
@@ -284,7 +284,7 @@ def buff_setup():
   if cur > data['next_rune_check']:
     if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
       if not data['rune_playing']:
-        post_status("/rune")
+        post_status("rune")
         play_audio(Audio.get_random_rune_audio())
         data['rune_playing'] = True
     data['next_rune_check'] = cur + timedelta(seconds=45)

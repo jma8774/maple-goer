@@ -163,13 +163,17 @@ class KeyListener:
 
 #region DISCORD REQUEST
 load_dotenv()
+URL = "http://ms-discord-bot-fd16a56d7c26.herokuapp.com"
+# URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
 
 def post_status(route, user="jeemong"):
+  print(f"Posting status to {URL}/{route}")
   headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
   user_data = {'user': user}
   try:
-    requests.post(f"http://localhost:5000/{route}", headers=headers, josn=user_data)
-  except:
-    pass
+    requests.post(f"{URL}/{route}", headers=headers, json=user_data)
+  except Exception as e:
+    print(f"Error posting status to {URL}/{route}: {e}")
+    
 #endregion DISCORD REQUEST
