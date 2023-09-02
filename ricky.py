@@ -56,7 +56,7 @@ def main():
   kl.add(START_KEY, start)
   kl.run()
 
-  post_status("started", "ricky")
+  post_status("started", { "user": "ricky"})
 
   try:
     commands()
@@ -73,7 +73,7 @@ def main():
       # Play sound if whiteroomed
       if data['is_changed_map']:
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
-        post_status("started", "ricky")
+        post_status("started", { "user": "ricky" })
         play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")

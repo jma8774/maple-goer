@@ -25,6 +25,7 @@ thread = None
 stop_flag = [False]
 data = {
   'is_paused': True,
+  'time_paused': 0,
   'is_changed_map': False,
   'next_loot': datetime.now() + timedelta(minutes=1.7),
   'x_and_down_x': False,
@@ -43,6 +44,8 @@ data = {
   'rune_playing': False,
   'next_rune_check': datetime.now(),
   'next_elite_box_check': datetime.now(),
+
+  'someone_on_map': False,
 }
 randomCache = {
   "idx": 0,
@@ -67,9 +70,9 @@ def main():
   kl.add(PAUSE_KEY, pause)
   kl.add(START_KEY, start)
   kl.add(RESET_LOOT_TIMER_KEY, reset_loot_timer)
+  kl.add("f10", check_person_entered_map)
   kl.run()
   
-  post_status("started")
 
   # Bot loop
   try:
@@ -78,8 +81,12 @@ def main():
     while True:
       if data['is_paused'] == True:
         time.sleep(1)
+        data['time_paused'] += 1
         continue
-
+      
+      post_status("started")
+      data['time_paused'] = 0
+      
       # Setup for each new run
       setup()
       thread = threading.Thread(target=midpoint3_macro)
@@ -270,25 +277,11 @@ def midpoint3_loot():
 def buff_setup():
   cur = datetime.now()
   
-  if cur > data['next_elite_box_check']:
-    boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
-    print(boxloc)
-    played = False
-    while boxloc != None:
-      if not played: 
-        play_audio(Audio.PING, loops=1)
-        played = True
-      press_release('f6')
-      boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
-    data['next_elite_box_check'] = cur + timedelta(seconds=45)
+  check_elite_box()
 
-  if cur > data['next_rune_check']:
-    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
-      if not data['rune_playing']:
-        post_status("rune")
-        play_audio(Audio.get_random_rune_audio())
-        data['rune_playing'] = True
-    data['next_rune_check'] = cur + timedelta(seconds=45)
+  check_rune()
+
+  check_person_entered_map()
 
   if data['x_and_down_x']:
     press_release('x')
@@ -328,6 +321,38 @@ def buff_setup():
     press_release('5', 0.7)
     data['next_bird'] = cur + timedelta(seconds=uniform(116, 125))
   
+def check_elite_box():
+  cur = datetime.now()
+  if cur > data['next_elite_box_check']:
+    boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+    print(boxloc)
+    played = False
+    while boxloc != None:
+      if not played: 
+        play_audio(Audio.PING, loops=1)
+        played = True
+      press_release('f6')
+      boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+    data['next_elite_box_check'] = cur + timedelta(seconds=45)
+
+def check_rune():
+  cur = datetime.now()
+  if cur > data['next_rune_check']:
+    if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
+      if not data['rune_playing']:
+        post_status("rune")
+        play_audio(Audio.get_random_rune_audio())
+        data['rune_playing'] = True
+    data['next_rune_check'] = cur + timedelta(seconds=45)
+
+def check_person_entered_map():
+  if pag.locateOnScreen(Images.PERSON, region=minimap_rune_region):
+    if not data['someone_on_map']:
+      post_status("someone_entered_map")
+      data['someone_on_map'] = True
+  else:
+    data['someone_on_map'] = False
+
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
     press('down')

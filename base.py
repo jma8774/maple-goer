@@ -39,6 +39,7 @@ class Images:
   BOUNTY_MINIMAP    = openImage("bounty_minimap.png")
   MINIMAP           = openImage("minimap.png")
   ELITE_BOX         = openImage("elite_box.png")
+  PERSON            = openImage("person.png")
 
   # Boss  
   LUCID             = openImage("lucid.png")
@@ -167,21 +168,19 @@ URL = "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
 # URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
 
-def post_status(route, user="jeemong"):
+def post_status(route, data={ "user": "jeemong" }):
   print(f"Posting status to {URL}/{route}")
   headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
-  user_data = {'user': user}
   try:
-    requests.post(f"{URL}/{route}", headers=headers, json=user_data)
+    requests.post(f"{URL}/{route}", headers=headers, json=data)
   except Exception as e:
     print(f"Error posting status to {URL}/{route}: {e}")
 
-def get_status(route, user="jeemong"):
+def get_status(route, data={ "user": "jeemong" }):
   print(f"Getting status to {URL}/{route}")
   headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
-  user_data = {'user': user}
   try:
-    requests.get(f"{URL}/{route}", headers=headers, json=user_data)
+    requests.get(f"{URL}/{route}", headers=headers, json=data)
   except Exception as e:
     print(f"Error posting status to {URL}/{route}: {e}")
     

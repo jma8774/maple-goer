@@ -60,6 +60,12 @@ def handle_started():
     client_event(send("bot-spam", f"Started his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
     return "Success", 200
 
+@app.route('/stopped', methods=['POST'])
+def handle_stopped():
+    body = request.json
+    client_event(send("bot-spam", f"Stopped his bot at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
+    return "Success", 200
+
 # Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS
 # Flask does not allow us to await the discord client's functions, so we need to use this function to put the discord client's functions on the client's event loop to run asynchronously
 def client_event(coro):
