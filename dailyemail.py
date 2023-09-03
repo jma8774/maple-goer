@@ -3,7 +3,7 @@ import random
 import threading
 import pygame
 from datetime import datetime, timedelta
-from base import Images, Audio, KeyListener, post_status, get_status, post_status_stopped
+from base import Images, Audio, KeyListener, post_status, get_status, post_summary
 import os 
 
 # Create own custom classes to simulate these classes... they use win32/user32 microsoft libraries which flags the events as LowLevelKeyHookInjected
@@ -328,7 +328,7 @@ def buff_setup():
   
 def post_running_time():
   if data['time_started'] != None:
-    post_status_stopped(data['time_started'], "jeemong")
+    post_summary(data['time_started'], "jeemong")
     data['time_started'] = None
 
 def check_elite_box():

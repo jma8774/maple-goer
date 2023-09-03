@@ -164,8 +164,8 @@ class KeyListener:
 
 #region DISCORD REQUEST
 load_dotenv()
-URL = "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
-# URL = "http://localhost:5000"
+# URL = "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
+URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
 
 def post_status(route, data={ "user": "jeemong" }):
@@ -184,13 +184,13 @@ def get_status(route, data={ "user": "jeemong" }):
   except Exception as e:
     print(f"Error posting status to {URL}/{route}: {e}")
     
-def post_status_stopped(start, user):
-  print(f"Posting bot run time to {URL}/stopped")
+def post_summary(start_time, user):
+  print(f"Posting bot run time to {URL}/summary")
   headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
   try:
-    if start is None:
+    if start_time is None:
       raise Exception("Start time is None")
-    requests.post(f"{URL}/stopped", headers=headers, json={ "user": user, "duration": (datetime.now() - start).total_seconds() })
+    requests.post(f"{URL}/summary", headers=headers, json={ "user": user, "start_time": datetime.timestamp(start_time), "end_time": datetime.timestamp(datetime.now()) })
   except Exception as e:
-    print(f"Error posting time to {URL}/stopped: {e}")
+    print(f"Error posting time to {URL}/summary: {e}")
 #endregion DISCORD REQUEST
