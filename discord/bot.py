@@ -55,7 +55,7 @@ async def sendSummary(channel, data):
   
   embed.add_field(name="\u200b", value="\u200b", inline=False)
   embed.add_field(name="**:clock1: Start Time**", value=f"{dtFormat(data['start_time'])} EST")
-  embed.add_field(name="**:clock2: Stop Time**", value=f"{dtFormat(data['end_time'])} EST")
+  embed.add_field(name="**:clock9: Stop Time**", value=f"{dtFormat(data['end_time'])} EST")
   duration_str = secondsToDisplay(duration)
   if duration_str:
     embed.add_field(name="**:hourglass: Duration**", value=duration_str)
