@@ -28,6 +28,7 @@ def main():
     data['x_and_down_x'] = True
 
   b = BotBase(data, {
+    "user": "jeemong",
     "script": midpoint3_macro,
     "setup": setup,
     "pause_cb": pause_cb

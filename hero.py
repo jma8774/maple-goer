@@ -19,8 +19,8 @@ minimap_rune_region = (0, 0, 200, 200)
 minimap_map_icon_region = (5, 15, 40, 40)
 
 thread = None
-stop_flag = [False]
 data = {
+  'stop_flag': False,
   'is_paused': True,
   'is_changed_map': False,
 
@@ -52,7 +52,7 @@ def main():
   clear()
 
   # Interception Key Listener Setup (seperate thread)
-  kl = KeyListener(stop_flag)
+  kl = KeyListener(data)
   kl.add(PAUSE_KEY, pause)
   kl.add(START_KEY, start)
   kl.run()
@@ -79,7 +79,7 @@ def main():
         play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
-    stop_flag[0] = True
+    data['stop_flag'] = True
     
 def setup():
   data['is_changed_map'] = False

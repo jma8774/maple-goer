@@ -17,8 +17,8 @@ OPEN_HERB_BAGS_KEY = 'f3'
 ENHANCE_KEY = 'f4'
 
 # Data
-stop_flag = [False]
 data = {
+  'stop_flag': False,
   "target": None
 }
 
@@ -36,7 +36,7 @@ def main():
     "OPEN_HERB_BAGS": openHerbBags,
     "ENHANCE": enhance,
   })
-  kl = KeyListener(stop_flag)
+  kl = KeyListener(data)
   kl.add(CRAFT_WAP_KEY, lambda: toggleScript("WAP crafting", scripts.WAP_CRAFT))
   kl.add(EXTRACT_KEY, lambda: toggleScript("equipment extraction", scripts.EXTRACT))
   kl.add(OPEN_HERB_BAGS_KEY, lambda: toggleScript("open herb bags", scripts.OPEN_HERB_BAGS))
@@ -54,7 +54,7 @@ def main():
       thread.join()
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
-    stop_flag[0] = True
+    data['stop_flag'] = True
 
 def enhance(scripts):
   location = pag.locateCenterOnScreen(Images.ENHANCE_ENHANCE, confidence=0.8)

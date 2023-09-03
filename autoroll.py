@@ -12,9 +12,9 @@ START_CUBING_KEY = 'f2'
 CUBE_TO_EPIC = 'f3'
 
 thread = None
-stop_flag = [False]
 combinations = []
 data = {
+  'stop_flag': False,
   'script': None,
 }
 
@@ -32,7 +32,7 @@ def main():
   clear()
 
   # Interception Key Listener Setup (seperate thread)
-  kl = KeyListener(stop_flag)
+  kl = KeyListener(data)
   kl.add(EDIT_COMBINATIONS_KEY, lambda: script(edit_combinations.__name__, edit_combinations))
   kl.add(START_CUBING_KEY, lambda: script(cube.__name__, cube))
   kl.add(CUBE_TO_EPIC, lambda: script(cube.__name__, cube_to_epic))
@@ -50,7 +50,7 @@ def main():
       thread.join()
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
-    stop_flag[0] = True
+    data['stop_flag'] = True
 
 def script(key, fn):
   if data['script'] and data['script'][0] == key:

@@ -11,8 +11,8 @@ import interception
 START_STOP_KEY = 'f1'
 
 thread = None
-stop_flag = [False]
 data = {
+  'stop_flag': False,
   'script': None,
 }
 
@@ -30,7 +30,7 @@ def main():
   clear()
 
   # Interception Key Listener Setup (seperate thread)
-  kl = KeyListener(stop_flag)
+  kl = KeyListener(data)
   kl.add(START_STOP_KEY, lambda: script(fuse_familiars.__name__, fuse_familiars))
   kl.run()
 
@@ -48,7 +48,7 @@ def main():
       commands()
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
-    stop_flag[0] = True
+    data['stop_flag'] = True
 
 def fuse_familiars():
   res = pag.size()

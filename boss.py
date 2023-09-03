@@ -13,8 +13,8 @@ LUCID_KEY = 'f2'
 WILL_KEY = 'f3'
 
 thread = None
-stop_flag = [False]
 data = {
+  'stop_flag': False,
   'corner_pos': (0, 0),
   'script': None,
 }
@@ -32,7 +32,7 @@ def main():
   interception.inputs.mouse = mdevice
 
   # Interception Key Listener Setup (seperate thread)
-  kl = KeyListener(stop_flag)
+  kl = KeyListener(data)
   kl.add(REFRESH_MOUSE_POSITION_KEY, refresh_mouse_position)
   kl.add(LUCID_KEY, lambda: script(lucid.__name__, lucid))
   kl.add(WILL_KEY, lambda: script(will.__name__, will))
@@ -50,7 +50,7 @@ def main():
       thread.join()
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
-    stop_flag[0] = True
+    data['stop_flag'] = True
 
 def lucid():
   while data['script'] and data['script'][0] == lucid.__name__:

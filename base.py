@@ -71,13 +71,13 @@ class BotBase:
           if self.data['duration_paused'] > 60:
             print("Bot has been paused for 3 minutes, ending current session and posting to discord")
             self.data['duration_paused'] = float('-inf')
-            self.post_running_time()
+            self.post_summary_helper()
           time.sleep(1)
           self.data['duration_paused'] += 1
           continue
         
         if self.data['time_started'] == None:
-          post_status("started")
+          post_status("started", { "user": self.config['user'] })
           self.data['time_started'] = datetime.now()
         self.data['duration_paused'] = 0
 
@@ -92,11 +92,11 @@ class BotBase:
         # Play sound if whiteroomed
         if self.data['is_changed_map']:
           print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
-          post_status("whiteroom")
+          post_status("whiteroom", { "user": self.config['user'] })
           self.play_audio(Audio.TYLER1_AUTISM)
     except KeyboardInterrupt:
       self.data['stop_flag'] = True
-      self.post_running_time()
+      self.post_summary_helper()
       print("Exiting... (Try spamming CTRL + C)")
   
   def check_rune(self):
@@ -105,13 +105,13 @@ class BotBase:
         if not self.data['rune_playing']:
           self.play_audio(Audio.get_random_rune_audio())
           self.data['rune_playing'] = True
-        post_status("rune")
+        post_status("rune", { "user": self.config['user'] })
       self.data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
 
   def check_person_entered_map(self):
     if pag.locateOnScreen(Images.PERSON, region=minimap_rune_region):
       if not self.data['someone_on_map']:
-        post_status("someone_entered_map")
+        post_status("someone_entered_map", { "user": self.config['user'] })
         self.data['someone_on_map'] = True
     else:
       self.data['someone_on_map'] = False
@@ -125,9 +125,9 @@ class BotBase:
         boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
       self.data['next_elite_box_check'] = cur + timedelta(seconds=45)
 
-  def post_running_time(self, user="jeemong"):
+  def post_summary_helper(self):
     if self.data['time_started'] != None:
-      post_summary(self.data['time_started'], user)
+      post_summary(self.data['time_started'], self.config['user'])
       self.data['time_started'] = None
     
   def pause(self):
