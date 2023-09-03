@@ -6,7 +6,186 @@ from interception._keycodes import KEYBOARD_MAPPING
 import os
 from dotenv import load_dotenv
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
+import pyautogui as pag
+import pygame
+
+def clear():
+  os.system('cls' if os.name == 'nt' else 'clear')
+
+#region BOTBASE
+START_KEY = 'f7'
+PAUSE_KEY = 'f8'
+RESET_LOOT_TIMER_KEY = 'f9'
+minimap_rune_region = (0, 0, 200, 200)
+
+class BotBase:
+  def __init__(self, data, config):
+    self.data = data
+    self.config = config
+    self.thread = None
+
+    self.setup_data()
+    self.setup_audio()
+
+    # Interception Setup for main loop
+    kdevice = interception.listen_to_keyboard()
+    mdevice = interception.listen_to_mouse()
+    interception.inputs.keyboard = kdevice
+    interception.inputs.mouse = mdevice
+    clear()
+
+    # Interception Key Listener Setup (seperate thread)
+    kl = KeyListener(data)
+    kl.add(PAUSE_KEY, self.pause)
+    kl.add(START_KEY, self.start)
+    kl.add(RESET_LOOT_TIMER_KEY, self.reset_loot_timer)
+    kl.run()
+
+    self.commands()
+
+  def setup_data(self):
+    self.data['stop_flag'] = False
+    self.data['is_paused'] = True
+    self.data['duration_paused'] = 0
+    self.data['time_started'] = None
+
+    self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
+    self.data['is_changed_map'] = False
+    self.data['key_pressed'] = {}
+    self.data['rune_playing'] = False
+    self.data['next_rune_check'] = datetime.now()
+    self.data['next_elite_box_check'] = datetime.now()
+    self.data['someone_on_map'] = False
+
+  def run(self):
+    if "script" not in self.config:
+      raise Exception("Config must have script functions")
+    setup = self.config['setup'] if 'setup' in self.config else None
+    script = self.config['script']
+    
+    try:
+      while True:
+        if self.data['is_paused'] == True:
+          if self.data['duration_paused'] > 60:
+            print("Bot has been paused for 3 minutes, ending current session and posting to discord")
+            self.data['duration_paused'] = float('-inf')
+            self.post_running_time()
+          time.sleep(1)
+          self.data['duration_paused'] += 1
+          continue
+        
+        if self.data['time_started'] == None:
+          post_status("started")
+          self.data['time_started'] = datetime.now()
+        self.data['duration_paused'] = 0
+
+        # Setup for each new run
+        if setup:
+          setup()
+        self.thread = threading.Thread(target=script)
+        self.thread.start()
+        self.thread.join()
+        self.release_all()
+
+        # Play sound if whiteroomed
+        if self.data['is_changed_map']:
+          print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
+          post_status("whiteroom")
+          self.play_audio(Audio.TYLER1_AUTISM)
+    except KeyboardInterrupt:
+      self.data['stop_flag'] = True
+      self.post_running_time()
+      print("Exiting... (Try spamming CTRL + C)")
+  
+  def check_rune(self):
+    if datetime.now() > self.data['next_rune_check']:
+      if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
+        if not self.data['rune_playing']:
+          self.play_audio(Audio.get_random_rune_audio())
+          self.data['rune_playing'] = True
+        post_status("rune")
+      self.data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
+
+  def check_person_entered_map(self):
+    if pag.locateOnScreen(Images.PERSON, region=minimap_rune_region):
+      if not self.data['someone_on_map']:
+        post_status("someone_entered_map")
+        self.data['someone_on_map'] = True
+    else:
+      self.data['someone_on_map'] = False
+
+  def check_elite_box(self, boxkey='f6'):
+    cur = datetime.now()
+    if cur > self.data['next_elite_box_check']:
+      boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+      while boxloc != None:
+        self.press_release(boxkey)
+        boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+      self.data['next_elite_box_check'] = cur + timedelta(seconds=45)
+
+  def post_running_time(self, user="jeemong"):
+    if self.data['time_started'] != None:
+      post_summary(self.data['time_started'], user)
+      self.data['time_started'] = None
+    
+  def pause(self):
+    print('Pausing')
+    self.data['is_paused'] = True
+    self.data['rune_playing'] = False
+    self.data['x_and_down_x'] = True
+    if 'pause_cb' in self.data:
+      self.data['pause_cb']()
+    self.pause_audio()
+
+  def start(self):
+    print('\nStarting')
+    self.data['is_paused'] = False
+    self.data['is_changed_map'] = False
+
+  def reset_loot_timer(self):
+    print('\nResetting loot timer')
+    self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
+
+  def setup_audio(self, volume=1):
+    pygame.init()
+    pygame.mixer.init()
+    pygame.mixer.music.set_volume(volume)
+
+  def play_audio(self, audio_file_path, loops=-1):
+    pygame.mixer.music.load(audio_file_path)
+    pygame.mixer.music.play(loops=loops)
+
+  def pause_audio(self):
+    pygame.mixer.music.pause()
+
+  def release_all(self):
+    for key in self.data['key_pressed']:
+      if self.data['key_pressed'][key]:
+        self.release(key)
+
+  def press(self, key, delay=0.05):
+    interception.key_down(key)
+    self.data['key_pressed'][key] = True
+    time.sleep(delay)
+    
+  def release(self, key, delay=0.05):
+    interception.key_up(key)
+    self.data['key_pressed'][key] = False
+    time.sleep(delay)
+
+  def press_release(self, key, delay=0.05):
+    self.press(key)
+    self.release(key, delay)
+
+  def commands(self):
+    print(f"Using images for resolution of 1366 fullscreen maplestory")
+    print("Commands:")
+    print(f"  {START_KEY} - start")
+    print(f"  {PAUSE_KEY} - pause")
+    print(f"  {RESET_LOOT_TIMER_KEY} - reset loot timer")
+#endregion BOT
 
 #region ASSESTS
 def openImage(file):
@@ -120,8 +299,8 @@ Avoid popular libaries like pyautogui, keyboard, pynput, etc. because they use v
 '''
 class KeyListener:
   
-  def __init__(self, stop_flag):
-    self.stop_flag = stop_flag
+  def __init__(self, data):
+    self.data = data
     self.events = {}
 
   def add(self, key, cb):
@@ -131,7 +310,7 @@ class KeyListener:
     context = interception.Interception()
     context.set_filter(context.is_keyboard, interception.FilterKeyState.FILTER_KEY_DOWN)
     while True:
-      if self.stop_flag[0]:
+      if self.data['stop_flag']:
         return
       
       device = context.wait()
@@ -146,7 +325,7 @@ class KeyListener:
     context = interception.Interception()
     context.set_filter(context.is_keyboard, interception.FilterKeyState.FILTER_KEY_DOWN)
     while True:
-      if self.stop_flag[0]:
+      if self.data['stop_flag']:
         return
       
       device = context.wait()
@@ -164,8 +343,8 @@ class KeyListener:
 
 #region DISCORD REQUEST
 load_dotenv()
-# URL = "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
-URL = "http://localhost:5000"
+URL = "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
+# URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
 
 def post_status(route, data={ "user": "jeemong" }):
