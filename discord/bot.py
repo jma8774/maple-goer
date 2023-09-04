@@ -63,7 +63,7 @@ async def sendSummary(channel, data):
   embed.add_field(name="**:gem: Nodes Earned**", value=f"{nodes}")
   embed.add_field(name="\u200b", value="\u200b", inline=False)
 
-  await channels[channel].send(debug, embed=embed)
+  await channels[channel].send(debug, f"<@{users[data['user']]}>", embed=embed)
 
 def secondsToDisplay(secs):
     hours = int(secs // 3600)

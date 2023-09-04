@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import time
 import pyautogui as pag
 import pygame
+import sys
 
 def clear():
   os.system('cls' if os.name == 'nt' else 'clear')
@@ -99,13 +100,14 @@ class BotBase:
       self.post_summary_helper()
       print("Exiting... (Try spamming CTRL + C)")
   
-  def check_rune(self):
+  def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check']:
       if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
-        if not self.data['rune_playing']:
+        if play_sound and not self.data['rune_playing']:
           self.play_audio(Audio.get_random_rune_audio())
           self.data['rune_playing'] = True
-        post_status("rune", { "user": self.config['user'] })
+        if post_request:
+          post_status("rune", { "user": self.config['user'] })
       self.data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
 
   def check_person_entered_map(self):
@@ -343,33 +345,45 @@ class KeyListener:
 
 #region DISCORD REQUEST
 load_dotenv()
-URL = "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
+
+isDev = "dev" in sys.argv
+URL = "http://localhost:5000" if isDev else "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
 # URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
 
+def send_non_block(reqFn):
+  t = threading.Thread(target=reqFn)
+  t.start()
+
 def post_status(route, data={ "user": "jeemong" }):
-  print(f"Posting status to {URL}/{route}")
-  headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
-  try:
-    requests.post(f"{URL}/{route}", headers=headers, json=data)
-  except Exception as e:
-    print(f"Error posting status to {URL}/{route}: {e}")
+  def post_status_helper():
+    print(f"Posting status to {URL}/{route}")
+    headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+    try:
+      requests.post(f"{URL}/{route}", headers=headers, json=data)
+    except Exception as e:
+      print(f"Error posting status to {URL}/{route}: {e}")
+  send_non_block(post_status_helper)
 
 def get_status(route, data={ "user": "jeemong" }):
-  print(f"Getting status to {URL}/{route}")
-  headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
-  try:
-    requests.get(f"{URL}/{route}", headers=headers, json=data)
-  except Exception as e:
-    print(f"Error posting status to {URL}/{route}: {e}")
+  def get_status_helper():
+    print(f"Getting status to {URL}/{route}")
+    headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+    try:
+      requests.get(f"{URL}/{route}", headers=headers, json=data)
+    except Exception as e:
+      print(f"Error posting status to {URL}/{route}: {e}")
+  send_non_block(get_status_helper)
     
 def post_summary(start_time, user):
-  print(f"Posting bot run time to {URL}/summary")
-  headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
-  try:
-    if start_time is None:
-      raise Exception("Start time is None")
-    requests.post(f"{URL}/summary", headers=headers, json={ "user": user, "start_time": datetime.timestamp(start_time), "end_time": datetime.timestamp(datetime.now()) })
-  except Exception as e:
-    print(f"Error posting time to {URL}/summary: {e}")
+  def post_summary_helper():
+    print(f"Posting bot run time to {URL}/summary")
+    headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+    try:
+      if start_time is None:
+        raise Exception("Start time is None")
+      requests.post(f"{URL}/summary", headers=headers, json={ "user": user, "start_time": datetime.timestamp(start_time), "end_time": datetime.timestamp(datetime.now()) })
+    except Exception as e:
+      print(f"Error posting time to {URL}/summary: {e}")
+  send_non_block(post_summary_helper)
 #endregion DISCORD REQUEST

@@ -31,6 +31,8 @@ def main():
 def liminia_1_5_macro():
   print("Starting 1-5 macro")
   while not should_pause():
+    b.check_rune()
+    b.check_elite_box(boxkey='f12')
     liminia_1_5_rotation()
 
 def liminia_1_5_rotation():

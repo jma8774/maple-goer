@@ -48,7 +48,6 @@ def midpoint3_macro():
       buff_setup()
     midpoint3_rotation()
     midpoint3_loot()
-    b.release_all()
   print("Paused World's Sorrow Midpoint 3 macro")
     
 def midpoint3_rotation():

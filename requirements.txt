@@ -7,3 +7,5 @@ pyautogui
 requests
 pytz
 asgiref
+asyncio
+atexit
