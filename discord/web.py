@@ -29,36 +29,36 @@ def before_request():
 
 @app.route('/hello', methods=['GET'])
 def handle_hello():
-    client_event(send("bot-spam", "hello!"))
+    client_event(send("bot-spam-2", "hello!"))
     return "hi!", 200
 
 @app.route('/whiteroom', methods=['POST'])
 def handle_whiteroom():
     body = request.json
     client_event(speakToName(body["user"], f"{body['user']} you got whiteroomed you dumbass"))
-    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
     return "Success", 200
 
 @app.route('/rune', methods=['POST'])
 def handle_rune():
     body = request.json
-    client_event(send("bot-spam", "Rune is up :robot:", body["user"]))
+    client_event(send("bot-spam-2", "Rune is up :robot:", body["user"]))
     return "Success", 200
 
 @app.route('/someone_entered_map', methods=['POST'])
 def handle_someone_entered_map():
     body = request.json
-    client_event(send("bot-spam", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"]))
+    client_event(send("bot-spam-2", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"]))
     return "Success", 200
 
 @app.route('/started', methods=['POST'])
 def handle_started():
     body = request.json
-    client_event(send("bot-spam", f"Started his cousin at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
+    client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
     return "Success", 200
 
 # @app.route('/stopped', methods=['POST'])
@@ -76,7 +76,7 @@ def handle_started():
 #     mph = 420000000
 #     duration = body["duration"]
 #     mesos = format(int(duration * (mph / 3600)), ",")
-#     client_event(send("bot-spam", 
+#     client_event(send("bot-spam-2", 
 #                       f"Stopped his cousin at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1: \n\nAssuming a rate of 420m mesos per hour, they earned {mesos} mesos from this {secondsToDisplay(duration)} long session! :tada: :tada: :tada:", 
 #                       body["user"])
 #                 )
@@ -85,7 +85,7 @@ def handle_started():
 @app.route('/summary', methods=['POST'])
 def handle_summary():
     data = request.json
-    client_event(sendSummary("bot-spam", data))
+    client_event(sendSummary("bot-spam-2", data))
     return "Success", 200
 
 # Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS

@@ -27,6 +27,7 @@ async def on_ready():
   channels = {
     "lounge": client.get_channel(420679175465336832),
     "bot-spam": client.get_channel(1018050116424306738),
+    "bot-spam-2": client.get_channel(1148302801961758772),
   }
   users = {
     "ricky": 600922329815449632,
