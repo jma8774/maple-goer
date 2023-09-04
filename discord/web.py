@@ -1,6 +1,6 @@
 import asyncio
-from flask import Flask, request, jsonify, abort
-from bot import client, send, sendSummary
+from flask import Flask, request, jsonify
+from bot import client, send, sendSummary, speakToName
 from werkzeug.exceptions import HTTPException
 from dotenv import load_dotenv
 import os
@@ -35,6 +35,7 @@ def handle_hello():
 @app.route('/whiteroom', methods=['POST'])
 def handle_whiteroom():
     body = request.json
+    client_event(speakToName(body["user"], f"{body['user']} you got whiteroomed you dumbass"))
     client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
     client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
     client_event(send("bot-spam", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))

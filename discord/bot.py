@@ -1,11 +1,18 @@
 import discord
+from discord.utils import get
 from dotenv import load_dotenv
 import os
 from datetime import datetime
 import pytz
+from gtts import gTTS
+import asyncio
 
 
-client = discord.Client(intents=discord.Intents.default())
+intents = discord.Intents.default()
+intents.members = True
+client = discord.Client(intents=intents)
+
+guilds = {}
 channels = {}
 users = {}
 isDebug = False
@@ -14,17 +21,60 @@ isDebug = False
 async def on_ready():
   global channels, users
   print(f'{client.user} has connected to Discord!')
+  guilds = {
+    "apes": client.get_guild(152954629993398272),
+  }
   channels = {
     "lounge": client.get_channel(420679175465336832),
     "bot-spam": client.get_channel(1018050116424306738),
   }
   users = {
-    "ricky": "600922329815449632",
-    "justin": "152956804270129152",
-    "jeemong": "152957206025863168",
+    "ricky": 600922329815449632,
+    "justin": 152956804270129152,
+    "jeemong": 152957206025863168,
   }
 
-async def send(channel, message, user=None):
+async def join_users_channel(userId: int) -> discord.Guild:
+  user = client.get_user(userId)
+  for guild in client.guilds:
+    for channel in guild.voice_channels:
+      for member in channel.members:
+        if member.id == userId:
+          # If I am already in a voice channel, disconnect from it
+          connected_to = get(client.voice_clients, guild=guild)
+          if connected_to is not None:
+            await connected_to.disconnect()
+
+          await channel.connect()
+          print(f"I joined {user.name}'s channel at {channel.name}")
+          return guild
+  print(f"I could not find {user.name} in any channel")
+  return None
+
+async def speakToUserId(userId: int, message: str):
+  try:
+    guild = await join_users_channel(userId)
+    if guild is None:
+      print("I am not in the specified guild, so I can't speak")
+      return
+    
+    voice_client = get(client.voice_clients, guild=guild)
+    if voice_client is None:
+      print(f"I am not in a voice channel in guild {guild}, so I can't speak")
+      return
+    
+    print(f"TTS: {message}")
+    tts = gTTS(text=message, lang='en')
+    tts.save("tts.mp3")
+    executable_path = "C:\\Users\\Jimmy\\Desktop\\ffmpeg\\bin\\ffmpeg.exe" if isDebug else "ffmpeg"
+    voice_client.play(discord.FFmpegPCMAudio(executable=executable_path, source="tts.mp3"))
+  except Exception as e:
+    print(f"Error while attempting to speak to user: {e}")
+
+async def speakToName(name, message: str):
+  await speakToUserId(users[name], message)
+
+async def send(channel, message, user:str=None):
   global channels, isDebug
   print(f"Sending message to {channel}: {message}")
   debug = "**[Debug]** " if isDebug else ""

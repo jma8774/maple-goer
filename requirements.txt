@@ -8,3 +8,5 @@ requests
 pytz
 asgiref
 asyncio
+PyNaCl
+gTTS
