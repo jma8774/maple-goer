@@ -36,11 +36,11 @@ def handle_hello():
 def handle_whiteroom():
     body = request.json
     client_event(speakToName(body["user"], f"{body['user']} you got whiteroomed you dumbass"))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
     return "Success", 200
 
 @app.route('/rune', methods=['POST'])

@@ -42,11 +42,11 @@ async def on_ready():
     await asyncio.sleep(300)
     now = datetime.now()
     removed = 0
-    for (message, time) in messagesQueue:
-      if now < time:
+    for (msg, msgTime) in messagesQueue:
+      if now < msgTime:
         break
       removed += 1
-      await message.delete()
+      await msg.delete()
     messagesQueue = messagesQueue[removed:]
 
 async def delete_all_bot_msgs(channel):
