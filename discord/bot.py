@@ -42,8 +42,8 @@ async def on_ready():
     await asyncio.sleep(300)
     now = datetime.now()
     removed = 0
-    for (msg, msgTime) in messagesQueue:
-      if now < msgTime:
+    for (msg, msgExpire) in messagesQueue:
+      if now < msgExpire:
         break
       removed += 1
       await msg.delete()
@@ -136,9 +136,9 @@ async def sendSummary(channel, data):
   duration_str = secondsToDisplay(duration)
   if duration_str:
     embed.add_field(name="**:hourglass: Duration**", value=duration_str)
-  embed.add_field(name="**:moneybag: Mesos Earned**", value=f"{mesos}")
-  embed.add_field(name="**:gem: Nodes Earned**", value=f"{nodes}")
-  embed.add_field(name="**:tickets:  Tickets Earned**", value=f"{tickets}")
+  embed.add_field(name="**:moneybag: Mesos**", value=f"{mesos}")
+  embed.add_field(name="**:gem: Nodes**", value=f"{nodes}")
+  embed.add_field(name="**:tickets:  Tickets**", value=f"{tickets}")
   embed.add_field(name="\u200b", value="\u200b", inline=False)
 
   await channels[channel].send(debug+f"<@{users[data['user']]}>", embed=embed)
