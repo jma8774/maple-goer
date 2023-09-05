@@ -1,6 +1,6 @@
 import asyncio
 from flask import Flask, request, jsonify
-from bot import client, send, sendSummary, speakToName
+from bot import client, send, sendSummary, speakToName, delete_all_bot_msgs
 from werkzeug.exceptions import HTTPException
 from dotenv import load_dotenv
 import os
@@ -36,11 +36,11 @@ def handle_hello():
 def handle_whiteroom():
     body = request.json
     client_event(speakToName(body["user"], f"{body['user']} you got whiteroomed you dumbass"))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
+    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"], addToQueue=False))
     return "Success", 200
 
 @app.route('/rune', methods=['POST'])
@@ -59,6 +59,12 @@ def handle_someone_entered_map():
 def handle_started():
     body = request.json
     client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"]))
+    return "Success", 200
+
+@app.route('/delete_all_bot_msgs', methods=['POST'])
+def handle_delete_all_bot_msgs():
+    body = request.json
+    client_event(delete_all_bot_msgs(body["channel"]))
     return "Success", 200
 
 # @app.route('/stopped', methods=['POST'])

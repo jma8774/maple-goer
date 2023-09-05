@@ -2,7 +2,7 @@ import discord
 from discord.utils import get
 from dotenv import load_dotenv
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from gtts import gTTS
 import asyncio
@@ -10,6 +10,7 @@ import asyncio
 
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 client = discord.Client(intents=intents)
 
 guilds = {}
@@ -17,9 +18,11 @@ channels = {}
 users = {}
 isDebug = False
 
+messagesQueue = []
+
 @client.event
 async def on_ready():
-  global channels, users
+  global messagesQueue, channels, users
   print(f'{client.user} has connected to Discord!')
   guilds = {
     "apes": client.get_guild(152954629993398272),
@@ -34,6 +37,26 @@ async def on_ready():
     "justin": 152956804270129152,
     "jeemong": 152957206025863168,
   }
+
+  # Clean up queue every 30 seconds
+  while True:
+    print("Cleaning up messages queue")
+    await asyncio.sleep(30)
+    now = datetime.now()
+    removed = 0
+    for (message, time) in messagesQueue:
+      if now > time:
+        removed += 1
+        await message.delete()
+    messagesQueue = messagesQueue[removed:]
+
+async def delete_all_bot_msgs(channel):
+  global channels
+  print(f"Deleting bot messages in {channel}")
+  print(channels[channel].id)
+  msgs = await channels[channel].history(limit=100).flatten()
+  for msg in msgs:
+    print(msg)
 
 async def join_users_channel(userId: int) -> discord.Guild:
   user = client.get_user(userId)
@@ -75,14 +98,17 @@ async def speakToUserId(userId: int, message: str):
 async def speakToName(name, message: str):
   await speakToUserId(users[name], message)
 
-async def send(channel, message, user:str=None):
+async def send(channel, message, user:str=None, addToQueue=True):
   global channels, isDebug
   print(f"Sending message to {channel}: {message}")
   debug = "**[Debug]** " if isDebug else ""
+  messageObj = None
   if user:
-    await channels[channel].send(debug + f"<@{users[user]}> " + message)
+    messageObj = await channels[channel].send(debug + f"<@{users[user]}> " + message)
   else:
-    await channels[channel].send(debug + message)
+    messageObj = await channels[channel].send(debug + message)
+  if addToQueue and messageObj is not None:
+    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=30)))
 
 async def sendSummary(channel, data):
   global channels, isDebug
