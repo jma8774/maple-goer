@@ -118,10 +118,14 @@ async def sendSummary(channel, data):
   data['end_time'] = estTime(datetime.fromtimestamp(data['end_time']))
 
   duration = (data['end_time'] - data['start_time']).total_seconds()
-  mph = 420000000
-  mesos = format(int(duration * (mph / 3600)), ",")
-  nodes = format(int(duration * (15 / 3600)), ",")
-  tickets = format(int(duration * (5 / 3600)), ",")
+  meso_per_hour = 420000000
+  nodes_per_hour = 15
+  tickets_per_hour = 5
+  monsters_per_hour = 14000
+  mesos = format(int(duration * (meso_per_hour / 3600)), ",")
+  nodes = format(int(duration * (nodes_per_hour / 3600)), ",")
+  tickets = format(int(duration * (tickets_per_hour / 3600)), ",")
+  monsters_killed = format(int(duration * (monsters_per_hour / 3600)), ",")
 
   embed = discord.Embed(
       title="Summary", 
@@ -131,14 +135,15 @@ async def sendSummary(channel, data):
     )
   
   embed.add_field(name="\u200b", value="\u200b", inline=False)
-  embed.add_field(name="**:clock1: Start Time**", value=f"{dtFormat(data['start_time'])} EST")
-  embed.add_field(name="**:clock9: Stop Time**", value=f"{dtFormat(data['end_time'])} EST")
+  embed.add_field(name="**:clock1:  Start Time**", value=f"{dtFormat(data['start_time'])} EST")
+  embed.add_field(name="**:clock9:  Stop Time**", value=f"{dtFormat(data['end_time'])} EST")
   duration_str = secondsToDisplay(duration)
   if duration_str:
-    embed.add_field(name="**:hourglass: Duration**", value=duration_str)
-  embed.add_field(name="**:moneybag: Mesos**", value=f"{mesos}")
-  embed.add_field(name="**:gem: Nodes**", value=f"{nodes}")
+    embed.add_field(name="**:hourglass:  Duration**", value=duration_str)
+  embed.add_field(name="**:moneybag:  Mesos**", value=f"{mesos}")
+  embed.add_field(name="**:gem:  Nodes**", value=f"{nodes}")
   embed.add_field(name="**:tickets:  Tickets**", value=f"{tickets}")
+  embed.add_field(name="**:mouse2:  Monsters Killed**", value=f"{monsters_killed}")
   embed.add_field(name="\u200b", value="\u200b", inline=False)
 
   await channels[channel].send(debug+f"<@{users[data['user']]}>", embed=embed)
