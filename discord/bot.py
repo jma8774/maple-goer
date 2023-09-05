@@ -121,6 +121,7 @@ async def sendSummary(channel, data):
   mph = 420000000
   mesos = format(int(duration * (mph / 3600)), ",")
   nodes = format(int(duration * (15 / 3600)), ",")
+  tickets = format(int(duration * (5 / 3600)), ",")
 
   embed = discord.Embed(
       title="Summary", 
@@ -137,6 +138,7 @@ async def sendSummary(channel, data):
     embed.add_field(name="**:hourglass: Duration**", value=duration_str)
   embed.add_field(name="**:moneybag: Mesos Earned**", value=f"{mesos}")
   embed.add_field(name="**:gem: Nodes Earned**", value=f"{nodes}")
+  embed.add_field(name="**:tickets:  Tickets Earned**", value=f"{tickets}")
   embed.add_field(name="\u200b", value="\u200b", inline=False)
 
   await channels[channel].send(debug+f"<@{users[data['user']]}>", embed=embed)
@@ -155,7 +157,7 @@ def estTime(dt):
   return dt.astimezone(pytz.timezone('America/New_York'))
 
 def dtFormat(dt):
-  return dt.strftime('%H:%M:%S')
+  return dt.strftime('%I:%M %p')
 
 def runClient(port):
   global isDebug
