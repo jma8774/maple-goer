@@ -157,7 +157,7 @@ def estTime(dt):
   return dt.astimezone(pytz.timezone('America/New_York'))
 
 def dtFormat(dt):
-  return dt.strftime('%I:%M %p')
+  return dt.strftime('%I:%M %p').lstrip('0')
 
 def runClient(port):
   global isDebug
