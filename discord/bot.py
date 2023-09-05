@@ -7,7 +7,6 @@ import pytz
 from gtts import gTTS
 import asyncio
 
-
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
@@ -37,17 +36,17 @@ async def on_ready():
     "justin": 152956804270129152,
     "jeemong": 152957206025863168,
   }
-
-  # Clean up queue every 30 seconds
+  # Clean up queue every 300 seconds
   while True:
     print("Cleaning up messages queue")
-    await asyncio.sleep(30)
+    await asyncio.sleep(300)
     now = datetime.now()
     removed = 0
     for (message, time) in messagesQueue:
-      if now > time:
-        removed += 1
-        await message.delete()
+      if now < time:
+        break
+      removed += 1
+      await message.delete()
     messagesQueue = messagesQueue[removed:]
 
 async def delete_all_bot_msgs(channel):
@@ -108,7 +107,7 @@ async def send(channel, message, user:str=None, addToQueue=True):
   else:
     messageObj = await channels[channel].send(debug + message)
   if addToQueue and messageObj is not None:
-    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=30)))
+    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=60)))
 
 async def sendSummary(channel, data):
   global channels, isDebug
