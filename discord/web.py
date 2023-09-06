@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 import pytz
+from common import secondsToDisplay, dtFormat
 
 app = Flask(__name__)
 
@@ -58,7 +59,7 @@ def handle_someone_entered_map():
 @app.route('/started', methods=['POST'])
 def handle_started():
     body = request.json
-    client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{datetime.now(pytz.timezone('America/New_York')).strftime('%H:%M:%S')} EST** :clock1:", body["user"], addToQueue=False))
+    client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", body["user"], addToQueue=False))
     return "Success", 200
 
 @app.route('/delete_all_bot_msgs', methods=['POST'])

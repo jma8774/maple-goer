@@ -3,9 +3,9 @@ from discord.utils import get
 from dotenv import load_dotenv
 import os
 from datetime import datetime, timedelta
-import pytz
 from gtts import gTTS
 import asyncio
+from common import dtFormat, secondsToDisplay
 
 intents = discord.Intents.default()
 intents.members = True
@@ -114,8 +114,8 @@ async def sendSummary(channel, data):
   print(f"Sending summary embed to {channel}: {data}")
   debug = "**[Debug]** " if isDebug else ""
 
-  data['start_time'] = estTime(datetime.fromtimestamp(data['start_time']))
-  data['end_time'] = estTime(datetime.fromtimestamp(data['end_time']))
+  data['start_time'] = datetime.fromtimestamp(data['start_time'])
+  data['end_time'] = datetime.fromtimestamp(data['end_time'])
 
   duration = (data['end_time'] - data['start_time']).total_seconds()
   meso_per_hour = 420000000
@@ -146,7 +146,9 @@ async def sendSummary(channel, data):
   embed.add_field(name="**:mouse2:  Monsters Killed**", value=f"{monsters_killed}")
   embed.add_field(name="\u200b", value="\u200b", inline=False)
 
-  await channels[channel].send(debug+f"<@{users[data['user']]}>", embed=embed)
+  messageObj = await channels[channel].send(debug+f"<@{users[data['user']]}>", embed=embed)
+  if debug and messageObj is not None:
+    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=60)))
 
 def secondsToDisplay(secs):
     hours = int(secs // 3600)
@@ -157,12 +159,6 @@ def secondsToDisplay(secs):
     if mins > 0:
         s += f"{mins} {'minutes' if mins > 1 else 'minute'} "
     return s.strip()
-
-def estTime(dt):
-  return dt.astimezone(pytz.timezone('America/New_York'))
-
-def dtFormat(dt):
-  return dt.strftime('%I:%M %p').lstrip('0')
 
 def runClient(port):
   global isDebug
