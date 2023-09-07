@@ -120,7 +120,7 @@ async def sendSummary(channel, data):
   duration = (data['end_time'] - data['start_time']).total_seconds()
   meso_per_hour = 420000000
   nodes_per_hour = 15
-  tickets_per_hour = 5
+  tickets_per_hour = 4
   monsters_per_hour = 14000
   mesos = format(int(duration * (meso_per_hour / 3600)), ",")
   nodes = format(int(duration * (nodes_per_hour / 3600)), ",")
