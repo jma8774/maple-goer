@@ -96,7 +96,7 @@ def midpoint3_loot():
   
   def face_left_teleport_reset():
     if should_pause(): return
-    b.press_release('left')
+    b.press_release('left', delay=uniform(0.01, 0.05))
     if should_pause(): return
     teleport_reset()
 
