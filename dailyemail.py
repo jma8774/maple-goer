@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from base import BotBase, Images, Audio, KeyListener, post_status, get_status, post_summary
 import pyautogui as pag
 
-ascendion_region = (0, 200, 505, 500)
+ascendion_region = (0, 200, 450, 500)
 minimap_map_icon_region = (5, 15, 40, 40)
 
 b = None
@@ -72,9 +72,9 @@ def midpoint3_rotation():
     while mob_loc == None:
       if should_pause(): return
       mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.75, grayscale=True, region=ascendion_region)
-      time.sleep(0.3)
+      time.sleep(0.2)
       count += 1
-      if count > 20: break
+      if count > 30: break
     if mob_loc == None:
       print(f"Couldn't find mob after {count} tries, continuing rotation")
     else:
@@ -121,7 +121,7 @@ def midpoint3_loot():
     if should_pause(): return
     erda_fountain()
     if should_pause(): return
-    jump_down(delayAfter=0.8)
+    jump_down(delayAfter=0.6)
     if should_pause(): return
     jump_down_attack(delayAfter=0.7)
     if should_pause(): return
@@ -129,9 +129,9 @@ def midpoint3_loot():
       jump_down_attack(delayAfter=0.5)
     b.press_release('right', 0.1)
     if should_pause(): return
-    if not jump_web(delayAfter=1.5):
+    if not jump_web(delayAfter=1.2):
       if should_pause(): return
-      jump_down(delayAfter=1.5)
+      jump_down(delayAfter=1.2)
     if should_pause(): return
     face_left_teleport_reset()
 
@@ -142,18 +142,17 @@ def midpoint3_loot():
     if should_pause(): return
     b.press('left', 1.4)
     if should_pause(): return
-    b.release('left', 0.5)
+    b.release('left', 0.3)
     b.press_release('right')
     if should_pause(): return
-    if not jump_web(delayAfter=1):
+    if not jump_web(delayAfter=0.8):
       if should_pause(): return
-      jump_down(delayAfter=1)
+      jump_down(delayAfter=0.4)
     if should_pause(): return
     jump_down_attack(delayAfter=0.7)
     if should_pause(): return
-    jump_down(delayAfter=0.6)
+    jump_down(delayAfter=0.4)
     if should_pause(): return
-    b.press_release('left')
     b.press_release('left')
     if should_pause(): return
     jump_down(delayAfter=0.1)
@@ -190,11 +189,11 @@ def midpoint3_loot():
       q_and_surgebolt(afterDelay=0.7)
     b.press_release('right')
     if should_pause(): return
-    jump_down(delayAfter=0.55)
+    jump_down(delayAfter=0.5)
     if should_pause(): return
     b.press_release('left')
     if should_pause(): return
-    jump_down(delayAfter=0.7)
+    jump_down(delayAfter=0.6)
     if should_pause(): return
     teleport_reset()
     if should_pause(): return
@@ -343,7 +342,7 @@ def q_and_surgebolt(afterDelay=0.7):
   else:
     b.press_release('q', afterDelay)
 
-def teleport_reset(delayAfter=0.7):
+def teleport_reset(delayAfter=0.6):
   if should_pause(): return
   b.press_release('x')
   if should_pause(): return

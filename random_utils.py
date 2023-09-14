@@ -87,14 +87,16 @@ def extract(scripts):
 
 def craftWAP(scripts):
   while data["target"] == scripts.WAP_CRAFT:
-    time.sleep(0.05)
+    time.sleep(0.1)
     clickIfFound(Images.CRAFT)
     time.sleep(0.3)
     clickIfFound(Images.OK_START)
-    time.sleep(3)
+    time.sleep(5)
     clickIfFound(Images.OK_END)
-    time.sleep(0.05)
+    time.sleep(0.1)
     moveToIfFound(Images.TAB_RESET)
+    time.sleep(0.1)
+    clickIfFound(Images.ALCHEMY_TAB)
     if data["target"] != scripts.WAP_CRAFT:
       break
     time.sleep(10)

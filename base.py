@@ -69,7 +69,7 @@ class BotBase:
     try:
       while True:
         if self.data['is_paused'] == True:
-          if self.data['duration_paused'] > 60:
+          if self.data['duration_paused'] > 180:
             print("Bot has been paused for 3 minutes, ending current session and posting to discord")
             self.data['duration_paused'] = float('-inf')
             self.post_summary_helper()
@@ -200,6 +200,7 @@ class Images:
   OK_END            = openImage('ok_end.png')
   CANCEL            = openImage("cancel.png")
   TAB_RESET         = openImage("tab_reset.png")
+  ALCHEMY_TAB       = openImage("alchemy_tab.png")
   EXTRACT_UP        = openImage("extract_up.png")
   CONFIRM           = openImage("confirm.png")
   BAG               = openImage("bag.png")
@@ -215,6 +216,7 @@ class Images:
   FOREBERION        = openImage("foreberion.png")
   ASCENDION         = openImage("mob.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")
+  VANISHING_ICON    = openImage("vanishing_icon.png")
   REVERSE_ICON      = openImage("reverse_icon.png")
   RUNE_MINIMAP      = openImage("rune_minimap.png")
   BOUNTY_MINIMAP    = openImage("bounty_minimap.png")

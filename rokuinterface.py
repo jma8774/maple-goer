@@ -112,7 +112,7 @@ def end_1_5_looting():
     if should_pause(): return
     jump_attack()
     if should_pause(): return
-    jump_attack(jumpDelay=0.3)
+    jump_attack(jumpDelay=0.45)
     if should_pause(): return
     jump_attack()
     if should_pause(): return
