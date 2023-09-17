@@ -62,11 +62,34 @@ def handle_started():
     client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", body["user"], addToQueue=False))
     return "Success", 200
 
+@app.route('/wap', methods=['POST'])
+def handle_wap():
+    body = request.json
+    status, user = body["status"], body["user"]
+    if status == "InventoryNotFound":
+        client_event(send("bot-spam-2", f"{user}'s bot couldn't find the USE inventory", addToQueue=False))
+    elif status == "AlreadyWapped":
+        client_event(send("bot-spam-2", f"{user}'s bot tried to wap, but it is already active", addToQueue=False))
+    elif status == "Success":
+        client_event(send("bot-spam-2", f"{user}'s bot used a wap", addToQueue=False))
+    return "Success", 200
+
+@app.route('/fam_fuel', methods=['POST'])
+def handle_fam_fuel():
+    body = request.json
+    status, user = body["status"], body["user"]
+    if status == "InventoryNotFound":
+        client_event(send("bot-spam-2", f"{user}'s bot couldn't find the USE inventory", addToQueue=False))
+    elif status == "Success":
+        client_event(send("bot-spam-2", f"{user}'s bot used a familiar fuel", addToQueue=False))
+    return "Success", 200
+
 @app.route('/delete_all_bot_msgs', methods=['POST'])
 def handle_delete_all_bot_msgs():
     body = request.json
     client_event(delete_all_bot_msgs(body["channel"]))
     return "Success", 200
+
 
 # @app.route('/stopped', methods=['POST'])
 # def handle_stopped():

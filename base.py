@@ -16,6 +16,9 @@ def clear():
   os.system('cls' if os.name == 'nt' else 'clear')
 
 #region BOTBASE
+TOF_KEY = 'f1'
+WAP_KEY = 'f2'
+FAM_FUEL_KEY = 'f3'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 RESET_LOOT_TIMER_KEY = 'f9'
@@ -39,6 +42,9 @@ class BotBase:
 
     # Interception Key Listener Setup (seperate thread)
     kl = KeyListener(data)
+    kl.add(TOF_KEY, self.handle_tof)
+    kl.add(WAP_KEY, self.handle_wap)
+    kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
     kl.add(PAUSE_KEY, self.pause)
     kl.add(START_KEY, self.start)
     kl.add(RESET_LOOT_TIMER_KEY, self.reset_loot_timer)
@@ -47,14 +53,21 @@ class BotBase:
     self.commands()
 
   def setup_data(self):
+    self.data['tof_state'] = None
+    self.data['next_tof_check'] = datetime.now()
+    self.data['wap_state'] = False
+    self.data['next_wap_check'] = datetime.now()
+    self.data['fam_fuel_state'] = False
+    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=60)
+
     self.data['stop_flag'] = False
     self.data['is_paused'] = True
     self.data['duration_paused'] = 0
     self.data['time_started'] = None
 
     self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
-    self.data['is_changed_map'] = False
     self.data['key_pressed'] = {}
+    self.data['is_changed_map'] = False
     self.data['rune_playing'] = False
     self.data['next_rune_check'] = datetime.now()
     self.data['next_elite_box_check'] = datetime.now()
@@ -100,6 +113,67 @@ class BotBase:
       self.post_summary_helper()
       print("Exiting... (Try spamming CTRL + C)")
   
+  def check_tof(self):
+    if self.data['tof_state'] == None:
+      return
+    d = {
+      "takeno": Images.TAKENO,
+      "ibaraki": Images.IBARAKI
+    }
+    if pag.locateOnScreen(d[self.data['tof_state']], confidence=0.9, grayscale=True):
+      askLoc = pag.locateCenterOnScreen(Images.ASK, confidence=0.9, grayscale=True)
+      if askLoc:
+        interception.click(askLoc)
+        interception.click(askLoc)
+        interception.click(askLoc)
+        # TODO
+
+  def check_wap(self):
+    dirty = False
+    if not self.data['wap_state']:
+      return
+    if not self.update_use_inventory_region():
+      print("Could not find inventory USE region to use wap")
+      dirty = True
+    if self.data['use_inventory_region'] and datetime.now() > self.data['next_wap_check']:
+      wap_loc = pag.locateCenterOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
+      if wap_loc:
+        interception.click(wap_loc)
+        interception.click(wap_loc)
+        interception.click(wap_loc)
+        time.sleep(0.2)
+        cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+        self.data['next_wap_check'] = datetime.now() + (timedelta(minutes=10) if cancel_loc else timedelta(minutes=121))
+        while cancel_loc:
+          interception.click(cancel_loc)
+          interception.move_to(cancel_loc.x-50, cancel_loc.y-50)
+          cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+        time.sleep(0.2)
+      else:
+        dirty = True
+    if dirty:
+      self.update_use_inventory_region(dirty)
+
+  def check_fam_fuel(self):
+    dirty = False
+    if not self.data['fam_fuel_state']:
+      return
+    if not self.update_use_inventory_region():
+      print("Could not find inventory USE region to use familiar fuel")
+      dirty = True
+    if self.data['use_inventory_region'] and datetime.now() > self.data['next_fam_fuel_check']:
+      fuel_loc = pag.locateCenterOnScreen(Images.FAM_FUEL, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
+      if fuel_loc:
+        interception.click(fuel_loc)
+        interception.click(fuel_loc)
+        interception.click(fuel_loc)
+        self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=60)
+        time.sleep(0.2)
+      else:
+        dirty = True
+    if dirty:
+      self.update_use_inventory_region(dirty)
+
   def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check']:
       if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
@@ -127,6 +201,15 @@ class BotBase:
         boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
       self.data['next_elite_box_check'] = cur + timedelta(seconds=45)
 
+  def update_use_inventory_region(self, dirty=False):
+    res = pag.size()
+    if dirty or 'use_inventory_region' not in self.data or self.data['use_inventory_region'] is None:
+      self.data['use_inventory_region'] = None
+      equip_tab = pag.locateOnScreen(Images.FAM_EQUIP, confidence=0.9, grayscale=True)
+      if equip_tab is not None:
+        self.data['use_inventory_region'] = (equip_tab.left, equip_tab.top, min(675, res[0] - equip_tab.left), min(390, res[1] - equip_tab.top))
+    return self.data['use_inventory_region'] is not None
+  
   def post_summary_helper(self):
     if self.data['time_started'] != None:
       post_summary(self.data['time_started'], self.config['user'])
@@ -149,6 +232,24 @@ class BotBase:
   def reset_loot_timer(self):
     print('\nResetting loot timer')
     self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
+
+  def handle_tof(self):
+    if self.data['tof_state'] == None:
+      self.data['tof_state'] = "takeno"
+    elif self.data['tof_state'] == "takeno":
+      self.data['tof_state'] = "ibaraki"
+    elif self.data['tof_state'] == "ibaraki":
+      self.data['tof_state'] = None
+    self.commands(True)
+
+  def handle_wap(self):
+    self.data['wap_state'] = not self.data['wap_state']
+    self.commands(True)
+
+  def handle_fam_fuel(self):
+    self.data['fam_fuel_state'] = not self.data['fam_fuel_state']
+    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=60)
+    self.commands(True)
 
   def setup_audio(self, volume=1):
     pygame.init()
@@ -181,9 +282,15 @@ class BotBase:
     self.press(key)
     self.release(key, delay)
 
-  def commands(self):
+  def commands(self, clearBefore=False):
+    if clearBefore:
+      clear()
     print(f"Using images for resolution of 1366 fullscreen maplestory")
     print("Commands:")
+    print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
+    print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
+    print(f"  {FAM_FUEL_KEY} - auto familiar fuel (use after 60 minutes): [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
+    print()
     print(f"  {START_KEY} - start")
     print(f"  {PAUSE_KEY} - pause")
     print(f"  {RESET_LOOT_TIMER_KEY} - reset loot timer")
@@ -223,6 +330,18 @@ class Images:
   MINIMAP           = openImage("minimap.png")
   ELITE_BOX         = openImage("elite_box.png")
   PERSON            = openImage("person.png")
+
+  # TOF
+  TAKENO            = openImage("takeno.png")
+  IBARAKI           = openImage("ibaraki.png")
+  ASK               = openImage("ask.png")
+
+  # WAP
+  WAP               = openImage("wap.png")
+
+  # FAM FUEL
+  FAM_FUEL          = openImage("fam_fuel.png")
+  MILK              = openImage("milk.png")
 
   # Boss  
   LUCID             = openImage("lucid.png")
@@ -348,12 +467,15 @@ class KeyListener:
 #region DISCORD REQUEST
 load_dotenv()
 
+abort = True
 isDev = "dev" in sys.argv
 URL = "http://localhost:5000" if isDev else "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
 # URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
 
 def send_non_block(reqFn):
+  if abort: 
+    return
   t = threading.Thread(target=reqFn)
   t.start()
 
@@ -376,6 +498,26 @@ def get_status(route, data={ "user": "jeemong" }):
     except Exception as e:
       print(f"Error posting status to {URL}/{route}: {e}")
   send_non_block(get_status_helper)
+
+def post_wap(data):
+  def post_wap_helper():
+    print(f"Getting status to {URL}/wap")
+    headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+    try:
+      requests.post(f"{URL}/wap", headers=headers, json=data)
+    except Exception as e:
+      print(f"Error posting status to {URL}/wap: {e}")
+  send_non_block(post_wap_helper)
+
+def post_fam_fuel(data):
+  def post_fam_fuel_helper():
+    print(f"Getting status to {URL}/fam_fuel")
+    headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+    try:
+      requests.post(f"{URL}/fam_fuel", headers=headers, json=data)
+    except Exception as e:
+      print(f"Error posting status to {URL}/fam_fuel: {e}")
+  send_non_block(post_fam_fuel_helper)
     
 def post_summary(start_time, user):
   def post_summary_helper():
