@@ -207,6 +207,8 @@ def midpoint3_loot():
 def buff_setup():
   cur = datetime.now()
   
+  b.check_fam_leveling()
+  
   b.check_tof()
 
   b.check_wap()

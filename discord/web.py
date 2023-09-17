@@ -67,11 +67,13 @@ def handle_wap():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot couldn't find the USE inventory", addToQueue=False))
+        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot couldn't find the USE inventory", addToQueue=True))
     elif status == "AlreadyWapped":
-        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot tried to wap, but it is already active", addToQueue=False))
+        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot tried to wap, but it is already active", addToQueue=True))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot used a wap", addToQueue=False))
+        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot used a wap", addToQueue=True))
+    elif status == "Failed":
+        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot failed to use the wap lol", addToQueue=True))
     return "Success", 200
 
 @app.route('/fam_fuel', methods=['POST'])
@@ -79,9 +81,11 @@ def handle_fam_fuel():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot couldn't find the USE inventory", addToQueue=False))
+        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot couldn't find the USE inventory", addToQueue=True))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot used a familiar fuel", addToQueue=False))
+        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot used a familiar fuel", addToQueue=True))
+    elif status == "Failed":
+        client_event(send("bot-spam-2", f"**{dtFormat(datetime.now())} EST** {user}'s bot failed to use the familiar fuel lol", addToQueue=True))
     return "Success", 200
 
 @app.route('/delete_all_bot_msgs', methods=['POST'])

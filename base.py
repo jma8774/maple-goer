@@ -17,12 +17,14 @@ def clear():
 
 #region BOTBASE
 TOF_KEY = 'f1'
-WAP_KEY = 'f2'
-FAM_FUEL_KEY = 'f3'
+AUTO_LEVEL_FAM_KEY = 'f2'
+WAP_KEY = 'f3'
+FAM_FUEL_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 RESET_LOOT_TIMER_KEY = 'f9'
 minimap_rune_region = (0, 0, 200, 200)
+buffs_region = (525, 0, 1366-525, 80)
 
 class BotBase:
   def __init__(self, data, config):
@@ -43,6 +45,7 @@ class BotBase:
     # Interception Key Listener Setup (seperate thread)
     kl = KeyListener(data)
     kl.add(TOF_KEY, self.handle_tof)
+    kl.add(AUTO_LEVEL_FAM_KEY, self.handle_auto_level_fam)
     kl.add(WAP_KEY, self.handle_wap)
     kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
     kl.add(PAUSE_KEY, self.pause)
@@ -54,12 +57,17 @@ class BotBase:
 
   def setup_data(self):
     self.data['use_inventory_region'] = None
+
     self.data['tof_state'] = None
     self.data['next_tof_check'] = datetime.now()
+
+    self.data['auto_level_fam_state'] = False
+
     self.data['wap_state'] = False
     self.data['next_wap_check'] = datetime.now()
+
     self.data['fam_fuel_state'] = False
-    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=60)
+    self.data['next_fam_fuel_check'] = datetime.now()
 
     self.data['stop_flag'] = False
     self.data['is_paused'] = True
@@ -114,6 +122,11 @@ class BotBase:
       self.post_summary_helper()
       print("Exiting... (Try spamming CTRL + C)")
   
+
+  def check_fam_leveling(self):
+    # TODO: do this
+    pass
+  
   def check_tof(self):
     if self.data['tof_state'] == None:
       return
@@ -127,58 +140,74 @@ class BotBase:
         interception.click(askLoc)
         interception.click(askLoc)
         interception.click(askLoc)
-        # TODO
+        # TODO: do this
 
   def check_wap(self):
     dirty = False
-    if not self.data['wap_state']:
+    if not self.data['wap_state'] or datetime.now() < self.data['next_wap_check']:
       return
+    
     if not self.update_use_inventory_region():
       print("Could not find inventory USE region to use wap")
       post_wap({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
-    if self.data['use_inventory_region'] and datetime.now() > self.data['next_wap_check']:
+
+    expired = not pag.locateOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=buffs_region)
+    print("Wap expired: ", expired)
+    if self.data['use_inventory_region'] and expired:
+      interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
       wap_loc = pag.locateCenterOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
       if wap_loc:
-        interception.click(wap_loc)
-        interception.click(wap_loc)
-        interception.click(wap_loc)
         time.sleep(0.2)
-        cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
-        wapAlreadyActive = cancel_loc is not None
-        while cancel_loc:
-          interception.click(cancel_loc)
-          interception.move_to(cancel_loc.x-50, cancel_loc.y-50)
-          cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
-        self.data['next_wap_check'] = datetime.now() + (timedelta(seconds=5) if wapAlreadyActive else timedelta(minutes=121))
-        post_wap({ "user": self.config['user'], "status": "AlreadyWapped" if wapAlreadyActive else "Success"})
+        interception.click(wap_loc)
+        interception.click(wap_loc)
+        # cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+        # wapAlreadyActive = cancel_loc is not None
+        # while cancel_loc:
+        #   interception.click(cancel_loc)
+        #   interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
+        #   cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+        # post_wap({ "user": self.config['user'], "status": "AlreadyWapped" if wapAlreadyActive else "Success"})
+        expired = not pag.locateOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=buffs_region)
+        post_wap({ "user": self.config['user'], "status": "Failed" if expired else "Success"})
         time.sleep(0.2)
       else:
         dirty = True
+
     if dirty:
       self.update_use_inventory_region(dirty)
 
+    self.data['next_wap_check'] = datetime.now() + timedelta(seconds=5)
+
   def check_fam_fuel(self):
     dirty = False
-    if not self.data['fam_fuel_state']:
+    if not self.data['fam_fuel_state'] or datetime.now() < self.data['next_fam_fuel_check']:
       return
+    
     if not self.update_use_inventory_region():
       print("Could not find inventory USE region to use familiar fuel")
       post_fam_fuel({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
-    if self.data['use_inventory_region'] and datetime.now() > self.data['next_fam_fuel_check']:
+
+    expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
+    print("Fam buff expired: ", expired)
+    if self.data['use_inventory_region'] and expired:
+      interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
       fuel_loc = pag.locateCenterOnScreen(Images.FAM_FUEL, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
       if fuel_loc:
+        time.sleep(0.2)
         interception.click(fuel_loc)
         interception.click(fuel_loc)
-        interception.click(fuel_loc)
-        self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=60)
-        post_fam_fuel({ "user": self.config['user'], "status": "Success"})
+        expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
+        post_fam_fuel({ "user": self.config['user'], "status": "Failed" if expired else "Success"})
         time.sleep(0.2)
       else:
         dirty = True
+        
     if dirty:
       self.update_use_inventory_region(dirty)
+
+    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(seconds=5)
 
   def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check']:
@@ -248,13 +277,16 @@ class BotBase:
       self.data['tof_state'] = None
     self.commands(True)
 
+  def handle_auto_level_fam(self):
+    self.data['auto_level_fam_state'] = not self.data['auto_level_fam_state']
+    self.commands(True)
+
   def handle_wap(self):
     self.data['wap_state'] = not self.data['wap_state']
     self.commands(True)
 
   def handle_fam_fuel(self):
     self.data['fam_fuel_state'] = not self.data['fam_fuel_state']
-    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=60)
     self.commands(True)
 
   def setup_audio(self, volume=1):
@@ -293,7 +325,8 @@ class BotBase:
       clear()
     print(f"Using images for resolution of 1366 fullscreen maplestory")
     print("Commands:")
-    print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
+    print(f"  {TOF_KEY} - auto thread of fate (WIP, don't use): [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
+    print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars (WIP, don't use): [{'enabled' if self.data['auto_level_fam_state'] else 'disabled'}]")
     print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
     print(f"  {FAM_FUEL_KEY} - auto familiar fuel (use after 60 minutes): [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
     print()
@@ -336,17 +369,17 @@ class Images:
   MINIMAP           = openImage("minimap.png")
   ELITE_BOX         = openImage("elite_box.png")
   PERSON            = openImage("person.png")
+  CASH_TAB          = openImage("cash_tab.png")
 
   # TOF
   TAKENO            = openImage("takeno.png")
   IBARAKI           = openImage("ibaraki.png")
   ASK               = openImage("ask.png")
-
   # WAP
   WAP               = openImage("wap.png")
-
   # FAM FUEL
   FAM_FUEL          = openImage("fam_fuel.png")
+  FAM_BUFF          = openImage("fam_buff.png")
   MILK              = openImage("milk.png")
 
   # Boss  
@@ -473,7 +506,7 @@ class KeyListener:
 #region DISCORD REQUEST
 load_dotenv()
 
-abort = False
+abort = True
 isDev = "dev" in sys.argv
 URL = "http://localhost:5000" if isDev else "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
 # URL = "http://localhost:5000"
