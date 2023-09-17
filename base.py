@@ -53,6 +53,7 @@ class BotBase:
     self.commands()
 
   def setup_data(self):
+    self.data['use_inventory_region'] = None
     self.data['tof_state'] = None
     self.data['next_tof_check'] = datetime.now()
     self.data['wap_state'] = False
@@ -134,6 +135,7 @@ class BotBase:
       return
     if not self.update_use_inventory_region():
       print("Could not find inventory USE region to use wap")
+      post_wap({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
     if self.data['use_inventory_region'] and datetime.now() > self.data['next_wap_check']:
       wap_loc = pag.locateCenterOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
@@ -143,11 +145,13 @@ class BotBase:
         interception.click(wap_loc)
         time.sleep(0.2)
         cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
-        self.data['next_wap_check'] = datetime.now() + (timedelta(minutes=10) if cancel_loc else timedelta(minutes=121))
+        wapAlreadyActive = cancel_loc is not None
         while cancel_loc:
           interception.click(cancel_loc)
           interception.move_to(cancel_loc.x-50, cancel_loc.y-50)
           cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+        self.data['next_wap_check'] = datetime.now() + (timedelta(seconds=5) if wapAlreadyActive else timedelta(minutes=121))
+        post_wap({ "user": self.config['user'], "status": "AlreadyWapped" if wapAlreadyActive else "Success"})
         time.sleep(0.2)
       else:
         dirty = True
@@ -160,6 +164,7 @@ class BotBase:
       return
     if not self.update_use_inventory_region():
       print("Could not find inventory USE region to use familiar fuel")
+      post_fam_fuel({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
     if self.data['use_inventory_region'] and datetime.now() > self.data['next_fam_fuel_check']:
       fuel_loc = pag.locateCenterOnScreen(Images.FAM_FUEL, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
@@ -168,6 +173,7 @@ class BotBase:
         interception.click(fuel_loc)
         interception.click(fuel_loc)
         self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=60)
+        post_fam_fuel({ "user": self.config['user'], "status": "Success"})
         time.sleep(0.2)
       else:
         dirty = True
@@ -203,7 +209,7 @@ class BotBase:
 
   def update_use_inventory_region(self, dirty=False):
     res = pag.size()
-    if dirty or 'use_inventory_region' not in self.data or self.data['use_inventory_region'] is None:
+    if dirty or self.data['use_inventory_region'] is None:
       self.data['use_inventory_region'] = None
       equip_tab = pag.locateOnScreen(Images.FAM_EQUIP, confidence=0.9, grayscale=True)
       if equip_tab is not None:
@@ -467,7 +473,7 @@ class KeyListener:
 #region DISCORD REQUEST
 load_dotenv()
 
-abort = True
+abort = False
 isDev = "dev" in sys.argv
 URL = "http://localhost:5000" if isDev else "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
 # URL = "http://localhost:5000"
@@ -501,7 +507,7 @@ def get_status(route, data={ "user": "jeemong" }):
 
 def post_wap(data):
   def post_wap_helper():
-    print(f"Getting status to {URL}/wap")
+    print(f"Posting status to {URL}/wap")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
     try:
       requests.post(f"{URL}/wap", headers=headers, json=data)
@@ -511,7 +517,7 @@ def post_wap(data):
 
 def post_fam_fuel(data):
   def post_fam_fuel_helper():
-    print(f"Getting status to {URL}/fam_fuel")
+    print(f"Posting status to {URL}/fam_fuel")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
     try:
       requests.post(f"{URL}/fam_fuel", headers=headers, json=data)
