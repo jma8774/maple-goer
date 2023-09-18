@@ -63,7 +63,7 @@ def handle_started():
     return "Success", 200
 
 @app.route('/tof', methods=['POST'])
-def handle_wap():
+def handle_tof():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "NoBulb":
