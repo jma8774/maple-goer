@@ -143,6 +143,7 @@ class BotBase:
       return
     interception.click(bulb_loc)
     time.sleep(0.2)
+    if self.data['is_paused']: return
     
     # Complete quest
     quest_to_complete = pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True)
@@ -165,6 +166,7 @@ class BotBase:
         return
     
     # Open the board
+    if self.data['is_paused']: return
     my_level_range_loc = pag.locateCenterOnScreen(Images.MY_LEVEL_RANGE, confidence=0.9, grayscale=True)
     if my_level_range_loc:
       interception.click(my_level_range_loc)
@@ -173,7 +175,9 @@ class BotBase:
     interception.click(board_quest)
     time.sleep(0.2)
 
+
     # Click on the person
+    if self.data['is_paused']: return
     person_loc = pag.locateOnScreen(d[self.data['tof_state']], confidence=0.9, grayscale=True)
     if not person_loc:
       print("Can't find person")
@@ -184,6 +188,7 @@ class BotBase:
     time.sleep(0.2)
 
     # Click on the ask button
+    if self.data['is_paused']: return
     askLoc = pag.locateCenterOnScreen(Images.ASK, confidence=0.9, grayscale=True)
     if not askLoc:
       print("Can't find ASK")
@@ -197,6 +202,7 @@ class BotBase:
     time.sleep(0.3)
 
     # Check if next exist, if it exist, then we continue
+    if self.data['is_paused']: return
     if not pag.locateOnScreen(Images.NEXT, confidence=0.90):
       print("Can't find NEXT, we are done?")
       post_tof({ "user": self.config['user'], "status": "Done"})
@@ -204,6 +210,7 @@ class BotBase:
       return
 
     # Accept the quest
+    if self.data['is_paused']: return
     time.sleep(0.2)
     self.press_release(npc_chat_key, delay=0.15)
     self.press_release(npc_chat_key, delay=0.15)
@@ -233,6 +240,7 @@ class BotBase:
     if self.data['use_inventory_region'] and expired:
       interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
       wap_loc = pag.locateCenterOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
+      if self.data['is_paused']: return
       if wap_loc:
         time.sleep(0.2)
         interception.click(wap_loc)
@@ -246,12 +254,13 @@ class BotBase:
             cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
           post_wap({ "user": self.config['user'], "status": "AlreadyWapped"})
         else:
-          expired = not pag.locateOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=buffs_region)
-          post_wap({ "user": self.config['user'], "status": "Failed" if expired else "Success"})
+          success = pag.locateOnScreen(Images.WAP_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
+          post_wap({ "user": self.config['user'], "status": "Success" if success else "Failed"})
         time.sleep(0.2)
       else:
         dirty = True
 
+    if self.data['is_paused']: return
     if dirty:
       self.update_use_inventory_region(dirty)
 
@@ -262,11 +271,13 @@ class BotBase:
     if not self.data['fam_fuel_state'] or datetime.now() < self.data['next_fam_fuel_check']:
       return
     
+    if self.data['is_paused']: return
     if not self.update_use_inventory_region():
       print("Could not find inventory USE region to use familiar fuel")
       post_fam_fuel({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
 
+    if self.data['is_paused']: return
     expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
     print("Fam buff expired: ", expired)
     if self.data['use_inventory_region'] and expired:
@@ -282,6 +293,7 @@ class BotBase:
       else:
         dirty = True
         
+    if self.data['is_paused']: return
     if dirty:
       self.update_use_inventory_region(dirty)
 
