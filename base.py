@@ -59,6 +59,7 @@ class BotBase:
     self.data['use_inventory_region'] = None
 
     self.data['tof_state'] = None
+    self.data['tof_done'] = False
     self.data['next_tof_check'] = datetime.now()
 
     self.data['auto_level_fam_state'] = False
@@ -127,20 +128,95 @@ class BotBase:
     # TODO: do this
     pass
   
-  def check_tof(self):
-    if self.data['tof_state'] == None:
+  def check_tof(self, npc_chat_key):
+    if self.data['tof_done'] or self.data['tof_state'] == None or datetime.now() < self.data['next_tof_check']:
       return
     d = {
       "takeno": Images.TAKENO,
       "ibaraki": Images.IBARAKI
     }
-    if pag.locateOnScreen(d[self.data['tof_state']], confidence=0.9, grayscale=True):
-      askLoc = pag.locateCenterOnScreen(Images.ASK, confidence=0.9, grayscale=True)
-      if askLoc:
-        interception.click(askLoc)
-        interception.click(askLoc)
-        interception.click(askLoc)
-        # TODO: do this
+    bulb_loc = pag.locateCenterOnScreen(Images.WHITE_QUEST_BULB)
+    if not bulb_loc:
+      print("Can't find white quest lightbulb")
+      post_tof({ "user": self.config['user'], "status": "NoBulb"})
+      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=10)
+      return
+    interception.click(bulb_loc)
+    time.sleep(0.2)
+    
+    # Complete quest
+    quest_to_complete = pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True)
+    if quest_to_complete:
+      interception.click(quest_to_complete)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+
+      # Check if it was completed
+      interception.click(bulb_loc)
+      time.sleep(0.1)
+      if pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True):
+        post_tof({ "user": self.config['user'], "status": "InProgress"})
+        self.data['next_tof_check'] = datetime.now() + timedelta(minutes=5)
+        return
+    
+    # Open the board
+    my_level_range_loc = pag.locateCenterOnScreen(Images.MY_LEVEL_RANGE, confidence=0.9, grayscale=True)
+    if my_level_range_loc:
+      interception.click(my_level_range_loc)
+    time.sleep(0.1)
+    board_quest = pag.locateCenterOnScreen(Images.TOF_BOARD, confidence=0.9, grayscale=True)
+    interception.click(board_quest)
+    time.sleep(0.2)
+
+    # Click on the person
+    person_loc = pag.locateOnScreen(d[self.data['tof_state']], confidence=0.9, grayscale=True)
+    if not person_loc:
+      print("Can't find person")
+      post_tof({ "user": self.config['user'], "status": "NoPerson"})
+      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=10)
+      return
+    interception.click(person_loc)
+    time.sleep(0.2)
+
+    # Click on the ask button
+    askLoc = pag.locateCenterOnScreen(Images.ASK, confidence=0.9, grayscale=True)
+    if not askLoc:
+      print("Can't find ASK")
+      post_tof({ "user": self.config['user'], "status": "NoAsk"})
+      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=10)
+      return
+    time.sleep(0.3)
+    interception.click(askLoc)
+    interception.click(askLoc)
+    interception.click(askLoc)
+    time.sleep(0.3)
+
+    # Check if next exist, if it exist, then we continue
+    if not pag.locateOnScreen(Images.NEXT, confidence=0.90):
+      print("Can't find NEXT, we are done?")
+      post_tof({ "user": self.config['user'], "status": "Done"})
+      self.data['tof_done'] = True
+      return
+
+    # Accept the quest
+    time.sleep(0.2)
+    self.press_release(npc_chat_key, delay=0.15)
+    self.press_release(npc_chat_key, delay=0.15)
+    self.press_release(npc_chat_key, delay=0.15)
+    self.press_release(npc_chat_key, delay=0.15)
+    self.press_release(npc_chat_key, delay=0.15)
+    self.press_release(npc_chat_key, delay=0.15)
+    self.press_release(npc_chat_key, delay=0.15)
+    print("Started a new ask")
+    post_tof({ "user": self.config['user'], "status": "Success"})
+    self.data['next_tof_check'] = datetime.now() + timedelta(minutes=30.5)
+
+    self.press_release("escape")
 
   def check_wap(self):
     dirty = False
@@ -152,7 +228,7 @@ class BotBase:
       post_wap({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
 
-    expired = not pag.locateOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=buffs_region)
+    expired = not pag.locateOnScreen(Images.WAP_BUFF, confidence=0.95, grayscale=True, region=buffs_region)
     print("Wap expired: ", expired)
     if self.data['use_inventory_region'] and expired:
       interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
@@ -161,15 +237,17 @@ class BotBase:
         time.sleep(0.2)
         interception.click(wap_loc)
         interception.click(wap_loc)
-        # cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
-        # wapAlreadyActive = cancel_loc is not None
-        # while cancel_loc:
-        #   interception.click(cancel_loc)
-        #   interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
-        #   cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
-        # post_wap({ "user": self.config['user'], "status": "AlreadyWapped" if wapAlreadyActive else "Success"})
-        expired = not pag.locateOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=buffs_region)
-        post_wap({ "user": self.config['user'], "status": "Failed" if expired else "Success"})
+        cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+        wapAlreadyActive = cancel_loc is not None
+        if wapAlreadyActive:
+          while cancel_loc:
+            interception.click(cancel_loc)
+            interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
+            cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+          post_wap({ "user": self.config['user'], "status": "AlreadyWapped"})
+        else:
+          expired = not pag.locateOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=buffs_region)
+          post_wap({ "user": self.config['user'], "status": "Failed" if expired else "Success"})
         time.sleep(0.2)
       else:
         dirty = True
@@ -198,9 +276,9 @@ class BotBase:
         time.sleep(0.2)
         interception.click(fuel_loc)
         interception.click(fuel_loc)
+        time.sleep(0.2)
         expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
         post_fam_fuel({ "user": self.config['user'], "status": "Failed" if expired else "Success"})
-        time.sleep(0.2)
       else:
         dirty = True
         
@@ -375,8 +453,14 @@ class Images:
   TAKENO            = openImage("takeno.png")
   IBARAKI           = openImage("ibaraki.png")
   ASK               = openImage("ask.png")
+  NEXT              = openImage("next.png")
+  TOF_COMPLETE      = openImage("tof_complete.png")
+  TOF_BOARD         = openImage("tof_board.png")
+  WHITE_QUEST_BULB  = openImage("white_quest_bulb.png")
+  MY_LEVEL_RANGE    = openImage("my_level_range.png")
   # WAP
   WAP               = openImage("wap.png")
+  WAP_BUFF          = openImage("wap_buff.png")
   # FAM FUEL
   FAM_FUEL          = openImage("fam_fuel.png")
   FAM_BUFF          = openImage("fam_buff.png")
@@ -506,7 +590,7 @@ class KeyListener:
 #region DISCORD REQUEST
 load_dotenv()
 
-abort = True
+abort = False
 isDev = "dev" in sys.argv
 URL = "http://localhost:5000" if isDev else "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
 # URL = "http://localhost:5000"
@@ -537,6 +621,16 @@ def get_status(route, data={ "user": "jeemong" }):
     except Exception as e:
       print(f"Error posting status to {URL}/{route}: {e}")
   send_non_block(get_status_helper)
+
+def post_tof(data):
+  def post_tof_helper():
+    print(f"Posting status to {URL}/tof")
+    headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+    try:
+      requests.post(f"{URL}/tof", headers=headers, json=data)
+    except Exception as e:
+      print(f"Error posting status to {URL}/tof: {e}")
+  send_non_block(post_tof_helper)
 
 def post_wap(data):
   def post_wap_helper():

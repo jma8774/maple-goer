@@ -42,9 +42,6 @@ def setup():
   data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
   
 def midpoint3_macro():
-  buff_setup()
-  return
-
   print("Started World's Sorrow Midpoint 3 macro")
   while not should_pause():
     if data['x_and_down_x'] or datetime.now() < data['next_erda_fountain']:
@@ -209,7 +206,7 @@ def buff_setup():
   
   b.check_fam_leveling()
   
-  b.check_tof()
+  b.check_tof("y")
 
   b.check_wap()
 
