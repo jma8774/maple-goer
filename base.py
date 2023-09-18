@@ -24,7 +24,7 @@ START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 RESET_LOOT_TIMER_KEY = 'f9'
 minimap_rune_region = (0, 0, 200, 200)
-buffs_region = (525, 0, 1366-525, 80)
+buffs_region = (300, 0, 1366-300, 80)
 
 class BotBase:
   def __init__(self, data, config):
@@ -159,10 +159,11 @@ class BotBase:
 
       # Check if it was completed
       interception.click(bulb_loc)
-      time.sleep(0.1)
+      time.sleep(0.25)
       if pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True):
         post_tof({ "user": self.config['user'], "status": "InProgress"})
         self.data['next_tof_check'] = datetime.now() + timedelta(minutes=5)
+        self.press_release("escape")
         return
     
     # Open the board
@@ -170,10 +171,10 @@ class BotBase:
     my_level_range_loc = pag.locateCenterOnScreen(Images.MY_LEVEL_RANGE, confidence=0.9, grayscale=True)
     if my_level_range_loc:
       interception.click(my_level_range_loc)
-    time.sleep(0.1)
+    time.sleep(0.3)
     board_quest = pag.locateCenterOnScreen(Images.TOF_BOARD, confidence=0.9, grayscale=True)
     interception.click(board_quest)
-    time.sleep(0.2)
+    time.sleep(0.3)
 
 
     # Click on the person
@@ -185,7 +186,7 @@ class BotBase:
       self.data['next_tof_check'] = datetime.now() + timedelta(seconds=10)
       return
     interception.click(person_loc)
-    time.sleep(0.2)
+    time.sleep(0.3)
 
     # Click on the ask button
     if self.data['is_paused']: return
@@ -264,7 +265,7 @@ class BotBase:
     if dirty:
       self.update_use_inventory_region(dirty)
 
-    self.data['next_wap_check'] = datetime.now() + timedelta(seconds=5)
+    self.data['next_wap_check'] = datetime.now() + timedelta(minutes=1)
 
   def check_fam_fuel(self):
     dirty = False
@@ -297,7 +298,7 @@ class BotBase:
     if dirty:
       self.update_use_inventory_region(dirty)
 
-    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(seconds=5)
+    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=1)
 
   def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check']:

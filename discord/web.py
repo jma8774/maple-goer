@@ -67,17 +67,17 @@ def handle_tof():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "NoBulb":
-        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find the white quest bulb", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find the white quest bulb", addToQueue=False))
     elif status == "InProgress":
-        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot tried to complete the quest but we need to wait, trying again in 5 minutes", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot tried to complete the quest but we need to wait, trying again in 5 minutes", addToQueue=False))
     elif status == "NoPerson":
-        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find your npc to click on", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find your npc to click on", addToQueue=False))
     elif status == "NoAsk":
-        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot coulnd't find the ask button", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot coulnd't find the ask button", addToQueue=False))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot successfully started a new TOF ask", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot successfully started a new TOF ask", addToQueue=False))
     elif status == "Done":
-        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot completed all TOF asks, it will stop asking now", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[TOF {dtFormat(datetime.now())} EST]** {user}'s bot completed all TOF asks, it will stop asking now", addToQueue=False))
     return "Success", 200
 
 @app.route('/wap', methods=['POST'])
@@ -85,13 +85,13 @@ def handle_wap():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find the USE inventory", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find the USE inventory", addToQueue=False))
     elif status == "AlreadyWapped":
-        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot tried to wap, but it is already active", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot tried to wap, but it is already active", addToQueue=False))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot used a wap", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot used a wap", addToQueue=False))
     elif status == "Failed":
-        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot failed to use the wap lol", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[WAP {dtFormat(datetime.now())} EST]** {user}'s bot failed to use the wap lol", addToQueue=False))
     return "Success", 200
 
 @app.route('/fam_fuel', methods=['POST'])
@@ -99,11 +99,11 @@ def handle_fam_fuel():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**[FAM FUEL {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find the USE inventory", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[FAM FUEL {dtFormat(datetime.now())} EST]** {user}'s bot couldn't find the USE inventory", addToQueue=False))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[FAM FUEL {dtFormat(datetime.now())} EST]** {user}'s bot used a familiar fuel", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[FAM FUEL {dtFormat(datetime.now())} EST]** {user}'s bot used a familiar fuel", addToQueue=False))
     elif status == "Failed":
-        client_event(send("bot-spam-2", f"**[FAM FUEL {dtFormat(datetime.now())} EST]** {user}'s bot failed to use the familiar fuel lol", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[FAM FUEL {dtFormat(datetime.now())} EST]** {user}'s bot failed to use the familiar fuel lol", addToQueue=False))
     return "Success", 200
 
 @app.route('/delete_all_bot_msgs', methods=['POST'])
