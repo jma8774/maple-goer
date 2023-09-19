@@ -24,7 +24,7 @@ START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 RESET_LOOT_TIMER_KEY = 'f9'
 minimap_rune_region = (0, 0, 200, 200)
-buffs_region = (300, 0, 1366-300, 80)
+buffs_region = (250, 0, 1366-250, 80)
 
 class BotBase:
   def __init__(self, data, config):
@@ -96,6 +96,7 @@ class BotBase:
             print("Bot has been paused for 3 minutes, ending current session and posting to discord")
             self.data['duration_paused'] = float('-inf')
             self.post_summary_helper()
+            raise KeyboardInterrupt
           time.sleep(1)
           self.data['duration_paused'] += 1
           continue
@@ -139,10 +140,10 @@ class BotBase:
     if not bulb_loc:
       print("Can't find white quest lightbulb")
       post_tof({ "user": self.config['user'], "status": "NoBulb"})
-      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=10)
+      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=5)
       return
     interception.click(bulb_loc)
-    time.sleep(0.2)
+    time.sleep(0.5)
     if self.data['is_paused']: return
     
     # Complete quest
@@ -159,7 +160,7 @@ class BotBase:
 
       # Check if it was completed
       interception.click(bulb_loc)
-      time.sleep(0.25)
+      time.sleep(0.5)
       if pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True):
         post_tof({ "user": self.config['user'], "status": "InProgress"})
         self.data['next_tof_check'] = datetime.now() + timedelta(minutes=5)
@@ -174,7 +175,8 @@ class BotBase:
     time.sleep(0.3)
     board_quest = pag.locateCenterOnScreen(Images.TOF_BOARD, confidence=0.9, grayscale=True)
     interception.click(board_quest)
-    time.sleep(0.3)
+    time.sleep(0.5)
+
 
 
     # Click on the person
@@ -183,10 +185,10 @@ class BotBase:
     if not person_loc:
       print("Can't find person")
       post_tof({ "user": self.config['user'], "status": "NoPerson"})
-      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=10)
+      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=5)
       return
     interception.click(person_loc)
-    time.sleep(0.3)
+    time.sleep(0.5)
 
     # Click on the ask button
     if self.data['is_paused']: return
@@ -194,13 +196,13 @@ class BotBase:
     if not askLoc:
       print("Can't find ASK")
       post_tof({ "user": self.config['user'], "status": "NoAsk"})
-      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=10)
+      self.data['next_tof_check'] = datetime.now() + timedelta(seconds=5)
       return
-    time.sleep(0.3)
+    time.sleep(0.5)
     interception.click(askLoc)
     interception.click(askLoc)
     interception.click(askLoc)
-    time.sleep(0.3)
+    time.sleep(0.5)
 
     # Check if next exist, if it exist, then we continue
     if self.data['is_paused']: return
@@ -208,11 +210,12 @@ class BotBase:
       print("Can't find NEXT, we are done?")
       post_tof({ "user": self.config['user'], "status": "Done"})
       self.data['tof_done'] = True
+      self.press_release("escape")
       return
 
     # Accept the quest
     if self.data['is_paused']: return
-    time.sleep(0.2)
+    time.sleep(0.5)
     self.press_release(npc_chat_key, delay=0.15)
     self.press_release(npc_chat_key, delay=0.15)
     self.press_release(npc_chat_key, delay=0.15)
@@ -246,6 +249,7 @@ class BotBase:
         time.sleep(0.2)
         interception.click(wap_loc)
         interception.click(wap_loc)
+        time.sleep(0.7)
         cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
         wapAlreadyActive = cancel_loc is not None
         if wapAlreadyActive:
@@ -288,9 +292,9 @@ class BotBase:
         time.sleep(0.2)
         interception.click(fuel_loc)
         interception.click(fuel_loc)
-        time.sleep(0.2)
-        expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
-        post_fam_fuel({ "user": self.config['user'], "status": "Failed" if expired else "Success"})
+        time.sleep(0.7)
+        success = pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
+        post_fam_fuel({ "user": self.config['user'], "status": "Success" if success else "Failed"})
       else:
         dirty = True
         
@@ -416,7 +420,7 @@ class BotBase:
       clear()
     print(f"Using images for resolution of 1366 fullscreen maplestory")
     print("Commands:")
-    print(f"  {TOF_KEY} - auto thread of fate (WIP, don't use): [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
+    print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
     print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars (WIP, don't use): [{'enabled' if self.data['auto_level_fam_state'] else 'disabled'}]")
     print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
     print(f"  {FAM_FUEL_KEY} - auto familiar fuel (use after 60 minutes): [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
