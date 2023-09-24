@@ -140,20 +140,21 @@ class BotBase:
     interception.click(setuploc)
     time.sleep(0.5)
     interception.move_to(setuploc.x, setuploc.y + 150)
-    time.sleep(0.5)
+    time.sleep(0.2)
     if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
-      self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=5)
+      self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=10)
       post_fam_level({ "user": self.config['user'], "status": "NotLeveledYet"})
       self.press_release("escape")
       return
     interception.click(setuploc.x, setuploc.y + 150)
     interception.click(setuploc.x, setuploc.y + 150)
-    time.sleep(0.5)
+    time.sleep(0.3)
     interception.click(setuploc.x, setuploc.y + 150)
     interception.click(setuploc.x, setuploc.y + 150)
 
     # Find up to 2 familiars to train 
     if self.data['is_paused']: return
+    time.sleep(0.25)
     fams = []
     if mob == 'ascendion':
       fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.9, grayscale=True)))
@@ -190,7 +191,8 @@ class BotBase:
     time.sleep(0.3)
     self.press_release("escape")
 
-    time.sleep(0.5)
+    time.sleep(1)
+    self.press_release(summon_fam_key)
     self.press_release(summon_fam_key)
     time.sleep(0.5)
   

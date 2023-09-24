@@ -67,7 +67,7 @@ def handle_fam_level():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "NotLeveledYet":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin determined that the familiars were not level 5 yet, trying again in 5 minutes", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin determined that the familiars were not level 5 yet, trying again in 10 minutes", addToQueue=False))
     elif status == "Success":
         client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling a set of familiars", addToQueue=False))
     elif status == "Done":
