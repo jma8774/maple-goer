@@ -133,6 +133,7 @@ class BotBase:
     mob = self.data['auto_level_fam_state']
     
     # Deselect current familiars
+    if self.data['is_paused']: return
     self.press_release(fam_menu_key)
     time.sleep(0.5)
     setuploc = pag.locateCenterOnScreen(Images.SETUP, confidence=0.8, grayscale=True)
@@ -152,29 +153,37 @@ class BotBase:
     interception.click(setuploc.x, setuploc.y + 150)
 
     # Find up to 2 familiars to train 
+    if self.data['is_paused']: return
     fams = []
     if mob == 'ascendion':
-      fams.append(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.9, grayscale=True)))
+      fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.9, grayscale=True)))
     elif mob == 'ricky/justin familiars if they want it':
       pass
     picked = 0
     for fam in fams:
-      interception.move_to(fam)
+      fam_pos = (fam.left + fam.width / 2, fam.top + fam.height / 2)
+      interception.move_to(fam_pos)
       time.sleep(0.3)
       if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
-        interception.click(fam)
-        interception.click(fam)
+        interception.click(fam_pos)
+        interception.click(fam_pos)
         time.sleep(0.7)
         picked += 1
         if picked == 2:
           break
+    if self.data['is_paused']: return
     if picked == 0:
       self.data['auto_level_done'] = True
-      self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=30.5)
       post_fam_level({ "user": self.config['user'], "status": "Done"})
+    else:
+      self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=30.5)
+      post_fam_level({ "user": self.config['user'], "status": "Success"})
 
     # Save
-    saveloc = pag.locateCenterOnScreen(Images.SAVE, confidence=0.8, grayscale=True)
+    if self.data['is_paused']: return
+    interception.move_to(setuploc)
+    time.sleep(0.3)
+    saveloc = pag.locateCenterOnScreen(Images.SAVE1366, confidence=0.8, grayscale=True)
     interception.click(saveloc)
     time.sleep(0.3)
     self.press_release("enter")
@@ -206,13 +215,13 @@ class BotBase:
     quest_to_complete = pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True)
     if quest_to_complete:
       interception.click(quest_to_complete)
-      self.press_release(npc_chat_key, delay=0.15)
-      self.press_release(npc_chat_key, delay=0.15)
-      self.press_release(npc_chat_key, delay=0.15)
-      self.press_release(npc_chat_key, delay=0.15)
-      self.press_release(npc_chat_key, delay=0.15)
-      self.press_release(npc_chat_key, delay=0.15)
-      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.25)
+      self.press_release(npc_chat_key, delay=0.25)
+      self.press_release(npc_chat_key, delay=0.25)
+      self.press_release(npc_chat_key, delay=0.25)
+      self.press_release(npc_chat_key, delay=0.25)
+      self.press_release(npc_chat_key, delay=0.25)
+      self.press_release(npc_chat_key, delay=0.25)
 
       # Check if it was completed
       interception.click(bulb_loc)
@@ -272,13 +281,13 @@ class BotBase:
     # Accept the quest
     if self.data['is_paused']: return
     time.sleep(0.5)
-    self.press_release(npc_chat_key, delay=0.15)
-    self.press_release(npc_chat_key, delay=0.15)
-    self.press_release(npc_chat_key, delay=0.15)
-    self.press_release(npc_chat_key, delay=0.15)
-    self.press_release(npc_chat_key, delay=0.15)
-    self.press_release(npc_chat_key, delay=0.15)
-    self.press_release(npc_chat_key, delay=0.15)
+    self.press_release(npc_chat_key, delay=0.25)
+    self.press_release(npc_chat_key, delay=0.25)
+    self.press_release(npc_chat_key, delay=0.25)
+    self.press_release(npc_chat_key, delay=0.25)
+    self.press_release(npc_chat_key, delay=0.25)
+    self.press_release(npc_chat_key, delay=0.25)
+    self.press_release(npc_chat_key, delay=0.25)
     print("Started a new ask")
     post_tof({ "user": self.config['user'], "status": "Success"})
     self.data['next_tof_check'] = datetime.now() + timedelta(minutes=30.5)
@@ -529,7 +538,7 @@ class Images:
 
   # Auto familiar leveling
   SETUP             = openImage("setup.png")
-  SAVE              = openImage("save.png")
+  SAVE1366              = openImage("save.png")
 
   # Login to characters for 1 hour
   REBOOT            = openImage("reboot.png")
