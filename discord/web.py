@@ -112,6 +112,10 @@ def handle_fam_fuel():
     status, user = body["status"], body["user"]
     if status == "InventoryNotFound":
         client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the USE inventory", addToQueue=False))
+    elif status == "NotExpired":
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin determined that the familiar buff is not about to expire", addToQueue=False))
+    elif status == "CantFindFuel":
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the familiar fuel in inventory", addToQueue=False))
     elif status == "Success":
         client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin used a familiar essence", addToQueue=False))
     elif status == "Failed":

@@ -31,7 +31,7 @@ def main():
 def liminia_1_5_macro():
   print("Starting 1-5 macro")
   while not should_pause():
-    b.check_fam_leveling()
+    b.check_fam_leveling(fam_menu_key='o', summon_fam_key='f6')
     b.check_tof("space")
     b.check_wap()
     b.check_fam_fuel()

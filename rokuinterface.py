@@ -41,6 +41,11 @@ def end_1_5_macro():
   print("Started End of World 1-5 macro")
   while not should_pause():
     b.check_rune(play_sound=False)
+    b.check_fam_leveling(fam_menu_key='f11', summon_fam_key='u')
+    b.check_tof(",")
+    b.check_wap()
+    b.check_fam_fuel()
+    # b.check_elite_box()
     end_1_5_rotation()
   print("Paused End of World 1-5 macro")
 
@@ -92,6 +97,7 @@ def end_1_5_rotation():
     if should_pause(): return
 
 def end_1_5_looting():
+  data['next_loot'] = datetime.now() - timedelta(minutes=uniform(1.4, 1.6))
   if datetime.now() > data['next_loot']:
     if should_pause(): return
     b.press('left')
@@ -120,7 +126,7 @@ def end_1_5_looting():
     if should_pause(): return
     b.release('right')
     if should_pause(): return
-    jump_up(jumpDelay=0.3, delayAfter=0.6)
+    jump_up(jumpDelay=0.35, delayAfter=0.6)
     if should_pause(): return
     b.press_release('left')
     data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.6))

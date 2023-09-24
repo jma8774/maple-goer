@@ -157,15 +157,17 @@ class BotBase:
     time.sleep(0.25)
     fams = []
     if mob == 'ascendion':
-      fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.9, grayscale=True)))
-    elif mob == 'ricky/justin familiars if they want it':
-      pass
+      fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True)))
+    elif mob == 'ascendion/foreberion':
+      fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True)))
+      fams.extend(list(pag.locateAllOnScreen(Images.FAM_FOREBERION, confidence=0.8, grayscale=True)))
     picked = 0
     for fam in fams:
       fam_pos = (fam.left + fam.width / 2, fam.top + fam.height / 2)
       interception.move_to(fam_pos)
       time.sleep(0.3)
       if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
+        time.sleep(0.7)
         interception.click(fam_pos)
         interception.click(fam_pos)
         time.sleep(0.7)
@@ -351,7 +353,9 @@ class BotBase:
 
     if self.data['is_paused']: return
     expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
-    print("Fam buff expired: ", expired)
+    if not expired:
+      print("Buff is not about to expire")
+      post_fam_fuel({ "user": self.config['user'], "status": "NotExpired"})
     if self.data['use_inventory_region'] and expired:
       interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
       fuel_loc = pag.locateCenterOnScreen(Images.FAM_FUEL, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
@@ -363,6 +367,7 @@ class BotBase:
         success = pag.locateOnScreen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
         post_fam_fuel({ "user": self.config['user'], "status": "Success" if success else "Failed"})
       else:
+        post_fam_fuel({ "user": self.config['user'], "status": "CantFindFuel"})
         dirty = True
         
     if self.data['is_paused']: return
@@ -443,7 +448,7 @@ class BotBase:
     if self.data['auto_level_fam_state'] == None:
       self.data['auto_level_fam_state'] = "ascendion"
     elif self.data['auto_level_fam_state'] == "ascendion":
-      self.data['auto_level_fam_state'] = "ricky/justin familiars if they want it"
+      self.data['auto_level_fam_state'] = "ascendion/foreberion"
     else:
       self.data['auto_level_fam_state'] = None
     self.commands(True)
@@ -598,6 +603,8 @@ class Images:
   FAM_25_STACK_RARE = openImage("fam_25_stack_rare.png")
   FAM_50_STACK_RARE = openImage("fam_50_stack_rare.png")
   FAM_100_STACK_RARE = openImage("fam_100_stack_rare.png")
+    # Specific Famliars - Foreberion
+  FAM_FOREBERION    = openImage("fam_foreberion.png")
 
   FAM_EQUIP         = openImage("fam_equip.png")
   FAM_FUSION        = openImage("fam_fusion.png")
