@@ -62,7 +62,9 @@ class BotBase:
     self.data['tof_done'] = False
     self.data['next_tof_check'] = datetime.now()
 
-    self.data['auto_level_fam_state'] = False
+    self.data['auto_level_fam_state'] = None
+    self.data['auto_level_done'] = False
+    self.data['next_level_fam_check'] = datetime.now()
 
     self.data['wap_state'] = False
     self.data['next_wap_check'] = datetime.now()
@@ -125,9 +127,63 @@ class BotBase:
       print("Exiting... (Try spamming CTRL + C)")
   
 
-  def check_fam_leveling(self):
-    # TODO: do this
-    pass
+  def check_fam_leveling(self, fam_menu_key='f11', summon_fam_key='f12'):
+    if self.data['auto_level_done'] or self.data['auto_level_fam_state'] == None or datetime.now() < self.data['next_level_fam_check']:
+      return
+    mob = self.data['auto_level_fam_state']
+    
+    # Deselect current familiars
+    self.press_release(fam_menu_key)
+    time.sleep(0.5)
+    setuploc = pag.locateCenterOnScreen(Images.SETUP, confidence=0.8, grayscale=True)
+    interception.click(setuploc)
+    time.sleep(0.5)
+    interception.move_to(setuploc.x, setuploc.y + 150)
+    time.sleep(0.5)
+    if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
+      self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=5)
+      post_fam_level({ "user": self.config['user'], "status": "NotLeveledYet"})
+      self.press_release("escape")
+      return
+    interception.click(setuploc.x, setuploc.y + 150)
+    interception.click(setuploc.x, setuploc.y + 150)
+    time.sleep(0.5)
+    interception.click(setuploc.x, setuploc.y + 150)
+    interception.click(setuploc.x, setuploc.y + 150)
+
+    # Find up to 2 familiars to train 
+    fams = []
+    if mob == 'ascendion':
+      fams.append(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.9, grayscale=True)))
+    elif mob == 'ricky/justin familiars if they want it':
+      pass
+    picked = 0
+    for fam in fams:
+      interception.move_to(fam)
+      time.sleep(0.3)
+      if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
+        interception.click(fam)
+        interception.click(fam)
+        time.sleep(0.7)
+        picked += 1
+        if picked == 2:
+          break
+    if picked == 0:
+      self.data['auto_level_done'] = True
+      self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=30.5)
+      post_fam_level({ "user": self.config['user'], "status": "Done"})
+
+    # Save
+    saveloc = pag.locateCenterOnScreen(Images.SAVE, confidence=0.8, grayscale=True)
+    interception.click(saveloc)
+    time.sleep(0.3)
+    self.press_release("enter")
+    time.sleep(0.3)
+    self.press_release("escape")
+
+    time.sleep(0.5)
+    self.press_release(summon_fam_key)
+    time.sleep(0.5)
   
   def check_tof(self, npc_chat_key):
     if self.data['tof_done'] or self.data['tof_state'] == None or datetime.now() < self.data['next_tof_check']:
@@ -239,7 +295,7 @@ class BotBase:
       post_wap({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
 
-    expired = not pag.locateOnScreen(Images.WAP_BUFF, confidence=0.95, grayscale=True, region=buffs_region)
+    expired = not pag.locateOnScreen(Images.WAP_BUFF, confidence=0.95, region=buffs_region)
     print("Wap expired: ", expired)
     if self.data['use_inventory_region'] and expired:
       interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
@@ -259,7 +315,7 @@ class BotBase:
             cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
           post_wap({ "user": self.config['user'], "status": "AlreadyWapped"})
         else:
-          success = pag.locateOnScreen(Images.WAP_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
+          success = pag.locateOnScreen(Images.WAP_BUFF, confidence=0.95, region=buffs_region)
           post_wap({ "user": self.config['user'], "status": "Success" if success else "Failed"})
         time.sleep(0.2)
       else:
@@ -283,7 +339,7 @@ class BotBase:
       dirty = True
 
     if self.data['is_paused']: return
-    expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
+    expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
     print("Fam buff expired: ", expired)
     if self.data['use_inventory_region'] and expired:
       interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
@@ -293,7 +349,7 @@ class BotBase:
         interception.click(fuel_loc)
         interception.click(fuel_loc)
         time.sleep(0.7)
-        success = pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9, grayscale=True, region=buffs_region)
+        success = pag.locateOnScreen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
         post_fam_fuel({ "user": self.config['user'], "status": "Success" if success else "Failed"})
       else:
         dirty = True
@@ -373,7 +429,12 @@ class BotBase:
     self.commands(True)
 
   def handle_auto_level_fam(self):
-    self.data['auto_level_fam_state'] = not self.data['auto_level_fam_state']
+    if self.data['auto_level_fam_state'] == None:
+      self.data['auto_level_fam_state'] = "ascendion"
+    elif self.data['auto_level_fam_state'] == "ascendion":
+      self.data['auto_level_fam_state'] = "ricky/justin familiars if they want it"
+    else:
+      self.data['auto_level_fam_state'] = None
     self.commands(True)
 
   def handle_wap(self):
@@ -421,7 +482,7 @@ class BotBase:
     print(f"Using images for resolution of 1366 fullscreen maplestory")
     print("Commands:")
     print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
-    print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars (WIP, don't use): [{'enabled' if self.data['auto_level_fam_state'] else 'disabled'}]")
+    print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
     print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
     print(f"  {FAM_FUEL_KEY} - auto familiar fuel (use after 60 minutes): [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
     print()
@@ -465,6 +526,14 @@ class Images:
   ELITE_BOX         = openImage("elite_box.png")
   PERSON            = openImage("person.png")
   CASH_TAB          = openImage("cash_tab.png")
+
+  # Auto familiar leveling
+  SETUP             = openImage("setup.png")
+  SAVE              = openImage("save.png")
+
+  # Login to characters for 1 hour
+  REBOOT            = openImage("reboot.png")
+  SETTING           = openImage("setting.png")
 
   # TOF
   TAKENO            = openImage("takeno.png")
@@ -638,6 +707,16 @@ def get_status(route, data={ "user": "jeemong" }):
     except Exception as e:
       print(f"Error posting status to {URL}/{route}: {e}")
   send_non_block(get_status_helper)
+
+def post_fam_level(data):
+  def post_fam_level_helper():
+    print(f"Posting status to {URL}/fam_level")
+    headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
+    try:
+      requests.post(f"{URL}/fam_level", headers=headers, json=data)
+    except Exception as e:
+      print(f"Error posting status to {URL}/fam_level: {e}")
+  send_non_block(post_fam_level_helper)
 
 def post_tof(data):
   def post_tof_helper():

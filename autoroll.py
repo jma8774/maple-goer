@@ -70,7 +70,7 @@ STATS = {
   "dex":      { "display": "DEX",                   "image": Images.DEX },
   "int":      { "display": "INT",                   "image": Images.INT },
   "luk":      { "display": "LUK",                   "image": Images.LUK },
-  "critdmg":  { "display": "Critical Damage",       "image": Images.CRIT_DMG },
+  "critdmg":  { "display": "Critical Damage (don't use)",       "image": Images.CRIT_DMG },
   "boss":     { "display": "Boss Damage",           "image": Images.BOSS },
   "ied":      { "display": "Ignore Enemy Defense",  "image": Images.IED },
   "meso":     { "display": "Meso Obtained",         "image": Images.MESO_OBTAINED },

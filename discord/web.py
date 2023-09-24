@@ -62,6 +62,16 @@ def handle_started():
     client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", body["user"], addToQueue=False))
     return "Success", 200
 
+@app.route('/fam_level', methods=['POST'])
+def handle_fam_level():
+    body = request.json
+    status, user = body["status"], body["user"]
+    if status == "NotLeveledYet":
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Fam Leveling]**\n{user}'s cousin determined that the familiars were not level 5 yet, trying again in 5 minutes", addToQueue=False))
+    elif status == "Done":
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Fam Leveling]**\n{user}'s cousin finished leveling all familiars, it will stop now", addToQueue=False))
+    return "Success", 200
+
 @app.route('/tof', methods=['POST'])
 def handle_tof():
     body = request.json

@@ -15,6 +15,7 @@ CRAFT_WAP_KEY = 'f1'
 EXTRACT_KEY = 'f2'
 OPEN_HERB_BAGS_KEY = 'f3'
 ENHANCE_KEY = 'f4'
+LOGIN_CHARS_FOR_1HOUR_KEY = 'f5'
 
 # Data
 data = {
@@ -35,12 +36,14 @@ def main():
     "EXTRACT": extract,
     "OPEN_HERB_BAGS": openHerbBags,
     "ENHANCE": enhance,
+    "LOGIN_CHARS_FOR_1HOUR": loginChars1Hour
   })
   kl = KeyListener(data)
   kl.add(CRAFT_WAP_KEY, lambda: toggleScript("WAP crafting", scripts.WAP_CRAFT))
   kl.add(EXTRACT_KEY, lambda: toggleScript("equipment extraction", scripts.EXTRACT))
   kl.add(OPEN_HERB_BAGS_KEY, lambda: toggleScript("open herb bags", scripts.OPEN_HERB_BAGS))
   kl.add(ENHANCE_KEY, lambda: toggleScript("enhance gear", scripts.ENHANCE))
+  kl.add(LOGIN_CHARS_FOR_1HOUR_KEY, lambda: toggleScript("login to each chars for 1 hour to reset guild skills", scripts.LOGIN_CHARS_FOR_1HOUR))
   kl.run()
 
   commands()
@@ -55,6 +58,39 @@ def main():
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
     data['stop_flag'] = True
+
+def loginChars1Hour(scripts):
+  while data["target"] == scripts.LOGIN_CHARS_FOR_1HOUR:
+    # Start from the character already logged in
+    # Wait 1 hour
+    print("Waiting 1 hour...")
+    time.sleep(3605)
+
+    # Log off
+    print("Logging off...")
+    while pag.locateOnScreen(Images.SETTING, confidence=0.8, grayscale=True) == None:
+      press_release('escape')
+    press_release('up', 0.5)
+    press_release('enter', 0.5)
+    press_release('enter', 0.5)
+    press_release('enter', 0.5)
+    time.sleep(10)
+
+    # Go to next character
+    print("Going to next character...")
+    rebootLoc = pag.locateCenterOnScreen(Images.REBOOT, confidence=0.8, grayscale=True)
+    interception.click(rebootLoc)
+    time.sleep(1)
+    press_release('enter')
+    time.sleep(10)
+
+    # Enter the character   
+    print("Entering character...")
+    press_release('right')
+    time.sleep(1)
+    press_release('enter')
+    
+
 
 def enhance(scripts):
   location = pag.locateCenterOnScreen(Images.ENHANCE_ENHANCE, confidence=0.8)
@@ -150,6 +186,7 @@ def commands():
   print(f"  {EXTRACT_KEY} - start/end extract equips")
   print(f"  {OPEN_HERB_BAGS_KEY} - start/end open herb bags")
   print(f"  {ENHANCE_KEY} - start/end gear enhancement")
+  print(f"  {LOGIN_CHARS_FOR_1HOUR_KEY} - start/end login to each chars for 1 hour to reset guild skills (start from the character you want already logged in)")
 
 if __name__=="__main__":
   main()
