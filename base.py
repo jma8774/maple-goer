@@ -219,13 +219,15 @@ class BotBase:
     quest_to_complete = pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True)
     if quest_to_complete:
       interception.click(quest_to_complete)
-      self.press_release(npc_chat_key, delay=0.25)
-      self.press_release(npc_chat_key, delay=0.25)
-      self.press_release(npc_chat_key, delay=0.25)
-      self.press_release(npc_chat_key, delay=0.25)
-      self.press_release(npc_chat_key, delay=0.25)
-      self.press_release(npc_chat_key, delay=0.25)
-      self.press_release(npc_chat_key, delay=0.25)
+      time.sleep(0.3)
+      while pag.locateOnScreen(Images.NEXT, confidence=0.90):
+        self.press_release(npc_chat_key, delay=0.15)
+        self.press_release(npc_chat_key, delay=0.15)
+        self.press_release(npc_chat_key, delay=0.15)
+        self.press_release(npc_chat_key, delay=0.15)
+        self.press_release(npc_chat_key, delay=0.15)
+        self.press_release(npc_chat_key, delay=0.15)
+        time.sleep(0.2)
 
       # Check if it was completed
       interception.click(bulb_loc)
@@ -285,13 +287,14 @@ class BotBase:
     # Accept the quest
     if self.data['is_paused']: return
     time.sleep(0.5)
-    self.press_release(npc_chat_key, delay=0.25)
-    self.press_release(npc_chat_key, delay=0.25)
-    self.press_release(npc_chat_key, delay=0.25)
-    self.press_release(npc_chat_key, delay=0.25)
-    self.press_release(npc_chat_key, delay=0.25)
-    self.press_release(npc_chat_key, delay=0.25)
-    self.press_release(npc_chat_key, delay=0.25)
+    while pag.locateOnScreen(Images.NEXT, confidence=0.90):
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      self.press_release(npc_chat_key, delay=0.15)
+      time.sleep(0.2)
     print("Started a new ask")
     post_tof({ "user": self.config['user'], "status": "Success"})
     self.data['next_tof_check'] = datetime.now() + timedelta(minutes=30.5)
@@ -312,7 +315,7 @@ class BotBase:
     print("Wap expired: ", expired)
     if self.data['use_inventory_region'] and expired:
       interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
-      wap_loc = pag.locateCenterOnScreen(Images.WAP, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
+      wap_loc = pag.locateCenterOnScreen(Images.WAP, confidence=0.85, grayscale=True, region=self.data['use_inventory_region'])
       if self.data['is_paused']: return
       if wap_loc:
         time.sleep(0.2)
@@ -355,10 +358,10 @@ class BotBase:
     expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
     if not expired:
       print("Buff is not about to expire")
-      post_fam_fuel({ "user": self.config['user'], "status": "NotExpired"})
+      # post_fam_fuel({ "user": self.config['user'], "status": "NotExpired"})
     if self.data['use_inventory_region'] and expired:
       interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
-      fuel_loc = pag.locateCenterOnScreen(Images.FAM_FUEL, confidence=0.9, grayscale=True, region=self.data['use_inventory_region'])
+      fuel_loc = pag.locateCenterOnScreen(Images.FAM_FUEL, confidence=0.80, grayscale=True, region=self.data['use_inventory_region'])
       if fuel_loc:
         time.sleep(0.2)
         interception.click(fuel_loc)
