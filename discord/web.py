@@ -59,7 +59,7 @@ def handle_someone_entered_map():
 @app.route('/started', methods=['POST'])
 def handle_started():
     body = request.json
-    client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", body["user"], addToQueue=False))
+    client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", body["user"], lifetime=0))
     return "Success", 200
 
 @app.route('/fam_level', methods=['POST'])
@@ -67,11 +67,11 @@ def handle_fam_level():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "NotLeveledYet":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin determined that the familiars were not level 5 yet, trying again in 10 minutes", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin determined that the familiars were not level 5 yet, trying again in 10 minutes"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling a set of familiars", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling a set of familiars"))
     elif status == "Done":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling all familiars, it will stop now", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling all familiars, it will stop now", lifetime=0))
     return "Success", 200
 
 @app.route('/tof', methods=['POST'])
@@ -79,17 +79,17 @@ def handle_tof():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "NoBulb":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the white quest bulb", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the white quest bulb"))
     elif status == "InProgress":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin tried to complete the quest but we still need to wait, trying again in 5 minutes", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin tried to complete the quest but we still need to wait, trying again in 5 minutes"))
     elif status == "NoPerson":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the npc to click on", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the npc to click on"))
     elif status == "NoAsk":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin coulnd't find the ask button", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin coulnd't find the ask button"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin successfully started a new Thread of Fate quest", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin successfully started a new Thread of Fate quest"))
     elif status == "Done":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin completed all the Thread of Fate quest, it will stop asking now", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin completed all the Thread of Fate quest, it will stop asking now", lifetime=0))
     return "Success", 200
 
 @app.route('/wap', methods=['POST'])
@@ -97,13 +97,13 @@ def handle_wap():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin couldn't find the USE inventory", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin couldn't find the USE inventory"))
     elif status == "AlreadyWapped":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin tried to WAP, but it is already active", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin tried to WAP, but it is already active"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin used a WAP", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin used a WAP"))
     elif status == "Failed":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin failed to use the WAP", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin failed to use the WAP"))
     return "Success", 200
 
 @app.route('/fam_fuel', methods=['POST'])
@@ -111,15 +111,15 @@ def handle_fam_fuel():
     body = request.json
     status, user = body["status"], body["user"]
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the USE inventory", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the USE inventory"))
     elif status == "NotExpired":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin determined that the familiar buff is not about to expire", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin determined that the familiar buff is not about to expire"))
     elif status == "CantFindFuel":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the familiar fuel in inventory", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the familiar fuel in inventory"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin used a familiar essence", addToQueue=False))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin used a familiar essence"))
     elif status == "Failed":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin failed to use the familiar fuel", addToQueue=True))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin failed to use the familiar fuel"))
     return "Success", 200
 
 @app.route('/delete_all_bot_msgs', methods=['POST'])

@@ -148,13 +148,19 @@ class BotBase:
       return
     interception.click(setuploc.x, setuploc.y + 150)
     interception.click(setuploc.x, setuploc.y + 150)
-    time.sleep(0.3)
+    time.sleep(0.1)
+    interception.click(setuploc.x, setuploc.y + 150)
+    interception.click(setuploc.x, setuploc.y + 150)
+    time.sleep(0.1)
+    interception.click(setuploc.x, setuploc.y + 150)
+    interception.click(setuploc.x, setuploc.y + 150)
+    time.sleep(0.1)
     interception.click(setuploc.x, setuploc.y + 150)
     interception.click(setuploc.x, setuploc.y + 150)
 
     # Find up to 2 familiars to train 
     if self.data['is_paused']: return
-    time.sleep(0.25)
+    time.sleep(0.1)
     fams = []
     if mob == 'ascendion':
       fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True)))
@@ -172,7 +178,7 @@ class BotBase:
         interception.click(fam_pos)
         time.sleep(0.7)
         picked += 1
-        if picked == 2:
+        if picked == 3:
           break
     if self.data['is_paused']: return
     if picked == 0:
@@ -193,10 +199,10 @@ class BotBase:
     time.sleep(0.3)
     self.press_release("escape")
 
-    time.sleep(1)
-    self.press_release(summon_fam_key)
-    self.press_release(summon_fam_key)
-    time.sleep(0.5)
+    time.sleep(0.2)
+    while not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9):
+      self.press_release(summon_fam_key)
+      time.sleep(0.5)
   
   def check_tof(self, npc_chat_key):
     if self.data['tof_done'] or self.data['tof_state'] == None or datetime.now() < self.data['next_tof_check']:

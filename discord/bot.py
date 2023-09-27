@@ -42,6 +42,7 @@ async def on_ready():
     await asyncio.sleep(300)
     now = datetime.now()
     removed = 0
+    messagesQueue = sorted(messagesQueue, key=lambda x: x[1])
     for (msg, msgExpire) in messagesQueue:
       if now < msgExpire:
         break
@@ -97,7 +98,7 @@ async def speakToUserId(userId: int, message: str):
 async def speakToName(name, message: str):
   await speakToUserId(users[name], message)
 
-async def send(channel, message, user:str=None, addToQueue=True):
+async def send(channel, message, user:str=None, lifetime=300):
   global channels, isDebug
   print(f"Sending message to {channel}: {message}")
   debug = "**[Debug]** " if isDebug else ""
@@ -106,8 +107,8 @@ async def send(channel, message, user:str=None, addToQueue=True):
     messageObj = await channels[channel].send(debug + f"<@{users[user]}> " + message)
   else:
     messageObj = await channels[channel].send(debug + message)
-  if addToQueue and messageObj is not None:
-    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=60)))
+  if lifetime > 0 and messageObj is not None:
+    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=lifetime)))
 
 async def sendSummary(channel, data):
   global channels, isDebug
@@ -142,7 +143,7 @@ async def sendSummary(channel, data):
     embed.add_field(name="**:hourglass:  Duration**", value=duration_str)
   embed.add_field(name="**:moneybag:  Mesos**", value=f"{mesos}")
   embed.add_field(name="**:gem:  Nodes**", value=f"{nodes}")
-  embed.add_field(name="**:tickets:  Tickets**", value=f"{tickets}")
+  # embed.add_field(name="**:tickets:  Tickets**", value=f"{tickets}")
   embed.add_field(name="**:mouse2:  Monsters Killed**", value=f"{monsters_killed}")
   embed.add_field(name="\u200b", value="\u200b", inline=False)
 

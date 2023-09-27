@@ -65,6 +65,7 @@ def loginChars1Hour(scripts):
     # Wait 1 hour
     print("Waiting 1 hour...")
     time.sleep(3605)
+    # time.sleep(60)
 
     # Log off
     print("Logging off...")
@@ -90,8 +91,6 @@ def loginChars1Hour(scripts):
     time.sleep(1)
     press_release('enter')
     
-
-
 def enhance(scripts):
   location = pag.locateCenterOnScreen(Images.ENHANCE_ENHANCE, confidence=0.8)
   while data["target"] == scripts.ENHANCE:
