@@ -16,6 +16,7 @@ EXTRACT_KEY = 'f2'
 OPEN_HERB_BAGS_KEY = 'f3'
 ENHANCE_KEY = 'f4'
 LOGIN_CHARS_FOR_1HOUR_KEY = 'f5'
+SPIEGLMANN_KEY = 'f6'
 
 # Data
 data = {
@@ -36,7 +37,8 @@ def main():
     "EXTRACT": extract,
     "OPEN_HERB_BAGS": openHerbBags,
     "ENHANCE": enhance,
-    "LOGIN_CHARS_FOR_1HOUR": loginChars1Hour
+    "LOGIN_CHARS_FOR_1HOUR": loginChars1Hour,
+    "SPIEGLMANN": spieglmann
   })
   kl = KeyListener(data)
   kl.add(CRAFT_WAP_KEY, lambda: toggleScript("WAP crafting", scripts.WAP_CRAFT))
@@ -44,6 +46,7 @@ def main():
   kl.add(OPEN_HERB_BAGS_KEY, lambda: toggleScript("open herb bags", scripts.OPEN_HERB_BAGS))
   kl.add(ENHANCE_KEY, lambda: toggleScript("enhance gear", scripts.ENHANCE))
   kl.add(LOGIN_CHARS_FOR_1HOUR_KEY, lambda: toggleScript("login to each chars for 1 hour to reset guild skills", scripts.LOGIN_CHARS_FOR_1HOUR))
+  kl.add(SPIEGLMANN_KEY, lambda: toggleScript("spieglmann", scripts.SPIEGLMANN))
   kl.run()
 
   commands()
@@ -59,6 +62,19 @@ def main():
     print("Exiting... (Try spamming CTRL + C)")
     data['stop_flag'] = True
 
+def spieglmann(scripts):
+  while data["target"] == scripts.SPIEGLMANN:
+    loc = pag.locateCenterOnScreen(Images.spieglmann_pot)
+    if not loc:
+      loc = pag.locateCenterOnScreen(Images.spieglmann_growth_pot)
+    if not loc:
+      loc = pag.locateCenterOnScreen(Images.spieglmann_storm_pot)
+    if loc:
+      click(loc)
+      click(loc)
+    interception.move_to((25, 25))
+    time.sleep(0.05)
+    
 def loginChars1Hour(scripts):
   while data["target"] == scripts.LOGIN_CHARS_FOR_1HOUR:
     # Start from the character already logged in
@@ -95,7 +111,7 @@ def enhance(scripts):
   location = pag.locateCenterOnScreen(Images.ENHANCE_ENHANCE, confidence=0.8)
   while data["target"] == scripts.ENHANCE:
     click(location)
-    time.sleep(0.01)
+    time.sleep(0.005)
     
 def openHerbBags(scripts):
   seq = 0
@@ -186,6 +202,7 @@ def commands():
   print(f"  {OPEN_HERB_BAGS_KEY} - start/end open herb bags")
   print(f"  {ENHANCE_KEY} - start/end gear enhancement")
   print(f"  {LOGIN_CHARS_FOR_1HOUR_KEY} - start/end login to each chars for 1 hour to reset guild skills (start from the character you want already logged in)")
+  print(f"  {SPIEGLMANN_KEY} - start/end spieglmann")
 
 if __name__=="__main__":
   main()

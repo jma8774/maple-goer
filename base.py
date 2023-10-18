@@ -44,10 +44,11 @@ class BotBase:
 
     # Interception Key Listener Setup (seperate thread)
     kl = KeyListener(data)
-    kl.add(TOF_KEY, self.handle_tof)
-    kl.add(AUTO_LEVEL_FAM_KEY, self.handle_auto_level_fam)
-    kl.add(WAP_KEY, self.handle_wap)
-    kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
+    if self.config['disable_extras'] != True:
+      kl.add(TOF_KEY, self.handle_tof)
+      kl.add(AUTO_LEVEL_FAM_KEY, self.handle_auto_level_fam)
+      kl.add(WAP_KEY, self.handle_wap)
+      kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
     kl.add(PAUSE_KEY, self.pause)
     kl.add(START_KEY, self.start)
     kl.add(RESET_LOOT_TIMER_KEY, self.reset_loot_timer)
@@ -84,6 +85,8 @@ class BotBase:
     self.data['next_rune_check'] = datetime.now()
     self.data['next_elite_box_check'] = datetime.now()
     self.data['someone_on_map'] = False
+
+    self.config['disable_extras'] = self.config['disable_extras'] if 'disable_extras' in self.config else False
 
   def run(self):
     if "script" not in self.config:
@@ -173,10 +176,10 @@ class BotBase:
       interception.move_to(fam_pos)
       time.sleep(0.3)
       if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
-        time.sleep(0.7)
+        time.sleep(0.3)
         interception.click(fam_pos)
         interception.click(fam_pos)
-        time.sleep(0.7)
+        time.sleep(0.4)
         picked += 1
         if picked == 3:
           break
@@ -187,19 +190,24 @@ class BotBase:
     else:
       self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=30.5)
       post_fam_level({ "user": self.config['user'], "status": "Success"})
+    time.sleep(0.4)
+    ok_loc = pag.locateCenterOnScreen(Images.OK_START, confidence=0.8, grayscale=True) or pag.locateCenterOnScreen(Images.OK_END, confidence=0.8, grayscale=True)
+    interception.click(ok_loc)
+    time.sleep(0.8)
 
     # Save
     if self.data['is_paused']: return
     interception.move_to(setuploc)
-    time.sleep(0.3)
+    time.sleep(0.5)
     saveloc = pag.locateCenterOnScreen(Images.SAVE1366, confidence=0.8, grayscale=True)
     interception.click(saveloc)
-    time.sleep(0.3)
+    interception.click(saveloc)
+    time.sleep(0.5)
     self.press_release("enter")
-    time.sleep(0.3)
+    time.sleep(0.5)
     self.press_release("escape")
 
-    time.sleep(0.2)
+    time.sleep(0.3)
     while not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9):
       self.press_release(summon_fam_key)
       time.sleep(0.5)
@@ -225,8 +233,8 @@ class BotBase:
     quest_to_complete = pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True)
     if quest_to_complete:
       interception.click(quest_to_complete)
-      time.sleep(0.3)
-      while pag.locateOnScreen(Images.NEXT, confidence=0.90):
+      time.sleep(2)
+      while pag.locateOnScreen(Images.YES, confidence=0.90):
         self.press_release(npc_chat_key, delay=0.15)
         self.press_release(npc_chat_key, delay=0.15)
         self.press_release(npc_chat_key, delay=0.15)
@@ -254,8 +262,6 @@ class BotBase:
     interception.click(board_quest)
     time.sleep(0.5)
 
-
-
     # Click on the person
     if self.data['is_paused']: return
     person_loc = pag.locateOnScreen(d[self.data['tof_state']], confidence=0.9, grayscale=True)
@@ -279,7 +285,7 @@ class BotBase:
     interception.click(askLoc)
     interception.click(askLoc)
     interception.click(askLoc)
-    time.sleep(0.5)
+    time.sleep(1.5)
 
     # Check if next exist, if it exist, then we continue
     if self.data['is_paused']: return
@@ -383,7 +389,7 @@ class BotBase:
     if dirty:
       self.update_use_inventory_region(dirty)
 
-    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(minutes=1)
+    self.data['next_fam_fuel_check'] = datetime.now() + timedelta(seconds=30)
 
   def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check']:
@@ -506,11 +512,12 @@ class BotBase:
       clear()
     print(f"Using images for resolution of 1366 fullscreen maplestory")
     print("Commands:")
-    print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
-    print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
-    print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
-    print(f"  {FAM_FUEL_KEY} - auto familiar fuel (use after 60 minutes): [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
-    print()
+    if self.config['disable_extras'] != True:
+      print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
+      print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
+      print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
+      print(f"  {FAM_FUEL_KEY} - auto familiar fuel (use after 60 minutes): [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
+      print()
     print(f"  {START_KEY} - start")
     print(f"  {PAUSE_KEY} - pause")
     print(f"  {RESET_LOOT_TIMER_KEY} - reset loot timer")
@@ -565,6 +572,7 @@ class Images:
   IBARAKI           = openImage("ibaraki.png")
   ASK               = openImage("ask.png")
   NEXT              = openImage("next.png")
+  YES               = openImage("yes.png")
   TOF_COMPLETE      = openImage("tof_complete.png")
   TOF_BOARD         = openImage("tof_board.png")
   WHITE_QUEST_BULB  = openImage("white_quest_bulb.png")
@@ -632,6 +640,15 @@ class Images:
   FAM_50_150_POINTS = openImage("fam_50_150_points.png")
   FAM_75_150_POINTS = openImage("fam_75_150_points.png")
   FAM_100_150_POINTS = openImage("fam_100_150_points.png")
+
+  # GREATCARE
+  greatcare_play    = openImage("greatcare_play.png")
+  greatcare_next    = openImage("greatcare_next.png")
+
+  # Spielgmann Potion
+  spieglmann_pot = openImage("spieglmann_pot.png")
+  spieglmann_storm_pot = openImage("spieglmann_storm_pot.png")
+  spieglmann_growth_pot = openImage("spieglmann_growth_pot.png")
   
   def get(key, suffix):
     return getattr(Images, f"{key}{suffix}")

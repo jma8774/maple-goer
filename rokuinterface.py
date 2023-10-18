@@ -34,6 +34,7 @@ def main():
   b = BotBase(data, {
     "user": "justin",
     "script": end_1_5_macro,
+    "disable_extras": True,
   })
   b.run()
 
