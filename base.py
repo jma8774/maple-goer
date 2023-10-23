@@ -11,6 +11,7 @@ import time
 import pyautogui as pag
 import pygame
 import sys
+from state import state
 
 def clear():
   os.system('cls' if os.name == 'nt' else 'clear')
@@ -23,7 +24,7 @@ FAM_FUEL_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 RESET_LOOT_TIMER_KEY = 'f9'
-minimap_rune_region = (0, 0, 200, 200)
+minimap_rune_region = (0, 0, 500, 300)
 buffs_region = (250, 0, 1366-250, 80)
 
 class BotBase:
@@ -75,7 +76,6 @@ class BotBase:
 
     self.data['stop_flag'] = False
     self.data['is_paused'] = True
-    self.data['duration_paused'] = 0
     self.data['time_started'] = None
 
     self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
@@ -84,7 +84,7 @@ class BotBase:
     self.data['rune_playing'] = False
     self.data['next_rune_check'] = datetime.now()
     self.data['next_elite_box_check'] = datetime.now()
-    self.data['someone_on_map'] = False
+    self.data['someone_on_map_cooldown'] = datetime.now()
 
     self.config['disable_extras'] = self.config['disable_extras'] if 'disable_extras' in self.config else False
 
@@ -97,19 +97,12 @@ class BotBase:
     try:
       while True:
         if self.data['is_paused'] == True:
-          if self.data['duration_paused'] > 180:
-            print("Bot has been paused for 3 minutes, ending current session and posting to discord")
-            self.data['duration_paused'] = float('-inf')
-            self.post_summary_helper()
-            raise KeyboardInterrupt
           time.sleep(1)
-          self.data['duration_paused'] += 1
           continue
         
         if self.data['time_started'] == None:
           post_status("started", { "user": self.config['user'] })
           self.data['time_started'] = datetime.now()
-        self.data['duration_paused'] = 0
 
         # Setup for each new run
         if setup:
@@ -402,12 +395,14 @@ class BotBase:
       self.data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
 
   def check_person_entered_map(self):
-    if pag.locateOnScreen(Images.PERSON, region=minimap_rune_region):
-      if not self.data['someone_on_map']:
-        post_status("someone_entered_map", { "user": self.config['user'] })
-        self.data['someone_on_map'] = True
-    else:
-      self.data['someone_on_map'] = False
+    normal = pag.locateOnScreen(Images.PERSON, region=minimap_rune_region)
+    guild = None if normal else pag.locateOnScreen(Images.GUILD_PERSON, region=minimap_rune_region)
+    if normal or guild:
+      cur = datetime.now()
+      if cur >= self.data['someone_on_map_cooldown']:
+        # post_status("someone_entered_map", { "user": self.config['user'] })
+        self.play_audio(Audio.PING, loops=2 if guild else 1)
+        self.data['someone_on_map_cooldown'] = cur + timedelta(seconds=5)
 
   def check_elite_box(self, boxkey='f6'):
     cur = datetime.now()
@@ -516,7 +511,7 @@ class BotBase:
       print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
       print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
       print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
-      print(f"  {FAM_FUEL_KEY} - auto familiar fuel (use after 60 minutes): [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
+      print(f"  {FAM_FUEL_KEY} - auto familiar fuel: [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
       print()
     print(f"  {START_KEY} - start")
     print(f"  {PAUSE_KEY} - pause")
@@ -549,7 +544,10 @@ class Images:
   DRONE_B           = openImage("drone_b.png")
   FOREBERION        = openImage("foreberion.png")
   ASCENDION         = openImage("mob.png")
+  FIRE_SPIRIT       = openImage("fire_spirit.png")
+  FIRE_SPIRIT2      = openImage("fire_spirit2.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")
+  CERNIUM_ICON      = openImage("cernium_icon.png")
   VANISHING_ICON    = openImage("vanishing_icon.png")
   REVERSE_ICON      = openImage("reverse_icon.png")
   RUNE_MINIMAP      = openImage("rune_minimap.png")
@@ -557,6 +555,7 @@ class Images:
   MINIMAP           = openImage("minimap.png")
   ELITE_BOX         = openImage("elite_box.png")
   PERSON            = openImage("person.png")
+  GUILD_PERSON      = openImage("guild_person.png")
   CASH_TAB          = openImage("cash_tab.png")
 
   # Auto familiar leveling
@@ -727,7 +726,7 @@ URL = "http://localhost:5000" if isDev else "https://ms-discord-bot-fd16a56d7c26
 API_KEY = os.getenv('FLASK_KEY_API')
 
 def send_non_block(reqFn):
-  if abort: 
+  if abort or not state['sendstatus']: 
     return
   t = threading.Thread(target=reqFn)
   t.start()

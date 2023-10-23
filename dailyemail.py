@@ -1,11 +1,15 @@
 import time
 import random
+import sys
 from datetime import datetime, timedelta
-from base import BotBase, Images, Audio, KeyListener, post_status, get_status, post_summary
+from base import BotBase, Images
 import pyautogui as pag
+from state import state
 
 ascendion_region = (0, 200, 450, 500)
+firespirit_region = (0, 450, 700, 750-450)
 minimap_map_icon_region = (5, 15, 40, 40)
+map = Images.CERNIUM_ICON
 
 b = None
 data = {
@@ -20,27 +24,145 @@ data = {
   'next_high_speed': datetime.now(),
   'next_bolt_burst': datetime.now(),
   'next_erda_fountain': datetime.now(),
+
+  'next_loot_2': datetime.now() + timedelta(minutes=1.5),
 }
 
 def main():
   global b
+
+  scripts = {
+    "mp": midpoint3_macro,
+    "fs": firespirit3_macro,
+    "default": firespirit3_macro
+  }
+
+  for arg in sys.argv:
+    if arg == 'nomap':
+      state['checkmap'] = False
+    elif arg == 'nomobscan':
+      state['scanmob'] = False
+    elif arg == 'nostatus':
+      state['sendstatus'] = False
+    elif arg == 'dev':
+      state['checkmap'] = False
+      state['scanmob'] = False
+      state['sendstatus'] = False
+    elif arg in scripts:
+      state['script'] = arg
+    
   def pause_cb():
     data['x_and_down_x'] = True
 
   b = BotBase(data, {
     "user": "jeemong",
-    "script": midpoint3_macro,
+    "script": scripts[state['script']],
     "setup": setup,
     "pause_cb": pause_cb
   })
+  print(state)
   b.run()
     
 def setup():
   data['next_blink_setup'] = None
-  data['next_split'] = datetime.now() + timedelta(seconds=uniform(120, 130))
+  data['next_split'] = datetime.now()
   data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(180, 220))
   data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
   
+def firespirit3_macro():
+  print("Started Fire Spirit 3 macro")
+  while not should_pause():
+    buff_setup()
+    firespirit3_rotation()
+    firespirit3_loot()
+  print("Paused Fire Spirit 3 macro")
+
+def firespirit3_rotation():
+  cur = datetime.now()
+  # Find mob before starting rotation
+  if state['scanmob']:
+    mob_loc = None
+    count = 0
+    interval = 0.15
+    while mob_loc == None:
+      if should_pause(): return
+      mob_loc = pag.locateOnScreen(Images.FIRE_SPIRIT, confidence=0.75, grayscale=True, region=firespirit_region) or pag.locateOnScreen(Images.FIRE_SPIRIT2, confidence=0.75, grayscale=True, region=firespirit_region)
+      time.sleep(interval)
+      count += 1
+      if count > (6/interval): break # 6 seconds
+    if mob_loc == None:
+      print(f"Couldn't find mob after {count} tries, continuing rotation")
+    else:
+      print(f"Found mob at {mob_loc}, continuing rotation")
+    
+  if should_pause(): return
+  jump_down_attack(delayAfter=0.37)
+  if should_pause(): return
+  b.press_release('q', 0.45)
+  if should_pause(): return
+  jump_down_attack_turn(delayAfter=0.34, turn='right')
+  if should_pause(): return
+  jump_down_attack(attackDelay=0.3, delayAfter=0.33)
+  if should_pause(): return
+  b.press_release('left')
+  if should_pause(): return
+  jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
+  if should_pause(): return
+  jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
+  cur = datetime.now()
+  if cur > data['next_erda_fountain']:
+    if should_pause(): return
+    jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.49)
+    if should_pause(): return
+    b.press_release('c', 1)
+    if not bolt_burst(0.7):
+      time.sleep(0.7)
+      if should_pause(): return
+    b.press_release('shift', 0.8)
+    if should_pause(): return
+    erda_fountain()
+    if should_pause(): return
+    if datetime.now() > data['next_loot_2']:
+      time.sleep(0.4)
+      data['next_loot_2'] = datetime.now() + timedelta(minutes=1.5)
+    teleport_reset()
+  else:
+    if should_pause(): return
+    teleport_reset()
+  
+def firespirit3_loot():
+  if datetime.now() < data['next_loot']:
+    return
+  if should_pause(): return
+  jump_down_attack(delayAfter=0.7)
+  if should_pause(): return
+  jump_attack(jumpDelay=0.08, attackDelay=0.05, delayAfter=0.53)
+  if should_pause(): return
+  time.sleep(0.3)
+  if should_pause(): return
+  b.press_release('right')
+  if should_pause(): return
+  teleport_reset()
+  if should_pause(): return
+  jump_down_attack(delayAfter=0.7)
+  if should_pause(): return
+  jump_attack(jumpDelay=0.08, attackDelay=0.05, delayAfter=0.52)
+  if should_pause(): return
+  jump_down_attack(delayAfter=0.7)
+  if should_pause(): return
+  jump_down_attack_turn(delayAfter=0.36, turn='left')
+  if should_pause(): return
+  jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
+  if should_pause(): return
+  jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
+  if should_pause(): return
+  jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
+  if should_pause(): return
+  b.check_rune()
+  if should_pause(): return
+  teleport_reset()
+  data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
+
 def midpoint3_macro():
   # buff_setup()
   # return
@@ -206,6 +328,8 @@ def midpoint3_loot():
 def buff_setup():
   cur = datetime.now()
   
+  b.check_person_entered_map()
+
   b.check_fam_leveling()
   
   b.check_tof("y")
@@ -218,29 +342,26 @@ def buff_setup():
 
   b.check_rune()
 
-  # check_person_entered_map()
 
   if data['x_and_down_x']:
-    b.press_release('x')
-    b.press_release('x', 0.7)
+    teleport_reset()
     b.press('down')
     b.press_release('x')
     b.press_release('x')
-    b.release('down', 0.7)
+    b.release('down', 0.6)
     data['x_and_down_x'] = False
     data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
     return
 
   if data['next_blink_setup'] == None:
-    b.press_release('x')
-    b.press_release('x', 0.7)
+    teleport_reset()
     data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
     return
   elif cur > data['next_blink_setup']:
     b.press('down')
     b.press_release('x')
     b.press_release('x')
-    b.release('down', 0.7)
+    b.release('down', 0.6)
     data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
     return
 
@@ -308,12 +429,9 @@ def flash_jump(jumpDelay=0.2, delayAfter=0.7):
   b.press_release('e', delayAfter)
 
 def jump_attack(attackDelay=0.2, jumpDelay=0.05, delayAfter=0.7):
-  rng = random.random()
   b.press_release('e', jumpDelay)
   b.press_release('e', attackDelay)
   b.press_release('q')
-  if rng > 0.7:
-    b.press_release('r')
   time.sleep(delayAfter)
 
 def jump_up(delayAfter=1):
@@ -336,6 +454,19 @@ def jump_down_attack(attackDelay=0.05, delayAfter=1):
   b.release('e')
   b.release('down', delayAfter)
 
+  
+def jump_down_attack_turn(attackDelay=0.05, delayAfter=1, turn='left'):
+  b.press('down')
+  b.press('e')
+  if turn == 'left':
+    b.press_release('left')
+  else:
+    b.press_release('right')
+  time.sleep(attackDelay)
+  b.press_release('q')
+  b.release('e')
+  b.release('down', delayAfter)
+
 def jump_down_and_fj(delayAfter=1):
   jump_down(delayAfter=uniform(0.3, 0.5))
   b.press('e')
@@ -352,7 +483,7 @@ def q_and_surgebolt(afterDelay=0.7):
   else:
     b.press_release('q', afterDelay)
 
-def teleport_reset(delayAfter=0.6):
+def teleport_reset(delayAfter=0.65):
   if should_pause(): return
   b.press_release('x')
   if should_pause(): return
@@ -360,7 +491,7 @@ def teleport_reset(delayAfter=0.6):
 
 def should_pause():
   # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  if not data['is_changed_map'] and pause_if_change_map(Images.LIMINIA_ICON):
+  if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(map):
     data['is_changed_map'] = True
   return data['is_paused']
 

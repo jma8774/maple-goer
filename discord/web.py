@@ -71,7 +71,7 @@ def handle_fam_level():
     elif status == "Success":
         client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling a set of familiars"))
     elif status == "Done":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling all familiars, it will stop now", lifetime=0))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling all familiars, it will stop now"))
     return "Success", 200
 
 @app.route('/tof', methods=['POST'])
@@ -89,7 +89,7 @@ def handle_tof():
     elif status == "Success":
         client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin successfully started a new Thread of Fate quest"))
     elif status == "Done":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin completed all the Thread of Fate quest, it will stop asking now", lifetime=0))
+        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin completed all the Thread of Fate quest, it will stop asking now"))
     return "Success", 200
 
 @app.route('/wap', methods=['POST'])
