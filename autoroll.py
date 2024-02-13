@@ -173,10 +173,10 @@ def cube(tier_to=None):
     if not try_again_loc:
       raise Exception("One more try not found, exiting...")
     interception.click(try_again_loc)
-    press_release('enter')
-    press_release('enter')
-    press_release('enter')
-    press_release('enter')
+    press_release('enter', delay=0.1)
+    press_release('enter', delay=0.1)
+    press_release('enter', delay=0.1)
+    press_release('enter', delay=0.1)
 
   lines_found = {}
   for combination in combinations:
@@ -218,18 +218,23 @@ def cube(tier_to=None):
       data['script'] = None
       break
     time.sleep(0.75)
+    now = datetime.now()
     while not pag.locateOnScreen(Images.ATT_INCREASE, confidence=0.8, grayscale=True, region=box_region):
       time.sleep(0.1)
-    time.sleep(0.15)
+      if datetime.now() - now > timedelta(seconds=1.5):
+        print("Bugged")
+        play_audio("images/retro_ping.wav", 1)
+        now = datetime.now() + timedelta(seconds=9999)
+    time.sleep(0.35)
 
 def setup_audio(volume=1):
   pygame.init()
   pygame.mixer.init()
   pygame.mixer.music.set_volume(volume)
 
-def play_audio():
-  pygame.mixer.music.load("images/ping.mp3")
-  pygame.mixer.music.play()
+def play_audio(song="images/ping.mp3", loops=1):
+  pygame.mixer.music.load(song)
+  pygame.mixer.music.play(loops=loops)
 
 def pause_audio():
   pygame.mixer.music.pause()

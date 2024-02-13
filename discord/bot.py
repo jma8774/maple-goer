@@ -17,11 +17,10 @@ channels = {}
 users = {}
 isDebug = False
 
-messagesQueue = []
 
 @client.event
 async def on_ready():
-  global messagesQueue, channels, users
+  global channels, users
   print(f'{client.user} has connected to Discord!')
   guilds = {
     "apes": client.get_guild(152954629993398272),
@@ -36,19 +35,6 @@ async def on_ready():
     "justin": 152956804270129152,
     "jeemong": 152957206025863168,
   }
-  # Clean up queue every 300 seconds
-  while True:
-    print("Cleaning up messages queue")
-    await asyncio.sleep(300)
-    now = datetime.now()
-    removed = 0
-    messagesQueue = sorted(messagesQueue, key=lambda x: x[1])
-    for (msg, msgExpire) in messagesQueue:
-      if now < msgExpire:
-        break
-      removed += 1
-      await msg.delete()
-    messagesQueue = messagesQueue[removed:]
 
 async def delete_all_bot_msgs(channel):
   global channels
@@ -98,17 +84,17 @@ async def speakToUserId(userId: int, message: str):
 async def speakToName(name, message: str):
   await speakToUserId(users[name], message)
 
-async def send(channel, message, user:str=None, lifetime=300):
+async def dm(user, message, delete_after=None, silent=False):
+  await client.get_user(users[user]).send(message, delete_after=delete_after, silent=silent)
+
+async def send(channel, message, user:str=None, delete_after=None):
   global channels, isDebug
   print(f"Sending message to {channel}: {message}")
   debug = "**[Debug]** " if isDebug else ""
-  messageObj = None
   if user:
-    messageObj = await channels[channel].send(debug + f"<@{users[user]}> " + message)
+    await channels[channel].send(debug + f"<@{users[user]}> " + message, delete_after=delete_after)
   else:
-    messageObj = await channels[channel].send(debug + message)
-  if lifetime > 0 and messageObj is not None:
-    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=lifetime)))
+    await channels[channel].send(debug + message, delete_after=delete_after)
 
 async def sendSummary(channel, data):
   global channels, isDebug
@@ -147,9 +133,10 @@ async def sendSummary(channel, data):
   embed.add_field(name="**:mouse2:  Monsters Killed**", value=f"{monsters_killed}")
   embed.add_field(name="\u200b", value="\u200b", inline=False)
 
-  messageObj = await channels[channel].send(debug+f"<@{users[data['user']]}>", embed=embed)
-  if debug and messageObj is not None:
-    messagesQueue.append((messageObj, datetime.now() + timedelta(seconds=60)))
+  if channel == None:
+    await client.get_user(users[data['user']]).send(debug+f"<@{users[data['user']]}>", embed=embed)
+  else:
+    await channels[channel].send(debug+f"<@{users[data['user']]}>", embed=embed)
 
 def secondsToDisplay(secs):
     hours = int(secs // 3600)

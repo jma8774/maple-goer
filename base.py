@@ -385,7 +385,7 @@ class BotBase:
     self.data['next_fam_fuel_check'] = datetime.now() + timedelta(seconds=30)
 
   def check_rune(self, play_sound=True, post_request=True):
-    if datetime.now() > self.data['next_rune_check']:
+    if datetime.now() > self.data['next_rune_check'] and state['checkrune']:
       if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
         if play_sound and not self.data['rune_playing']:
           self.play_audio(Audio.get_random_rune_audio())
@@ -394,13 +394,15 @@ class BotBase:
           post_status("rune", { "user": self.config['user'] })
       self.data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
 
-  def check_person_entered_map(self):
-    normal = pag.locateOnScreen(Images.PERSON, region=minimap_rune_region)
-    guild = None if normal else pag.locateOnScreen(Images.GUILD_PERSON, region=minimap_rune_region)
+  def check_person_entered_map(self, only_guild=False):
+    normal = None if only_guild else pag.locateOnScreen(Images.PERSON, region=minimap_rune_region)
+    guild = pag.locateOnScreen(Images.GUILD_PERSON, region=minimap_rune_region)
     if normal or guild:
       cur = datetime.now()
       if cur >= self.data['someone_on_map_cooldown']:
         # post_status("someone_entered_map", { "user": self.config['user'] })
+        if guild:
+          post_status("guild_entered_map", { "user": self.config['user'] })
         self.play_audio(Audio.PING, loops=2 if guild else 1)
         self.data['someone_on_map_cooldown'] = cur + timedelta(seconds=5)
 
@@ -546,9 +548,20 @@ class Images:
   ASCENDION         = openImage("mob.png")
   FIRE_SPIRIT       = openImage("fire_spirit.png")
   FIRE_SPIRIT2      = openImage("fire_spirit2.png")
+  DIAMOND_GUARDIAN1 = openImage("diamond_guardian1.png")
+  DIAMOND_GUARDIAN2 = openImage("diamond_guardian2.png")
+  ALLEY3_MOB        = openImage("alley3_mob.png")
+  ALLEY3_MOB2       = openImage("alley3_mob2.png")
+  EBON_MAGE1        = openImage("ebon_mage1.png")
+  EBON_MAGE2        = openImage("ebon_mage2.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")
   CERNIUM_ICON      = openImage("cernium_icon.png")
+  BURNIUM_ICON      = openImage("burnium.png")
+  ODIUM_ICON        = openImage("odium_icon.png")
+  SHANGRILA_ICON    = openImage("shangrila_icon.png")
   VANISHING_ICON    = openImage("vanishing_icon.png")
+  CHUCHU_ICON       = openImage("chuchu_icon.png")
+  LACH_ICON         = openImage("lach_icon.png")
   REVERSE_ICON      = openImage("reverse_icon.png")
   RUNE_MINIMAP      = openImage("rune_minimap.png")
   BOUNTY_MINIMAP    = openImage("bounty_minimap.png")
@@ -557,6 +570,8 @@ class Images:
   PERSON            = openImage("person.png")
   GUILD_PERSON      = openImage("guild_person.png")
   CASH_TAB          = openImage("cash_tab.png")
+  ELITE_BOSS_HP     = openImage("elite_boss_hp.png")
+  REFRESH_BOSS      = openImage("refresh_boss.png")
 
   # Auto familiar leveling
   SETUP             = openImage("setup.png")
@@ -649,8 +664,63 @@ class Images:
   spieglmann_storm_pot = openImage("spieglmann_storm_pot.png")
   spieglmann_growth_pot = openImage("spieglmann_growth_pot.png")
   
+  # CR
+  CR_BATTLE = openImage("cr_battle.png")
+  CR_OK = openImage("cr_ok.png")
+
+  class POE_Images:
+    # Currency Tab
+    highlight = openImage("highlight.png")
+    inactive_alt = openImage("inactive_alt.png")
+    
+    # Cluster
+    glowing = openImage("glowing.png") # t1 es
+    glimmering = openImage("glimmering.png") # t2 es
+    powerful = openImage("powerful.png") # t1 effect
+    potent = openImage("potent.png") # t2 effect
+    prodigy = openImage("prodigy.png") # t1 int
+    bear = openImage("bear.png") # t1 str
+    meteor = openImage("meteor.png") # t1 attribute
+    sky = openImage("sky.png") # t2 attribute
+    kaleidoscope = openImage("kaleidoscope.png") # t1 all res
+    salamander = openImage("salamander.png") # t2 fire res
+    drake = openImage("drake.png") # t1 fire res
+
+    # Flask
+    abecedarian = openImage("abecedarian.png") # 25% effect
+    dabbler = openImage("dabbler.png") # 25% effect
+    alchemist = openImage("alchemist.png") # 25% effect
+
+    dove = openImage("dove.png") # attack speed
+    rainbow = openImage("rainbow.png") # ele res
+    impala = openImage("impala.png") # evasion
+    owl = openImage("owl.png") # curse
+    cheetah = openImage("cheetah.png") # movement speed
+    armadillo = openImage("armadillo.png") # armour
+    bogmoss = openImage("bogmoss.png") # avoid shock
+
+    granite = openImage("granite.png")
+    jade = openImage("jade.png")
+    bismuth = openImage("bismuth.png")
+    quicksilver = openImage("quicksilver.png")
+    amethyst = openImage("amethyst.png")
+    topaz = openImage("topaz.png")
+    sapphire = openImage("sapphire.png")
+
+    # Other
+    mana40 = openImage("mana40.png")
+    hp60 = openImage("hp60.png")
+    showcase_empty = openImage("showcase_empty.png")
+    helmet_tab = openImage("helmet_tab.png")
+    currency_tab = openImage("currency_tab.png")
+    
+    
+  # POE
+  POE = POE_Images
+  
   def get(key, suffix):
     return getattr(Images, f"{key}{suffix}")
+  
   
 class Audio:
   TYLER1_AUTISM     = "images/tyler1autism.mp3"
@@ -720,10 +790,12 @@ class KeyListener:
 load_dotenv()
 
 abort = False
-isDev = "dev" in sys.argv
-URL = "http://localhost:5000" if isDev else "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
-# URL = "http://localhost:5000"
 API_KEY = os.getenv('FLASK_KEY_API')
+
+def get_URL():
+  useLocalServer = "dev" in sys.argv or state['localserver']
+  return "http://localhost:5000" if useLocalServer else "https://ms-discord-bot-fd16a56d7c26.herokuapp.com"
+  
 
 def send_non_block(reqFn):
   if abort or not state['sendstatus']: 
@@ -732,6 +804,7 @@ def send_non_block(reqFn):
   t.start()
 
 def post_status(route, data={ "user": "jeemong" }):
+  URL = get_URL()
   def post_status_helper():
     print(f"Posting status to {URL}/{route}")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
@@ -742,6 +815,7 @@ def post_status(route, data={ "user": "jeemong" }):
   send_non_block(post_status_helper)
 
 def get_status(route, data={ "user": "jeemong" }):
+  URL = get_URL()
   def get_status_helper():
     print(f"Getting status to {URL}/{route}")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
@@ -752,6 +826,7 @@ def get_status(route, data={ "user": "jeemong" }):
   send_non_block(get_status_helper)
 
 def post_fam_level(data):
+  URL = get_URL()
   def post_fam_level_helper():
     print(f"Posting status to {URL}/fam_level")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
@@ -759,9 +834,10 @@ def post_fam_level(data):
       requests.post(f"{URL}/fam_level", headers=headers, json=data)
     except Exception as e:
       print(f"Error posting status to {URL}/fam_level: {e}")
-  send_non_block(post_fam_level_helper)
+  # send_non_block(post_fam_level_helper)
 
 def post_tof(data):
+  URL = get_URL()
   def post_tof_helper():
     print(f"Posting status to {URL}/tof")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
@@ -769,9 +845,10 @@ def post_tof(data):
       requests.post(f"{URL}/tof", headers=headers, json=data)
     except Exception as e:
       print(f"Error posting status to {URL}/tof: {e}")
-  send_non_block(post_tof_helper)
+  # send_non_block(post_tof_helper)
 
 def post_wap(data):
+  URL = get_URL()
   def post_wap_helper():
     print(f"Posting status to {URL}/wap")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
@@ -779,9 +856,10 @@ def post_wap(data):
       requests.post(f"{URL}/wap", headers=headers, json=data)
     except Exception as e:
       print(f"Error posting status to {URL}/wap: {e}")
-  send_non_block(post_wap_helper)
+  # send_non_block(post_wap_helper)
 
 def post_fam_fuel(data):
+  URL = get_URL()
   def post_fam_fuel_helper():
     print(f"Posting status to {URL}/fam_fuel")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
@@ -789,9 +867,10 @@ def post_fam_fuel(data):
       requests.post(f"{URL}/fam_fuel", headers=headers, json=data)
     except Exception as e:
       print(f"Error posting status to {URL}/fam_fuel: {e}")
-  send_non_block(post_fam_fuel_helper)
+  # send_non_block(post_fam_fuel_helper)
     
 def post_summary(start_time, user):
+  URL = get_URL()
   def post_summary_helper():
     print(f"Posting bot run time to {URL}/summary")
     headers = {'X-API-Key': API_KEY, 'Content-Type': 'application/json'}
@@ -803,3 +882,4 @@ def post_summary(start_time, user):
       print(f"Error posting time to {URL}/summary: {e}")
   send_non_block(post_summary_helper)
 #endregion DISCORD REQUEST
+

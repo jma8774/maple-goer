@@ -8,8 +8,22 @@ from state import state
 
 ascendion_region = (0, 200, 450, 500)
 firespirit_region = (0, 450, 700, 750-450)
-minimap_map_icon_region = (5, 15, 40, 40)
-map = Images.CERNIUM_ICON
+ebon_region = (750, 230, 1365-750, 415-230)
+gate1_region = (5, 300, 365-5, 545-300)
+alley3_region = (0, 310, 670, 725-310)
+minimap_map_icon_region = (0, 0, 55, 55)
+def getMap():
+  maps = {
+    "mp": Images.LIMINIA_ICON,
+    "fs": Images.CERNIUM_ICON,
+    "ebon": Images.BURNIUM_ICON,
+    "gate1": Images.ODIUM_ICON,
+    "alley3": Images.ODIUM_ICON,
+    "spring1": Images.SHANGRILA_ICON,
+    # "maru": Images.MARAUDER_ICON,
+    "default": Images.ODIUM_ICON
+  }
+  return maps[state['script']] if state['script'] in maps else maps['default']
 
 b = None
 data = {
@@ -18,6 +32,8 @@ data = {
   'next_split': datetime.now(),
   'next_blink_setup': None,
   'next_bird': datetime.now(),
+  'next_pot': datetime.now() + timedelta(minutes=0.5),
+  'next_boss_buff': datetime.now() + timedelta(minutes=0.5),
 
   'next_surgebolt': datetime.now(),
   'next_web': datetime.now(),
@@ -34,7 +50,15 @@ def main():
   scripts = {
     "mp": midpoint3_macro,
     "fs": firespirit3_macro,
-    "default": firespirit3_macro
+    "ebon": ebonmage_macro,
+    "maru": maru2_macro,
+    "gate1": gate1_macro,
+    "alley3": alley3_macro,
+    "spring1": spring1_macro,
+    "default": gate1_macro,
+
+    "tiru": tiru_macro,
+    "knight": knight_macro,
   }
 
   for arg in sys.argv:
@@ -44,12 +68,15 @@ def main():
       state['scanmob'] = False
     elif arg == 'nostatus':
       state['sendstatus'] = False
+    elif arg == 'norune':
+      state['checkrune'] = False
     elif arg == 'dev':
       state['checkmap'] = False
       state['scanmob'] = False
       state['sendstatus'] = False
     elif arg in scripts:
       state['script'] = arg
+    state['localserver'] = True
     
   def pause_cb():
     data['x_and_down_x'] = True
@@ -68,7 +95,304 @@ def setup():
   data['next_split'] = datetime.now()
   data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(180, 220))
   data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
+
+def spring1_macro():
+  print("Started Blooming Spring 1 macro")
+  while not should_pause():
+    buff_setup()
+    if should_pause(): return
+    b.press_release('e', 0.1)
+    if should_pause(): return
+    b.press_release('q', 0.6)
+    if should_pause(): return
+    b.press_release('q', 0.6)
+    if should_pause(): return
+    b.press_release('right')
+    if should_pause(): return
+    b.press_release('e', 0.1)
+    if should_pause(): return
+    b.press_release('q', 0.6)
+    if should_pause(): return
+    b.press_release('q', 0.6)
+    if should_pause(): return
+    b.press_release('left')
+    teleport_reset()
+    time.sleep(6)
+  print("Paused Blooming Spring 1 macro")
+
+def alley3_macro():
+  erda_counter = 0
+  def alley3_rotation():
+    nonlocal erda_counter
+    cur = datetime.now()
+    # Use erda fountain if available
+    if cur > data['next_erda_fountain']:
+      erda_counter += 1
+      jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.47)
+      if False:
+        if should_pause(): return
+        jump_down_attack(delayAfter=0.47)
+        if should_pause(): return
+        erda_fountain()
+        if should_pause(): return
+        teleport_reset()
+      else:
+        jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.47)
+        if should_pause(): return
+        jump_down_attack_turn(delayAfter=0.45, turn='left')
+        if should_pause(): return
+        b.press('left', 0.7)
+        if should_pause(): return
+        b.release('left')
+        if should_pause(): return
+        erda_fountain()
+        if should_pause(): return
+        jump_down_attack(delayAfter=0.48)
+        if should_pause(): return
+        jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.47)
+        if should_pause(): return
+        jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.49)
+        if should_pause(): return
+        b.press_release('right')
+        if should_pause(): return
+        teleport_reset()
+        data['next_loot_2'] = datetime.now() + timedelta(minutes=1.5)
+    # Find mob before starting rotation
+    if state['scanmob']:
+      mob_loc = None
+      count = 0
+      interval = 0.1
+      while mob_loc == None:
+        if should_pause(): return
+        mob_loc = pag.locateOnScreen(Images.ALLEY3_MOB, confidence=0.75, grayscale=True, region=alley3_region) or pag.locateOnScreen(Images.ALLEY3_MOB2, confidence=0.75, grayscale=True, region=alley3_region)
+        time.sleep(interval)
+        count += 1
+        if count > (6/interval): break # 6 seconds
+      if mob_loc == None:
+        print(f"Couldn't find mob after {count} tries, continuing rotation")
+      else:
+        print(f"Found mob at {mob_loc}, continuing rotation")
+    if should_pause(): return
+    b.press_release('e', 0.15)
+    if should_pause(): return
+    q_and_surgebolt(afterDelay=0.49)
+    if should_pause(): return
+    b.press_release('left')
+    if should_pause(): return
+    jump_attack(attackDelay=0.05, delayAfter=0.47)
+    if should_pause(): return
+    jump_attack(attackDelay=0.05, delayAfter=0.7)
+    if datetime.now() < data['next_loot']:
+      if should_pause(): return
+      jump_down_attack(delayAfter=0.45)
+      if should_pause(): return
+      b.press_release('right')
+      if should_pause(): return
+      jump_attack(attackDelay=0.05, delayAfter=0.47)
+      if should_pause(): return
+      jump_attack(attackDelay=0.05, delayAfter=0.49)
+      if should_pause(): return
+      teleport_reset()
+    else:
+      jump_up(delayAfter=1)
+      if should_pause(): return
+      b.press_release('right')
+      if should_pause(): return
+      data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
+      teleport_reset()
   
+  print("Started Road to the Castle's Gate 1 macro")
+  while not should_pause():
+    buff_setup()
+    alley3_rotation()
+  print("Paused Road to the Castle's Gate 1 macro")
+
+def gate1_macro():
+  def gate1_rotation():
+    just_erda = False
+    cur = datetime.now()
+    # Use erda fountain if available
+    if cur > data['next_erda_fountain']:
+      if should_pause(): return
+      b.press_release('shift', 0.8)
+      if should_pause(): return
+      erda_fountain()
+      just_erda = True
+
+    if just_erda:
+      if should_pause(): return
+      q_and_surgebolt(afterDelay=0.47)
+      if should_pause(): return
+      jump_down_attack_turn(delayAfter=0.45, turn='left')
+      if should_pause(): return
+      q_and_surgebolt(afterDelay=0.47)
+      if should_pause(): return
+      b.press_release('right')
+      if should_pause(): return
+      jump_attack(attackDelay=0.05, delayAfter=0.47)
+      if should_pause(): return
+      jump_attack(attackDelay=0.05, delayAfter=0.47)
+      if should_pause(): return
+      teleport_reset()
+    else:
+      # Find mob before starting rotation
+      if state['scanmob']:
+        mob_loc = None
+        count = 0
+        interval = 0.15
+        while mob_loc == None:
+          if should_pause(): return
+          mob_loc = pag.locateOnScreen(Images.DIAMOND_GUARDIAN1, confidence=0.75, grayscale=True, region=gate1_region) or pag.locateOnScreen(Images.DIAMOND_GUARDIAN2, confidence=0.75, grayscale=True, region=gate1_region)
+          time.sleep(interval)
+          count += 1
+          if count > (6/interval): break # 6 seconds
+        if mob_loc == None:
+          print(f"Couldn't find mob after {count} tries, continuing rotation")
+        else:
+          print(f"Found mob at {mob_loc}, continuing rotation")
+      if should_pause(): return
+      q_and_surgebolt(afterDelay=0.47)
+      if should_pause(): return
+      jump_down_attack_turn(delayAfter=0.41, turn='left')
+      if should_pause(): return
+      jump_down_attack(delayAfter=0.41)
+      if should_pause(): return
+      b.press_release('right')
+      if should_pause(): return
+      jump_attack(attackDelay=0.05, delayAfter=0.47)
+      if should_pause(): return
+      if random.random() > 0.6:
+        jump_attack(attackDelay=0.05, delayAfter=0.47)
+      if should_pause(): return
+      teleport_reset()
+  
+  def gate1_loot():
+    if datetime.now() < data['next_loot']:
+      return
+    if should_pause(): return
+    jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.47)
+    if should_pause(): return
+    jump_down_attack(delayAfter=0.47)
+    if should_pause(): return
+    q_and_surgebolt(afterDelay=0.45)
+    if should_pause(): return
+    b.press_release('left')
+    if should_pause(): return
+    jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.47)
+    if should_pause(): return
+    jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.47)
+    if should_pause(): return
+    jump_attack(jumpDelay=0.07, attackDelay=0.05, delayAfter=0.47)
+    if should_pause(): return
+    b.press_release('c', 0.9)
+    if not bolt_burst(0.6):
+      if not web(delayAfter=0.6):
+        q_and_surgebolt(afterDelay=0.6)
+    b.press_release('right')
+    if should_pause(): return
+    teleport_reset()
+    data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
+    
+  print("Started Road to the Castle's Gate 1 macro")
+  while not should_pause():
+    buff_setup()
+    gate1_rotation()
+    gate1_loot()
+  print("Paused Road to the Castle's Gate 1 macro")
+
+def maru2_macro():
+  print("Started Marauder macro")
+  while not should_pause():
+    buff_setup()
+    if should_pause(): return
+    q_and_surgebolt(afterDelay=0.47)
+    if should_pause(): return
+    jump_down_attack_turn(delayAfter=0.41, turn='right')
+    if should_pause(): return
+    q_and_surgebolt(afterDelay=0.47)
+    if should_pause(): return
+    b.press_release('left')
+    if should_pause(): return
+    jump_attack(attackDelay=0.05, delayAfter=0.47)
+    if should_pause(): return
+    jump_attack(attackDelay=0.05, delayAfter=0.47)
+    if should_pause(): return
+    teleport_reset()
+  print("Paused Marauder macro")
+
+def ebonmage_macro():
+  print("Started Ebon Mage macro")
+  while not should_pause():
+    if datetime.now() < data['next_loot']:
+      buff_setup()
+    else:
+      if should_pause(): return
+      jump_attack(jumpDelay=0.04, attackDelay=0.05, delayAfter=1)
+      if should_pause(): return
+      jump_down_attack(delayAfter=0.3)
+      if should_pause(): return
+      jump_down_attack_turn(delayAfter=0.4, turn='right')
+      if should_pause(): return
+      q_and_surgebolt(afterDelay=0.48)
+      if should_pause(): return
+      b.press_release('left')
+      jump_attack(jumpDelay=0.04, attackDelay=0.05, delayAfter=0.47)
+      if should_pause(): return
+      teleport_reset()
+      data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
+
+    if datetime.now() > data['next_erda_fountain']:
+      if should_pause(): return
+      b.press('right', 0.8)
+      if should_pause(): return
+      jump_attack(jumpDelay=0.02, attackDelay=0.02, delayAfter=0.47)
+      if should_pause(): return
+      b.release('right')
+      if should_pause(): return
+      b.press_release('left')
+      if should_pause(): return
+      erda_fountain()
+      if should_pause(): return
+      jump_down_attack(delayAfter=0.5)
+      if should_pause(): return
+      jump_attack(jumpDelay=0.02, attackDelay=0.02, delayAfter=0.47)
+      if should_pause(): return
+      jump_attack(jumpDelay=0.02, attackDelay=0.02, delayAfter=0.47)
+      teleport_reset()
+    else:
+      if state['scanmob']:
+        mob_loc = None
+        count = 0
+        interval = 0.15
+        while mob_loc == None:
+          if should_pause(): return
+          mob_loc = pag.locateOnScreen(Images.EBON_MAGE1, confidence=0.75, grayscale=True, region=ebon_region) or pag.locateOnScreen(Images.EBON_MAGE2, confidence=0.75, grayscale=True, region=ebon_region)
+          time.sleep(interval)
+          count += 1
+          if count > (6/interval): break # 6 seconds
+        if mob_loc == None:
+          print(f"Couldn't find mob after {count} tries, continuing rotation")
+        else:
+          print(f"Found mob at {mob_loc}, continuing rotation")
+      if should_pause(): return
+      b.press_release('q', 0.46)
+      if should_pause(): return
+      jump_down_attack_turn(delayAfter=0.4, turn='right')
+      if should_pause(): return
+      b.press_release('q', 0.46)
+      if should_pause(): return
+      jump_down_attack_turn(delayAfter=0.42, turn='left')
+      if should_pause(): return
+      q_and_surgebolt(afterDelay=0.47)
+      if should_pause(): return
+      b.press_release('right')
+      if should_pause(): return
+      q_and_surgebolt(afterDelay=0.47)
+      if should_pause(): return
+      b.press_release('left')
+      teleport_reset()
+  print("Paused Ebon Mage macro")
+    
 def firespirit3_macro():
   print("Started Fire Spirit 3 macro")
   while not should_pause():
@@ -98,9 +422,9 @@ def firespirit3_rotation():
   if should_pause(): return
   jump_down_attack(delayAfter=0.37)
   if should_pause(): return
-  b.press_release('q', 0.45)
+  b.press_release('q', 0.46)
   if should_pause(): return
-  jump_down_attack_turn(delayAfter=0.34, turn='right')
+  jump_down_attack_turn(delayAfter=0.40, turn='right')
   if should_pause(): return
   jump_down_attack(attackDelay=0.3, delayAfter=0.33)
   if should_pause(): return
@@ -158,7 +482,7 @@ def firespirit3_loot():
   if should_pause(): return
   jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
   if should_pause(): return
-  b.check_rune()
+  b.check_rune(play_sound=False)
   if should_pause(): return
   teleport_reset()
   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
@@ -325,10 +649,42 @@ def midpoint3_loot():
 
   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))
 
+def knight_macro():
+  while not should_pause():
+    buff_setup()
+    jump_down_attack(delayAfter=0.6)
+    if should_pause(): return
+    q_and_surgebolt(afterDelay=0.5)
+    if datetime.now() > data['next_loot']:
+        data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))
+        jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
+        jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
+    teleport_reset()
+
+def tiru_macro():
+  while not should_pause():
+    buff_setup()
+    if datetime.now() > data['next_loot']:
+      flash_jump(jumpDelay=0.1)
+      data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))
+    jump_down_attack(delayAfter=0.6)
+    if should_pause(): return
+    jump_down_attack(delayAfter=0.6)
+    if should_pause(): return
+    q_and_surgebolt(afterDelay=0.5)
+    if should_pause(): return
+    b.press_release('right')
+    if should_pause(): return
+    q_and_surgebolt(afterDelay=0.5)
+    if should_pause(): return
+    b.press_release('left')
+    if should_pause(): return
+    teleport_reset()
+
 def buff_setup():
   cur = datetime.now()
   
-  b.check_person_entered_map()
+  b.check_person_entered_map(only_guild=True)
 
   b.check_fam_leveling()
   
@@ -340,8 +696,16 @@ def buff_setup():
 
   b.check_elite_box()
 
-  b.check_rune()
+  b.check_rune(play_sound=False)
 
+  if cur > data['next_boss_buff'] and pag.locateOnScreen(Images.ELITE_BOSS_HP, region=(200, 0, 1150-200, 30)):
+    b.press_release('t', 0.5)
+    b.press_release('pageup', 0.45)
+    b.press_release('home', 0.45)
+    b.press_release('insert', 0.9)
+    b.press_release('delete', 0.6)
+    web(delayAfter=0.4)
+    data['next_boss_buff'] = cur + timedelta(minutes=uniform(1.5, 1.7))
 
   if data['x_and_down_x']:
     teleport_reset()
@@ -370,20 +734,20 @@ def buff_setup():
     b.press_release('2', 0.7)
     return
 
-  if cur > data['next_sharpeye']:
-    data['next_sharpeye'] = cur + timedelta(seconds=uniform(180, 220))
-    b.press_release('pagedown', 1.55)
-    return
+  # if cur > data['next_sharpeye']:
+  #   data['next_sharpeye'] = cur + timedelta(seconds=uniform(180, 220))
+  #   b.press_release('pagedown', 1.55)
+  #   return
 
-  if cur > data['next_bird']:
-    b.press_release('5', 0.7)
-    data['next_bird'] = cur + timedelta(seconds=uniform(116, 125))
+  # if cur > data['next_bird']:
+  #   b.press_release('5', 0.7)
+  #   data['next_bird'] = cur + timedelta(seconds=uniform(116, 125))
 
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
     b.press('down')
-    b.press_release('f')
-    b.press_release('f')
+    b.press_release('b')
+    b.press_release('b')
     b.release('down', delay=0.6)
     data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
     return True
@@ -456,15 +820,15 @@ def jump_down_attack(attackDelay=0.05, delayAfter=1):
 
   
 def jump_down_attack_turn(attackDelay=0.05, delayAfter=1, turn='left'):
-  b.press('down')
-  b.press('e')
+  b.press('down', delay=0.02)
+  b.press('e', delay=0.02)
   if turn == 'left':
-    b.press_release('left')
+    b.press_release('left', delay=0)
   else:
-    b.press_release('right')
+    b.press_release('right', delay=0)
   time.sleep(attackDelay)
-  b.press_release('q')
-  b.release('e')
+  b.press_release('q', delay=0.02)
+  b.release('e', delay=0.02)
   b.release('down', delayAfter)
 
 def jump_down_and_fj(delayAfter=1):
@@ -491,7 +855,7 @@ def teleport_reset(delayAfter=0.65):
 
 def should_pause():
   # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(map):
+  if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(getMap()):
     data['is_changed_map'] = True
   return data['is_paused']
 

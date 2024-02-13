@@ -1,12 +1,13 @@
 import asyncio
 from flask import Flask, request, jsonify
-from bot import client, send, sendSummary, speakToName, delete_all_bot_msgs
+from bot import client, send, dm, sendSummary, speakToName, delete_all_bot_msgs
 from werkzeug.exceptions import HTTPException
 from dotenv import load_dotenv
 import os
 from datetime import datetime
 import pytz
 from common import secondsToDisplay, dtFormat
+from config import is_dm
 
 app = Flask(__name__)
 
@@ -36,98 +37,141 @@ def handle_hello():
 @app.route('/whiteroom', methods=['POST'])
 def handle_whiteroom():
     body = request.json
-    client_event(speakToName(body["user"], f"{body['user']} you got whiteroomed you dumbass"))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
-    client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", body["user"]))
+    user = body["user"]
+    client_event(speakToName(user, f"{user} you got whiteroomed you dumbass"))
+    if is_dm(user):
+        client_event(dm(user, ":white_large_square: You got whiteroomed  :white_large_square:"))
+        client_event(dm(user, ":white_large_square: You got whiteroomed  :white_large_square:"))
+        client_event(dm(user, ":white_large_square: You got whiteroomed  :white_large_square:"))
+        client_event(dm(user, ":white_large_square: You got whiteroomed  :white_large_square:"))
+        client_event(dm(user, ":white_large_square: You got whiteroomed  :white_large_square:"))
+    else:
+        client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", user, delete_after=300))
+        client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", user, delete_after=300))
+        client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", user, delete_after=300))
+        client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", user, delete_after=300))
+        client_event(send("bot-spam-2", ":white_large_square: You got whiteroomed  :white_large_square:", user, delete_after=300))
     return "Success", 200
 
 @app.route('/rune', methods=['POST'])
 def handle_rune():
     body = request.json
-    client_event(send("bot-spam-2", "Rune is up :robot:", body["user"]))
+    user = body["user"]
+    if is_dm(user):
+        client_event(dm(user, "Rune is up :robot:", delete_after=60))
+    else:
+        client_event(send("bot-spam-2", "Rune is up :robot:", user, delete_after=300))
     return "Success", 200
 
 @app.route('/someone_entered_map', methods=['POST'])
 def handle_someone_entered_map():
     body = request.json
-    client_event(send("bot-spam-2", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"]))
+    user = body["user"]
+    if is_dm(user):
+        client_event(dm(user, "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", delete_after=60))
+    else:
+        client_event(send("bot-spam-2", "Someone entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"], delete_after=300))
+    return "Success", 200
+
+@app.route('/guild_entered_map', methods=['POST'])
+def handle_guild_entered_map():
+    body = request.json
+    user = body["user"]
+    if is_dm(user):
+        client_event(dm(user, "Guild person entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", delete_after=60))
+    else:
+        client_event(send("bot-spam-2", "Guild person entered your map  <:monkas:421119362225799178> <:monkas:421119362225799178> <:monkas:421119362225799178>", body["user"], delete_after=300))
     return "Success", 200
 
 @app.route('/started', methods=['POST'])
 def handle_started():
     body = request.json
-    client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", body["user"], lifetime=0))
+    user = body["user"]
+    if is_dm(user):
+        client_event(dm(user, f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", silent=True))
+    else:
+        client_event(send("bot-spam-2", f"Started his cousin at :clock1: **{dtFormat(datetime.now())} EST** :clock1:", user))
     return "Success", 200
 
 @app.route('/fam_level', methods=['POST'])
 def handle_fam_level():
     body = request.json
     status, user = body["status"], body["user"]
+    def send_wrapper(message):
+        if is_dm(user):
+            client_event(dm(user, message, delete_after=60, silent=True))
+        else:
+            client_event(send("bot-spam-2", message, delete_after=300))
     if status == "NotLeveledYet":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin determined that the familiars were not level 5 yet, trying again in 10 minutes"))
+        client_event(send_wrapper("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin determined that the familiars were not level 5 yet, trying again in 10 minutes"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling a set of familiars"))
+        client_event(send_wrapper("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling a set of familiars"))
     elif status == "Done":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling all familiars, it will stop now"))
+        client_event(send_wrapper("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Auto Familiar Leveling]**\n{user}'s cousin finished leveling all familiars, it will stop now"))
     return "Success", 200
 
 @app.route('/tof', methods=['POST'])
 def handle_tof():
     body = request.json
     status, user = body["status"], body["user"]
+    def send_wrapper(message):
+        if is_dm(user):
+            client_event(dm(user, message, delete_after=60, silent=True))
+        else:
+            client_event(send("bot-spam-2", message, delete_after=300))
     if status == "NoBulb":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the white quest bulb"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the white quest bulb"))
     elif status == "InProgress":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin tried to complete the quest but we still need to wait, trying again in 5 minutes"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin tried to complete the quest but we still need to wait, trying again in 5 minutes"))
     elif status == "NoPerson":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the npc to click on"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin couldn't find the npc to click on"))
     elif status == "NoAsk":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin coulnd't find the ask button"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin coulnd't find the ask button"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin successfully started a new Thread of Fate quest"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin successfully started a new Thread of Fate quest"))
     elif status == "Done":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin completed all the Thread of Fate quest, it will stop asking now"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - ToF]**\n{user}'s cousin completed all the Thread of Fate quest, it will stop asking now"))
     return "Success", 200
 
 @app.route('/wap', methods=['POST'])
 def handle_wap():
     body = request.json
     status, user = body["status"], body["user"]
+    def send_wrapper(message):
+        if is_dm(user):
+            client_event(dm(user, message, delete_after=60, silent=True))
+        else:
+            client_event(send("bot-spam-2", message, delete_after=300))
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin couldn't find the USE inventory"))
+        client_event(send_wrapper("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin couldn't find the USE inventory"))
     elif status == "AlreadyWapped":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin tried to WAP, but it is already active"))
+        client_event(send_wrapper("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin tried to WAP, but it is already active"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin used a WAP"))
+        client_event(send_wrapper("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin used a WAP"))
     elif status == "Failed":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin failed to use the WAP"))
+        client_event(send_wrapper("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - WAP]**\n{user}'s cousin failed to use the WAP"))
     return "Success", 200
 
 @app.route('/fam_fuel', methods=['POST'])
 def handle_fam_fuel():
     body = request.json
     status, user = body["status"], body["user"]
+    def send_wrapper(message):
+        if is_dm(user):
+            client_event(dm(user, message, delete_after=60, silent=True))
+        else:
+            client_event(send("bot-spam-2", message, delete_after=300))
     if status == "InventoryNotFound":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the USE inventory"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the USE inventory"))
     elif status == "NotExpired":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin determined that the familiar buff is not about to expire"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin determined that the familiar buff is not about to expire"))
     elif status == "CantFindFuel":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the familiar fuel in inventory"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin couldn't find the familiar fuel in inventory"))
     elif status == "Success":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin used a familiar essence"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin used a familiar essence"))
     elif status == "Failed":
-        client_event(send("bot-spam-2", f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin failed to use the familiar fuel"))
+        client_event(send_wrapper(f"**[{dtFormat(datetime.now())} EST - Familiar Essence]**\n{user}'s cousin failed to use the familiar fuel"))
     return "Success", 200
-
-@app.route('/delete_all_bot_msgs', methods=['POST'])
-def handle_delete_all_bot_msgs():
-    body = request.json
-    client_event(delete_all_bot_msgs(body["channel"]))
-    return "Success", 200
-
 
 # @app.route('/stopped', methods=['POST'])
 # def handle_stopped():
@@ -153,7 +197,7 @@ def handle_delete_all_bot_msgs():
 @app.route('/summary', methods=['POST'])
 def handle_summary():
     data = request.json
-    client_event(sendSummary("bot-spam-2", data))
+    client_event(sendSummary(None if is_dm(data['user']) else "bot-spam-2", data))
     return "Success", 200
 
 # Discord bot is on another event loop/thread, so we need to use this function to call it's functions IDK TBH BUT IT WORKS

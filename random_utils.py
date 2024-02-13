@@ -16,7 +16,7 @@ EXTRACT_KEY = 'f2'
 OPEN_HERB_BAGS_KEY = 'f3'
 ENHANCE_KEY = 'f4'
 LOGIN_CHARS_FOR_1HOUR_KEY = 'f5'
-SPIEGLMANN_KEY = 'f6'
+REFRESH_BOSS_KEY = 'f6'
 
 # Data
 data = {
@@ -38,7 +38,7 @@ def main():
     "OPEN_HERB_BAGS": openHerbBags,
     "ENHANCE": enhance,
     "LOGIN_CHARS_FOR_1HOUR": loginChars1Hour,
-    "SPIEGLMANN": spieglmann
+    "REFRESH_BOSS": refreshboss
   })
   kl = KeyListener(data)
   kl.add(CRAFT_WAP_KEY, lambda: toggleScript("WAP crafting", scripts.WAP_CRAFT))
@@ -46,7 +46,7 @@ def main():
   kl.add(OPEN_HERB_BAGS_KEY, lambda: toggleScript("open herb bags", scripts.OPEN_HERB_BAGS))
   kl.add(ENHANCE_KEY, lambda: toggleScript("enhance gear", scripts.ENHANCE))
   kl.add(LOGIN_CHARS_FOR_1HOUR_KEY, lambda: toggleScript("login to each chars for 1 hour to reset guild skills", scripts.LOGIN_CHARS_FOR_1HOUR))
-  kl.add(SPIEGLMANN_KEY, lambda: toggleScript("spieglmann", scripts.SPIEGLMANN))
+  kl.add(REFRESH_BOSS_KEY, lambda: toggleScript("refresh boss ui", scripts.REFRESH_BOSS))
   kl.run()
 
   commands()
@@ -62,18 +62,14 @@ def main():
     print("Exiting... (Try spamming CTRL + C)")
     data['stop_flag'] = True
 
-def spieglmann(scripts):
-  while data["target"] == scripts.SPIEGLMANN:
-    loc = pag.locateCenterOnScreen(Images.spieglmann_pot)
-    if not loc:
-      loc = pag.locateCenterOnScreen(Images.spieglmann_growth_pot)
-    if not loc:
-      loc = pag.locateCenterOnScreen(Images.spieglmann_storm_pot)
-    if loc:
-      click(loc)
-      click(loc)
-    interception.move_to((25, 25))
-    time.sleep(0.05)
+def refreshboss(scripts):
+  while data["target"] == scripts.REFRESH_BOSS:
+    refresh_loc = pag.locateCenterOnScreen(Images.REFRESH_BOSS, confidence=0.9, grayscale=True)
+    if refresh_loc:
+      interception.click(refresh_loc)
+      time.sleep(0.5)
+      interception.move_to((25, 25))
+    time.sleep(3)
     
 def loginChars1Hour(scripts):
   while data["target"] == scripts.LOGIN_CHARS_FOR_1HOUR:
@@ -81,12 +77,14 @@ def loginChars1Hour(scripts):
     # Wait 1 hour
     print("Waiting 1 hour...")
     time.sleep(3605)
+
     # time.sleep(60)
 
     # Log off
     print("Logging off...")
     while pag.locateOnScreen(Images.SETTING, confidence=0.8, grayscale=True) == None:
       press_release('escape')
+      time.sleep(1)
     press_release('up', 0.5)
     press_release('enter', 0.5)
     press_release('enter', 0.5)
@@ -96,10 +94,13 @@ def loginChars1Hour(scripts):
     # Go to next character
     print("Going to next character...")
     rebootLoc = pag.locateCenterOnScreen(Images.REBOOT, confidence=0.8, grayscale=True)
-    interception.click(rebootLoc)
-    time.sleep(1)
-    press_release('enter')
-    time.sleep(10)
+    while rebootLoc != None:
+      interception.click(rebootLoc)
+      time.sleep(1)
+      press_release('enter')
+      time.sleep(10)
+      interception.move_to((25, 25))
+      rebootLoc = pag.locateCenterOnScreen(Images.REBOOT, confidence=0.8, grayscale=True)
 
     # Enter the character   
     print("Entering character...")
@@ -140,7 +141,8 @@ def craftWAP(scripts):
   while data["target"] == scripts.WAP_CRAFT:
     time.sleep(0.1)
     clickIfFound(Images.CRAFT)
-    time.sleep(0.3)
+    interception.click()
+    time.sleep(1)
     clickIfFound(Images.OK_START)
     time.sleep(5)
     clickIfFound(Images.OK_END)
@@ -202,7 +204,7 @@ def commands():
   print(f"  {OPEN_HERB_BAGS_KEY} - start/end open herb bags")
   print(f"  {ENHANCE_KEY} - start/end gear enhancement")
   print(f"  {LOGIN_CHARS_FOR_1HOUR_KEY} - start/end login to each chars for 1 hour to reset guild skills (start from the character you want already logged in)")
-  print(f"  {SPIEGLMANN_KEY} - start/end spieglmann")
+  print(f"  {REFRESH_BOSS_KEY} - start/end refresh boss ui")
 
 if __name__=="__main__":
   main()
