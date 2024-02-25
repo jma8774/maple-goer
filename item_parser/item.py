@@ -10,9 +10,15 @@ class Item:
     self._raw_string: str = raw_string
     self._item_affixes: list[str] = []
     self._item_affixes_parsed: dict = {}
+    self._num_prefixes = 0
+    self._num_suffixes = 0
     self._item_base = ""
     self._item_class = ""
+    self._item_rarity = ""
     self._item_level = ""
+
+    # Cluster Jewel Enchants
+    self._cluster_jewel_enchants = []
 
     lines = raw_string.splitlines()
     i = 0
@@ -23,6 +29,15 @@ class Item:
         if match is None:
           raise ValueError(f"Could not parse item class: {lines[i]}, match={match}")
         self._item_class = match.group(0) if match else lines[i]
+        i += 1
+        continue
+
+      # Parse item rarity (always second line)
+      if self._item_rarity == "":
+        match = re.search(RE_GET_CONTENT_AFTER_COLON, lines[i])
+        if match is None:
+          raise ValueError(f"Could not parse item rarity: {lines[i]}, match={match}")
+        self._item_rarity = match.group(0) if match else lines[i]
         i += 1
         continue
 
@@ -42,6 +57,12 @@ class Item:
         i += 1
         continue
 
+      if "Cluster" in self._item_base:
+        if lines[i].startswith("Added") and lines[i].endswith("(enchant)"):
+          self._cluster_jewel_enchants.append(lines[i])
+          i += 1
+          continue
+
       # Parse affixes
       if lines[i] == SEPERATOR and (lines[i+1].startswith("{ Prefix") or lines[i+1].startswith("{ Suffix")):
         i += 1
@@ -55,6 +76,10 @@ class Item:
       
     i = 0
     while i < len(self._item_affixes):
+      if self._item_affixes[i].startswith("{ Prefix"):
+        self._num_prefixes += 1
+      if self._item_affixes[i].startswith("{ Suffix"):
+        self._num_suffixes += 1
       affix_type = self._item_affixes[i]
       affix_descriptions = []
       i += 1
@@ -69,19 +94,37 @@ class Item:
     return self._item_affixes_parsed
   
   @property
-  def item_base(self):
+  def base(self):
     return self._item_base
   
   @property
-  def item_class(self):
+  def type(self):
     return self._item_class
   
   @property
-  def item_level(self):
+  def ilvl(self):
     return self._item_level
-
+  
+  @property
+  def rarity(self):
+    return self._item_rarity
+  
+  @property
+  def num_prefixes(self):
+    return self._num_prefixes
+  
+  @property
+  def num_suffixes(self):
+    return self._num_suffixes
+  
+  def cluster_jewel_has(self, word: str):
+    for line in self._cluster_jewel_enchants:
+      if word in line:
+        return True
+    return False
+  
   def __str__(self):
-    return f"{([str(v) for k, v in self._item_affixes_parsed.items()])}"
+    return f"({self.num_prefixes}p {self.num_suffixes}s]) {([str(v) for k, v in self._item_affixes_parsed.items()])}"
     # return f"{self._item_base} {([str(v) for k, v in self._item_affixes_parsed.items()])}"
   
   def __eq__(self, other):

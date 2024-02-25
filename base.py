@@ -671,7 +671,12 @@ class Images:
   class POE_Images:
     # Currency Tab
     highlight = openImage("highlight.png")
+    inactive_transmute = openImage("inactive_transmute.png")
     inactive_alt = openImage("inactive_alt.png")
+    inactive_aug = openImage("inactive_aug.png")
+    inactive_regal = openImage("inactive_regal.png")
+    inactive_scour = openImage("inactive_scour.png")
+    chat_local_tab = openImage("chat_local_tab.png")
     
     # Cluster
     glowing = openImage("glowing.png") # t1 es

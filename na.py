@@ -17,6 +17,7 @@ from item_parser.configs.affix_config import AffixConfig
 from item_parser.constants import Operator
 from item_parser.configs.item_base_config import BaseItemConfig
 from item_parser.work_item import CraftingWorkItem
+from random import randint
 
 class Scripts:
   def __init__(self, obj):
@@ -54,7 +55,11 @@ CURRENCY_LOCATIONS = {
   "regal": (579, 362)
 }
 INACTIVE_CURRENCY_IMGS = {
-  "alt": Images.inactive_alt
+  "transmute": Images.inactive_transmute,
+  "alt": Images.inactive_alt,
+  "aug": Images.inactive_aug,
+  "regal": Images.inactive_regal,
+  "scour": Images.inactive_scour,
 }
 
 # Areas (x, y, width, height)
@@ -194,7 +199,7 @@ def cancel():
 def auto_vaal_haste(scriptobj):
   while data["target"] == scriptobj:
     if GetWindowText(GetForegroundWindow()) == "Path of Exile":
-        press_release("e")
+        press_release("r")
     time.sleep(3)
     if data["target"] != scriptobj:
       break
@@ -226,78 +231,58 @@ def auto_pot(scripts):
 
 def safe_copy_item(current_item: Item):
   new_item = current_item
-  n = 5
+  n = 20
   while n > 0:
-    press_release('c', delay=0.01, pressdelay=0.01)
+    press_release('c', delay=0, pressdelay=0.01)
     new_item = Item(pc.paste())
     if current_item != new_item:
       return new_item
+    time.sleep(0.02)
     n -= 1
   return new_item
 
-def multi_crafting(scriptobj):
-  # #### 5 Bow + 4 Flask + 5 Amulets 
-  # bowworkitem = CraftingWorkItem(
-  #   [(0,0), (0,2), (0,4), (0,6), (0,8)]
-  # )
-  # flaskworkitem = CraftingWorkItem(
-  #   [(0,10), (0,11), (2,10), (2,11)]
-  # )
-  # amuletworkitem = CraftingWorkItem(
-  #   [(4,0), (4,1), (4,2), (4,3), (4,4)]
-  # )
-  # crafting(scriptobj, bowworkitem, resetscript=False)
-  # crafting(scriptobj, flaskworkitem, resetscript=False)
-  # crafting(scriptobj, amuletworkitem)
-  # ####
-  # bowworkitem = CraftingWorkItem(
-  #   [(0,0), (0,2), (0,4), (0,6)]
-  # )
-  # flaskworkitem = CraftingWorkItem(
-  #   [(0,8), (0,9), (0,10), (0,11), (2,8), (2,9), (2,10), (2,11)]
-  # )
-  # amuletworkitem = CraftingWorkItem(
-  #   [(4,0), (4,1), (4,2), (4,3), (4,4)]
-  # )
-  # crafting(scriptobj, flaskworkitem, resetscript=False)
-  # crafting(scriptobj, bowworkitem, resetscript=False)
-  # crafting(scriptobj, amuletworkitem)
-  workitem = CraftingWorkItem(
-    [(0,0), (0,1), (2,0), (2,1), (0,2), (0,4), (0,6), (0,8), (0,10), (4,0)] 
-  )
-  crafting(scriptobj, workitem)
-
-def good_prefix(item: Item, item_config: BaseItemConfig):
+def good_prefixes(item: Item, item_config: BaseItemConfig):
   good_prefixes: list[AffixConfig] = item_config.get("prefixes")
   if len(good_prefixes) == 0:
-    return None # None means no need to check
+    return 0
+  num_good = 0
   for p in good_prefixes:
     if item.affixes.get(p._affix_name) and p.pass_check(item.affixes.get(p._affix_name)):
-      return True
-  return False
+      num_good += 1
+  return num_good
 
-def good_suffix(item: Item, item_config: BaseItemConfig):
+def good_suffixes(item: Item, item_config: BaseItemConfig):
   good_suffixes: list[AffixConfig] = item_config.get("suffixes")
   if len(good_suffixes) == 0:
-    return None # None means no need to check
+    return 0
+  num_good = 0
   for s in good_suffixes:
     if item.affixes.get(s._affix_name) and s.pass_check(item.affixes.get(s._affix_name)):
-      return True
-  return False
+      num_good += 1
+  return num_good 
 
 def is_valid(item: Item, item_config: BaseItemConfig):
   print(item)
   if item is None:
+    raise Exception("Item is None")
+  
+  total_required = item_config.get("num_affixes_required")
+  if total_required == 0 or total_required is None:
+    raise Exception("No affixes required (1)")
+  
+  if len(item_config.get("prefixes")) == 0 and len(item_config.get("suffixes")) == 0:
+    raise Exception("No affixes to check (2)")
+  
+  prefixes = good_prefixes(item, item_config)
+  suffixes = good_suffixes(item, item_config)
+  # print(f"prefixes={prefixes}, suffixes={suffixes}, total_required={total_required}")
+  if prefixes + suffixes < total_required:
     return False
-  prefix_state = good_prefix(item, item_config) # True means found, False means not found, None means no need to check
-  suffix_state = good_suffix(item, item_config) # True means found, False means not found, None means no need to check
-  if prefix_state is None and suffix_state is None:
-    raise Exception("No affixes to check")
-  if prefix_state is None:
-    return suffix_state
-  if suffix_state is None:
-    return prefix_state
-  return prefix_state and suffix_state
+  
+  # Certain configs can apply special checks as a last resort
+  if item_config.get("custom_is_valid") is None:
+    return True
+  return item_config.get("custom_is_valid")(item)
   
 def make_all_inventory_queue():
   queue = deque([(0,0), (0,1), (0,2), (0,3), (0,4), (0,5), (0,6), (0,7), (0,8), (0,9), (0,10), (0,11), \
@@ -322,6 +307,16 @@ def craft_from_queue_tab(scriptobj):
           break
       if data["target"] != scriptobj:
         break
+    # Leave the back of the inventory open so we can return the item to the dump tab (make a 2x4 space in the back)
+    press('shift', 0.1)
+    queue = [INVENTORY_COORDS[0][10], INVENTORY_COORDS[0][11], INVENTORY_COORDS[1][10], INVENTORY_COORDS[1][11], INVENTORY_COORDS[2][10], INVENTORY_COORDS[2][11], INVENTORY_COORDS[3][10], INVENTORY_COORDS[3][11]]
+    for loc in queue:
+      if data["target"] != scriptobj:
+        break
+      moveto(loc)
+      click()
+      click()
+    release('shift')
     release('ctrl', 0.1)
   
   while data["target"] == scriptobj:
@@ -338,6 +333,7 @@ def craft_from_queue_tab(scriptobj):
 def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
   queue = deque(workitem.positions)
   while len(queue) > 0:
+    try_close_chat()
     current = queue.popleft()
     print(f"Placing item from inventory {current}")
     place_item(current)
@@ -355,20 +351,57 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
     time.sleep(0.2)
     press_release('c', delay=0.2)
     press_release('c', delay=0.2)
+
     item = Item(pc.paste())
-    item_config = BaseItemConfig.get_config_by_base_name(item)
+    try:
+      item_config = BaseItemConfig.get_config_by_base_name(item)
+    except Exception as e:
+      print(f"Item parser failed: {e}")
+      double_release(["ctrl", "shift", "altleft"])
+      return_item()
+      dump_tab_it()
+      move_back_to_currency_tab()
+      continue
+
+    num_affixes_required = item_config.get("num_affixes_required")
     while not is_valid(item, item_config):
-      click(delay=0.01)
+      # Scour and transmute if we have a rare item
+      pick_up_alt = item.rarity == "Rare" or item.rarity == "Normal"
+      if item.rarity == "Rare":
+        scour_it()
+        transmute_it()
+      elif item.rarity == "Normal":
+        transmute_it()
+
+      if pick_up_alt:
+        pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
+        press('shift')
+        moveto(LOCATIONS["showcase"], delay=0.06)
+
+      click(delay=0)
       item = safe_copy_item(item)
-      if item_config.get("should_aug") and len(item.affixes) < 2 and (good_prefix(item, item_config) or good_suffix(item, item_config)):
+
+      # Augment if we have less than 2 affixes and we have a good prefix or suffix
+      augged = False
+      if num_affixes_required >= 2 and len(item.affixes) < 2 and (good_prefixes(item, item_config) + good_suffixes(item, item_config) >= 1):
+        augged = True
         aug_it()
         item = safe_copy_item(item)
+
+      # Regal if we have less than 3 affixes and we have 2 good prefixes or suffixes
+      if num_affixes_required >= 3 and len(item.affixes) < 3 and (good_prefixes(item, item_config) + good_suffixes(item, item_config) >= 2):
+        regal_it()
+        item = safe_copy_item(item)
+
+      if augged:
         pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
-        moveto(LOCATIONS["showcase"], delay=0.01)
         press('shift')
+        moveto(LOCATIONS["showcase"], delay=0.06)
       if data["target"] != scriptobj:
         break
+
     double_release(["ctrl", "shift", "altleft"])
+    try_close_chat()
     if data["target"] != scriptobj:
       break      
     else:
@@ -376,10 +409,8 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
     if data["target"] != scriptobj:
       break
     return_item()
-    
     # Move it to the dump tab
     dump_tab_it()
-
     # Move back to currency tab
     move_back_to_currency_tab()
 
@@ -449,24 +480,29 @@ def place_item(pos):
   double_release(["shift", "ctrl"])
   time.sleep(0.05)
 
+def try_close_chat():
+  while pag.locateOnScreen(Images.chat_local_tab, grayscale=True, confidence=0.8):
+    press('enter', 0.1)
+
+# We have a 2x4 space in the back of the inventory, we can return the item to the dump tab
 def return_item():
   release('shift', 0.01)
   release('shift', 0.01)
-  moveto(LOCATIONS["showcase"])
-  press('ctrl')
+  moveto(LOCATIONS["showcase"], 0.1)
   click()
+  moveto(INVENTORY_COORDS[0][11], 0.1)
   click()
-  release('ctrl')
-  release('ctrl')
 
 def dump_tab_it():
-  moveto(TABS["dump"], 0.1)
+  moveto(TABS["dump"], 0.2)
   click()
   click()
-  moveto(LOCATIONS["tl_corner_inventory"], 0.1)
-  press('ctrl', 0.1)
+  moveto(INVENTORY_COORDS[0][11], 0.2)
+  press('shift')
+  press('ctrl', 0.2)
   click()
   click()
+  release('shift')
   release('ctrl')
 
 def move_back_to_currency_tab():
@@ -474,12 +510,24 @@ def move_back_to_currency_tab():
   click()
   click()
   
+def use_it(currency):
+  release('shift', delay=0.01)
+  release('shift', delay=0.01)
+  pick_up_by_image(INACTIVE_CURRENCY_IMGS[currency])
+  moveto(LOCATIONS["showcase"], delay=0.06)
+  click(delay=0.05)
+
 def aug_it():
-  release('shift', delay=0.01)
-  release('shift', delay=0.01)
-  pick_up("aug")
-  moveto(LOCATIONS["showcase"])
-  click()
+  use_it("aug")
+
+def regal_it(): 
+  use_it("regal")
+
+def transmute_it():
+  use_it("transmute")
+
+def scour_it():
+  use_it("scour")
 
 def pick_up(name):
   release('shift')
@@ -488,15 +536,16 @@ def pick_up(name):
   
 # I have more than 2 stacks of alts > 5000 quantity, they're in different coordinates
 def pick_up_by_image(img):
-  release('shift')
+  release('shift', delay=0.01)
   loc = pag.locateOnScreen(img, confidence=0.9, grayscale=True, region=REGION["stash"])
   if not loc:
-    print(f"Image {img} not found, moving to (0, 0)")
+    print(f"Image {img} not found, moving mouse away")
+    moveto((randint(0, 115), randint(0, 2400)), delay=0.1)
   loc = pag.locateOnScreen(img, confidence=0.9, grayscale=True, region=REGION["stash"])
   if not loc:
     raise Exception(f"Image {img} not found on screen")
-  moveto(loc)
-  right_click()
+  moveto(loc, delay=0.05)
+  right_click(delay=0.01)
   
 def highlight():
   return pag.locateOnScreen(Images.highlight, confidence=0.8, grayscale=True, region=REGION["highlight_showcase"])
@@ -520,18 +569,21 @@ def click(location=None, delay=0.05):
     it.click()
   else:
     it.click(location)
-  time.sleep(delay)
+  if delay > 0:
+    time.sleep(delay)
 
 def right_click(location=None, delay=0.05):
   if (location == None):
     it.right_click()
   else:
     it.right_click(location)
-  time.sleep(delay)
+  if delay > 0:
+    time.sleep(delay)
 
 def moveto(location, delay=0.05):
   it.move_to(location)
-  time.sleep(delay)
+  if delay > 0:
+    time.sleep(delay)
 
 def doubleclick(location, delay=0.05):
   it.click(location)
@@ -553,11 +605,13 @@ def pause_audio():
 
 def press(key, delay=0.05):
   it.key_down(key)
-  time.sleep(delay)
+  if delay > 0:
+    time.sleep(delay)
   
 def release(key, delay=0.05):
   it.key_up(key)
-  time.sleep(delay)
+  if delay > 0:
+    time.sleep(delay)
 
 def press_release(key, delay=0.05, pressdelay=0.05):
   press(key, pressdelay)

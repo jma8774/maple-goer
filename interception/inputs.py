@@ -23,7 +23,7 @@ except Exception:
 
 
 MOUSE_BUTTON_DELAY = 0.03
-KEY_PRESS_DELAY = 0.025
+KEY_PRESS_DELAY = 0.01
 
 keyboard = 1
 mouse = 11
@@ -90,8 +90,7 @@ def click(
     """
     if x is not None:
         move_to(x, y)
-
-    time.sleep(delay)
+        time.sleep(delay)
 
     for _ in range(clicks):
         mouse_down(button)
