@@ -676,6 +676,8 @@ class Images:
     inactive_aug = openImage("inactive_aug.png")
     inactive_regal = openImage("inactive_regal.png")
     inactive_scour = openImage("inactive_scour.png")
+    inactive_exalt = openImage("inactive_exalt.png")
+    inactive_annul = openImage("inactive_annul.png")
     chat_local_tab = openImage("chat_local_tab.png")
     
     # Cluster
@@ -736,6 +738,7 @@ class Audio:
   LETMEDOITFORYOU   = "images/let me do it for you.mp3"
   TYLER1_MACHINEGUN = "images/t1 machine.mp3"
   WHYAREYOUGAY      = "images/why are you gay.mp3"
+  RETRO_NOTIFICATION = "images/retro_ping.wav"
   
   def get_random_rune_audio():
     return random.choice([Audio.AMOGUS, Audio.AUGH, Audio.BRUH, Audio.LETMEDOITFORYOU, Audio.WHYAREYOUGAY])

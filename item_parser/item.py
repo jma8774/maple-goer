@@ -4,6 +4,7 @@ import regex as re
 SEPERATOR = "--------"
 RE_GET_BASE_NAME_WITHOUT_AFFIX = r'(?<=\'s\s|^)(.*?)(?=\sof|$)'
 RE_GET_CONTENT_AFTER_COLON = r'(?<=:\s)(.*?)(?=$)'
+RE_GET_CLUSTER_PASSIVES_NUM = r'(?<=Adds\s)(\d*?)(?=\sPassive)'
                                            
 class Item:
   def __init__(self, raw_string: str):
@@ -19,6 +20,7 @@ class Item:
 
     # Cluster Jewel Enchants
     self._cluster_jewel_enchants = []
+    self._cluster_jewel_passives = 0
 
     lines = raw_string.splitlines()
     i = 0
@@ -57,12 +59,19 @@ class Item:
         i += 1
         continue
 
-      if "Cluster" in self._item_base:
-        if lines[i].startswith("Added") and lines[i].endswith("(enchant)"):
+      if "Cluster" in self._item_base and lines[i].endswith("(enchant)"):
+        if lines[i].startswith("Added"):
           self._cluster_jewel_enchants.append(lines[i])
           i += 1
           continue
-
+        elif self._cluster_jewel_passives == 0:
+          match = re.search(RE_GET_CLUSTER_PASSIVES_NUM, lines[i])
+          if match is None:
+            raise ValueError(f"Could not parse cluster jewel passives: {lines[i]}, match={match}")
+          self._cluster_jewel_passives = int(match.group(0))
+          i += 1
+          continue
+          
       # Parse affixes
       if lines[i] == SEPERATOR and (lines[i+1].startswith("{ Prefix") or lines[i+1].startswith("{ Suffix")):
         i += 1
@@ -117,6 +126,14 @@ class Item:
   def num_suffixes(self):
     return self._num_suffixes
   
+  @property
+  def cluster_jewel_enchants(self):
+    return self._cluster_jewel_enchants
+  
+  @property
+  def cluster_jewel_passives(self):
+    return self._cluster_jewel_passives
+  
   def cluster_jewel_has(self, word: str):
     for line in self._cluster_jewel_enchants:
       if word in line:
@@ -128,10 +145,11 @@ class Item:
     # return f"{self._item_base} {([str(v) for k, v in self._item_affixes_parsed.items()])}"
   
   def __eq__(self, other):
-    if isinstance(other, Item):
-      if len(self.affixes) != len(other.affixes):
+    if not isinstance(other, Item):
+      return False
+    if len(self.affixes) != len(other.affixes):
+      return False
+    for affix in self.affixes:
+      if not other.affixes.get(affix) or (other.affixes.get(affix) != self.affixes.get(affix)):
         return False
-      for affix in self.affixes:
-        if not other.affixes.get(affix):
-          return False
     return True

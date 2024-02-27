@@ -49,3 +49,15 @@ class Line:
       else:
         return f'[❌] {self._affix_type} - {self._affix_descriptions}'
     return f'[✅] {self.affix_name}: {self.affix_values}'
+  
+  def __eq__(self, other):
+    if not isinstance(other, Line):
+      return False
+    if self.affix_name != other.affix_name:
+      return False
+    if len(self.affix_values) != len(other.affix_values):
+      return False
+    for i in range(len(self.affix_values)):
+      if self.affix_values[i] != other.affix_values[i]:
+        return False
+    return True

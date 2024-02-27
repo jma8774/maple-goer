@@ -15,9 +15,10 @@ from item_parser.line import Line
 from item_parser.item import Item
 from item_parser.configs.affix_config import AffixConfig
 from item_parser.constants import Operator
-from item_parser.configs.item_base_config import BaseItemConfig
+from item_parser.configs.item_base_config import ConfigsModule, Config
 from item_parser.work_item import CraftingWorkItem
 from random import randint
+from PIL import Image
 
 class Scripts:
   def __init__(self, obj):
@@ -28,8 +29,8 @@ class Scripts:
 CRAFTING_1x2_KEY = 'f1'
 CRAFTING_2x4_KEY = 'f2'
 CRATING_1x1_KEY = 'f3'
-CRAFT_UNTIL_HIGHLIGHT_KEY = 'f4'
-PRESS_E_EVERY_INTERVAL_KEY = 'f6'
+ATTACK_OR_VAAL_HASTE_KEY = 'f4'
+PRESS_R_EVERY_INTERVAL_KEY = 'f6'
 CRAFT_FROM_QUEUE_TAB_KEY = 'f7'
 CANCEL_KEY = 'f12'
 
@@ -60,6 +61,8 @@ INACTIVE_CURRENCY_IMGS = {
   "aug": Images.inactive_aug,
   "regal": Images.inactive_regal,
   "scour": Images.inactive_scour,
+  "exalt": Images.inactive_exalt,
+  "annul": Images.inactive_annul
 }
 
 # Areas (x, y, width, height)
@@ -99,11 +102,15 @@ TABS = {
   "currency": (975, 240),
 }
 
+def raise_and_stop(msg):
+  data["target"] = None
+  raise Exception(msg)
+
 def test():
   print("Testing item parser...")
   try:
     item = Item(pc.paste())
-    item_config = BaseItemConfig.get_config_by_base_name(item)
+    item_config = ConfigsModule.get_config_by_base_name(item)
     print(f"is_valid={is_valid(item, item_config)}")
     print()
   except Exception as e:
@@ -113,7 +120,7 @@ def test():
 
 def main():
   test()
-  setup_audio(volume=0.5)
+  setup_audio(volume=0.5)  
 
   # Interception Setup for main loop
   kdevice = it.listen_to_keyboard()
@@ -136,9 +143,9 @@ def main():
     "name": "Crafting 1x1 Items",
     "fn": crafting_1x1
   },
-  "CraftUntilHighlight": {
-    "name": "Craft until highlight",
-    "fn": craft_until_highlight
+  "AttackAndVaalHaste": {
+    "name": "Attack (w) and Vaal Haste (r)",
+    "fn": attack_and_vaal_haste
   },
   "CraftFromQueueTab": {
     "name": "Craft from queue tab",
@@ -153,9 +160,9 @@ def main():
   kl.add(CRAFTING_1x2_KEY, lambda: toggleScript(scripts.Crafting_1x2))
   kl.add(CRAFTING_2x4_KEY, lambda: toggleScript(scripts.Crafting_2x4))
   kl.add(CRATING_1x1_KEY, lambda: toggleScript(scripts.Crafting_1x1))
-  kl.add(CRAFT_UNTIL_HIGHLIGHT_KEY, lambda: toggleScript(scripts.CraftUntilHighlight))
+  kl.add(ATTACK_OR_VAAL_HASTE_KEY, lambda: toggleScript(scripts.AttackAndVaalHaste))
   kl.add(CRAFT_FROM_QUEUE_TAB_KEY, lambda: toggleScript(scripts.CraftFromQueueTab))
-  kl.add(PRESS_E_EVERY_INTERVAL_KEY, lambda: toggleScript(scripts.AutoVaalHaste))
+  kl.add(PRESS_R_EVERY_INTERVAL_KEY, lambda: toggleScript(scripts.AutoVaalHaste))
   kl.add(CANCEL_KEY, cancel)
   kl.run()
 
@@ -231,50 +238,33 @@ def auto_pot(scripts):
 
 def safe_copy_item(current_item: Item):
   new_item = current_item
-  n = 20
+  n = 35
   while n > 0:
     press_release('c', delay=0, pressdelay=0.01)
-    new_item = Item(pc.paste())
+    try:
+      new_item = Item(pc.paste())
+    except Exception as e:
+      raise_and_stop(f"[safe_copy_item] Item parser failed: {e}")
     if current_item != new_item:
       return new_item
-    time.sleep(0.02)
+    time.sleep(0.01)
     n -= 1
   return new_item
 
-def good_prefixes(item: Item, item_config: BaseItemConfig):
-  good_prefixes: list[AffixConfig] = item_config.get("prefixes")
-  if len(good_prefixes) == 0:
-    return 0
-  num_good = 0
-  for p in good_prefixes:
-    if item.affixes.get(p._affix_name) and p.pass_check(item.affixes.get(p._affix_name)):
-      num_good += 1
-  return num_good
-
-def good_suffixes(item: Item, item_config: BaseItemConfig):
-  good_suffixes: list[AffixConfig] = item_config.get("suffixes")
-  if len(good_suffixes) == 0:
-    return 0
-  num_good = 0
-  for s in good_suffixes:
-    if item.affixes.get(s._affix_name) and s.pass_check(item.affixes.get(s._affix_name)):
-      num_good += 1
-  return num_good 
-
-def is_valid(item: Item, item_config: BaseItemConfig):
+def is_valid(item: Item, item_config: Config):
   print(item)
   if item is None:
-    raise Exception("Item is None")
+    raise_and_stop("Item is None")
   
   total_required = item_config.get("num_affixes_required")
   if total_required == 0 or total_required is None:
-    raise Exception("No affixes required (1)")
+    raise_and_stop("No affixes required (1)")
   
   if len(item_config.get("prefixes")) == 0 and len(item_config.get("suffixes")) == 0:
-    raise Exception("No affixes to check (2)")
+    raise_and_stop("No affixes to check (2)")
   
-  prefixes = good_prefixes(item, item_config)
-  suffixes = good_suffixes(item, item_config)
+  prefixes = ConfigsModule.good_prefixes(item, item_config)
+  suffixes = ConfigsModule.good_suffixes(item, item_config)
   # print(f"prefixes={prefixes}, suffixes={suffixes}, total_required={total_required}")
   if prefixes + suffixes < total_required:
     return False
@@ -319,28 +309,31 @@ def craft_from_queue_tab(scriptobj):
     release('shift')
     release('ctrl', 0.1)
   
+  number_of_fully_empty_cycles = 0
   while data["target"] == scriptobj:
     queue = make_all_inventory_queue()
     workitem = CraftingWorkItem(queue)
-    crafting(scriptobj, workitem, resetscript=False)
-    if data["target"] != scriptobj:
-      break
+    empty_slots = crafting(scriptobj, workitem, resetscript=False)
+    if empty_slots == 60: 
+      number_of_fully_empty_cycles += 1
+      if number_of_fully_empty_cycles >= 3: data["target"] = None
+    if data["target"] != scriptobj: break
     refill_inventory_from_queue()
-    if data["target"] != scriptobj:
-      break
+    if data["target"] != scriptobj: break
     move_back_to_currency_tab()
 
 def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
   queue = deque(workitem.positions)
+  empty_slots = 0
   while len(queue) > 0:
     try_close_chat()
     current = queue.popleft()
     print(f"Placing item from inventory {current}")
     place_item(current)
-    if data["target"] != scriptobj:
-      break
+    if data["target"] != scriptobj: break
     if pag.locateOnScreen(Images.showcase_empty, grayscale=True, confidence=0.8, region=REGION["showcase_box"]):
       print("Showcase empty, going to the next one...")
+      empty_slots += 1
       continue
     pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
     moveto(LOCATIONS["showcase"])
@@ -351,10 +344,9 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
     time.sleep(0.2)
     press_release('c', delay=0.2)
     press_release('c', delay=0.2)
-
-    item = Item(pc.paste())
     try:
-      item_config = BaseItemConfig.get_config_by_base_name(item)
+      item = Item(pc.paste())
+      item_config = ConfigsModule.get_config_by_base_name(item)
     except Exception as e:
       print(f"Item parser failed: {e}")
       double_release(["ctrl", "shift", "altleft"])
@@ -374,49 +366,74 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
         transmute_it()
 
       if pick_up_alt:
+        time.sleep(0.3)
         pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
         press('shift')
-        moveto(LOCATIONS["showcase"], delay=0.06)
+        moveto(LOCATIONS["showcase"], delay=0.2)
 
       click(delay=0)
       item = safe_copy_item(item)
 
       # Augment if we have less than 2 affixes and we have a good prefix or suffix
       augged = False
-      if num_affixes_required >= 2 and len(item.affixes) < 2 and (good_prefixes(item, item_config) + good_suffixes(item, item_config) >= 1):
+      if num_affixes_required >= 2 and len(item.affixes) < 2 and (ConfigsModule.good_prefixes(item, item_config) + ConfigsModule.good_suffixes(item, item_config) >= 1):
         augged = True
         aug_it()
+        try_close_chat()
         item = safe_copy_item(item)
 
       # Regal if we have less than 3 affixes and we have 2 good prefixes or suffixes
-      if num_affixes_required >= 3 and len(item.affixes) < 3 and (good_prefixes(item, item_config) + good_suffixes(item, item_config) >= 2):
+      regaled = False
+      custom_should_regal = item_config.get("custom_should_regal")
+      if num_affixes_required >= 3 and len(item.affixes) < 3 and ((custom_should_regal and custom_should_regal(item)) or (not custom_should_regal and ConfigsModule.good_prefixes(item, item_config) + ConfigsModule.good_suffixes(item, item_config) >= 2)):
+        regaled = True
+        print("\n💎 Regaling!")
         regal_it()
         item = safe_copy_item(item)
+        print(item)
+
+      custom_should_exalt = item_config.get("custom_should_exalt")
+      if regaled and custom_should_exalt is not None and custom_should_exalt(item):
+        print("Exalting since custom_should_exalt check passed")
+        print("\n💎 Exalting!")
+        play_audio("images/retro_ping.wav", 1)
+        exalt_it()
+        item = safe_copy_item(item)
+        print(item)
+        while not is_valid(item, item_config):
+          print("\n💎 Annuling!")
+          annul_it()
+          item = safe_copy_item(item)
+          print(item)
+          if item_config.get("custom_should_exalt") is not None and item_config.get("custom_should_exalt")(item):
+            print("\n💎 Exalting again!")
+            exalt_it()
+            item = safe_copy_item(item)
+            print(item)
+          else:
+            break
 
       if augged:
         pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
         press('shift')
         moveto(LOCATIONS["showcase"], delay=0.06)
-      if data["target"] != scriptobj:
-        break
+      if data["target"] != scriptobj: break
 
     double_release(["ctrl", "shift", "altleft"])
     try_close_chat()
-    if data["target"] != scriptobj:
-      break      
-    else:
+    if data["target"] == scriptobj: 
       play_audio()
-    if data["target"] != scriptobj:
+      return_item()
+      # Move it to the dump tab
+      dump_tab_it()
+      # Move back to currency tab
+      move_back_to_currency_tab()
+    else:
       break
-    return_item()
-    # Move it to the dump tab
-    dump_tab_it()
-    # Move back to currency tab
-    move_back_to_currency_tab()
-
 
   if resetscript:
     data["target"] = None
+  return empty_slots
 
 def crafting_1x2(scriptobj):
   workitem = CraftingWorkItem(
@@ -436,39 +453,26 @@ def crafting_1x1(scriptobj):
   )
   crafting(scriptobj, workitem)
 
-def craft_until_highlight(scriptobj):
-  def roll_until_highlight_or_empty(script_key, skipFirst=False):
-    if pag.locateOnScreen(Images.showcase_empty, grayscale=True, confidence=0.8, region=REGION["showcase_box"]):
-      print("Showcase empty, going to the next one...")
-      return False
-    pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
-    press('shift')
-    moveto(LOCATIONS["showcase"])
-    while skipFirst or not highlight():
-      click()
-      time.sleep(0.1)
-      skipFirst = False
-      if data["target"] != script_key:
-        return False
-    release('shift')
-    release('shift')
-    return True
+def attack_and_vaal_haste(scriptobj):
+  def can_vaal_haste(now): return last_vaal_haste + timedelta(seconds=8) < now
+  def can_sigil(now): return last_sigil + timedelta(seconds=11) < now
 
-  global scripts
-  queue = deque([(0,0)])
-  if data["cmd"].get("highlight") == "bow":
-    queue = deque([(0,0), (0,2), (0,4), (0,6), (0,8), (0,10)])
-
-  while len(queue) > 0:
-    current = queue.popleft()
-    place_item(current)
-    if roll_until_highlight_or_empty(scriptobj):
-      play_audio()
-    double_release(["ctrl", "shift"])
-    if data["target"] != scriptobj:
-      break
-    return_item()
-  data["target"] = None
+  last_vaal_haste = datetime.now() - timedelta(seconds=99)
+  last_sigil = datetime.now() - timedelta(seconds=99)
+  while data["target"] == scriptobj:
+    now = datetime.now()
+    if can_vaal_haste(now):
+      press_release("r", 0.15 if can_sigil(now) else 0)
+      last_vaal_haste = datetime.now()
+    if can_sigil(now):
+      press_release("e")
+      last_sigil = datetime.now()
+    press("w")
+    while (datetime.now() - now).seconds < 3:
+      time.sleep(0.25)
+      if data["target"] != scriptobj:
+        break
+    release("w")
 
 def place_item(pos):
   x, y = pos
@@ -511,10 +515,13 @@ def move_back_to_currency_tab():
   click()
   
 def use_it(currency):
-  release('shift', delay=0.01)
+  release('shift', delay=0)
   release('shift', delay=0.01)
   pick_up_by_image(INACTIVE_CURRENCY_IMGS[currency])
-  moveto(LOCATIONS["showcase"], delay=0.06)
+  x, y = LOCATIONS["showcase"]
+  moveto((x+5, y+5), delay=0)
+  moveto((x-5,y-5), delay=0)
+  moveto((x,y), delay=0.03)
   click(delay=0.05)
 
 def aug_it():
@@ -523,11 +530,17 @@ def aug_it():
 def regal_it(): 
   use_it("regal")
 
+def exalt_it():
+  use_it("exalt")
+
 def transmute_it():
   use_it("transmute")
 
 def scour_it():
   use_it("scour")
+
+def annul_it():
+  use_it("annul")
 
 def pick_up(name):
   release('shift')
@@ -535,16 +548,20 @@ def pick_up(name):
   right_click()
   
 # I have more than 2 stacks of alts > 5000 quantity, they're in different coordinates
-def pick_up_by_image(img):
+def pick_up_by_image(img: Image):
+  release('shift', delay=0)
   release('shift', delay=0.01)
+  moveto((randint(510, 540), randint(490, 725)), delay=0)
   loc = pag.locateOnScreen(img, confidence=0.9, grayscale=True, region=REGION["stash"])
   if not loc:
-    print(f"Image {img} not found, moving mouse away")
-    moveto((randint(0, 115), randint(0, 2400)), delay=0.1)
+    print(f"Image not found, moving mouse away")
+    moveto((randint(0, 2400), randint(0, 115)), delay=0.1)
   loc = pag.locateOnScreen(img, confidence=0.9, grayscale=True, region=REGION["stash"])
   if not loc:
-    raise Exception(f"Image {img} not found on screen")
-  moveto(loc, delay=0.05)
+    raise_and_stop(f"Image not found on screen")
+  moveto((loc.left+5, loc.top+5), delay=0)
+  moveto((loc.left-5, loc.top-5), delay=0)
+  moveto(loc, delay=0.03)
   right_click(delay=0.01)
   
 def highlight():
@@ -623,10 +640,9 @@ def commands():
   print(f"  {CRATING_1x1_KEY} - start/end 2x4 craft")
   print(f"  {CRATING_1x1_KEY} - start/end 1x1 craft")
   # print(f"  {AUTO_POT_KEY} - start/end auto pot (press 2 when mana reaches 40%, press 1 when hp reaches 60%)")
-  print(f"  {CRAFT_UNTIL_HIGHLIGHT_KEY} - start/end craft until highlight")
+  print(f"  {ATTACK_OR_VAAL_HASTE_KEY} - start/end attack or vaal haste")
   print(f"  {CRAFT_FROM_QUEUE_TAB_KEY} - start/end craft from queue tab")
-  print(f"  {PRESS_E_EVERY_INTERVAL_KEY} - start/end press E every interval (for auto vaal haste)")
-  # print(f"  {CRAFT_INT_STACK_CLUSTER_KEY} - start/end craft int stack cluster [\"glo|gli|pow|pot|prod|teor\"]")
+  print(f"  {PRESS_R_EVERY_INTERVAL_KEY} - start/end press E every interval (for auto vaal haste)")
   print(f"  {CANCEL_KEY} - cancel all scripts")
 
 if __name__=="__main__":
