@@ -27,6 +27,16 @@ RESET_LOOT_TIMER_KEY = 'f9'
 minimap_rune_region = (0, 0, 500, 300)
 buffs_region = (250, 0, 1366-250, 80)
 
+def shutdown_computer():
+    if os.name == 'nt':
+        # For Windows operating system
+        os.system('shutdown /s /t 0')
+    elif os.name == 'posix':
+        # For Unix/Linux/Mac operating systems
+        os.system('sudo shutdown now')
+    else:
+        print('Unsupported operating system.')
+        
 class BotBase:
   def __init__(self, data, config):
     self.data = data
@@ -678,7 +688,9 @@ class Images:
     inactive_scour = openImage("inactive_scour.png")
     inactive_exalt = openImage("inactive_exalt.png")
     inactive_annul = openImage("inactive_annul.png")
+    inactive_chaos = openImage("inactive_chaos.png")
     chat_local_tab = openImage("chat_local_tab.png")
+    poe_window_x = openImage("poe_window_x.png")
     
     # Cluster
     glowing = openImage("glowing.png") # t1 es

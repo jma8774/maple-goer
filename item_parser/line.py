@@ -5,7 +5,7 @@ AFFIX_NAME_REGEX = r'(?<=")(.*?)(?=")'
 class Line:
   def __init__(self, affix_type: str, affix_descriptions: list[str]):
     self._affix_type = affix_type
-    self._affix_descriptions = affix_descriptions
+    self._affix_descriptions_raw = affix_descriptions
     self._affix_description_values: list[int] = []
 
     # Parse affix name
@@ -31,23 +31,25 @@ class Line:
   @property
   def affix_name(self):
     if self._affix_name is None:
-      raise ValueError(f"Attempting to use an invalid line: {self._affix_descriptions}")
+      raise ValueError(f"[affix_name] Attempting to use an invalid line: {self._affix_descriptions_raw}")
     return self._affix_name
   
   @property
   def affix_values(self):
-    if len(self._affix_description_values) == 0:
-      raise ValueError(f"Attempting to use an invalid line: {self._affix_descriptions}")
     return self._affix_description_values
+  
+  @property
+  def affix_raw(self):
+    return self._affix_descriptions_raw
   
   def __str__(self):
     if not self.is_valid:
       if self._affix_name is not None:
-        return f'[❌] {self.affix_name}: {self._affix_descriptions}'
+        return f'[❌] {self.affix_name}: {self._affix_descriptions_raw}'
       elif len(self._affix_description_values) != 0:
         return f'[❌] {self._affix_type}: {self._affix_description_values}'
       else:
-        return f'[❌] {self._affix_type} - {self._affix_descriptions}'
+        return f'[❌] {self._affix_type} - {self._affix_descriptions_raw}'
     return f'[✅] {self.affix_name}: {self.affix_values}'
   
   def __eq__(self, other):
@@ -59,5 +61,9 @@ class Line:
       return False
     for i in range(len(self.affix_values)):
       if self.affix_values[i] != other.affix_values[i]:
+        return False
+    # Will do a string comparison against raw descrption if affix values are the same (For items with same affix names but they represent different values eg. Cluster jewels "Notable" and "Significance")
+    for i in range(len(self._affix_descriptions_raw)):
+      if self._affix_descriptions_raw[i] != other._affix_descriptions_raw[i]:
         return False
     return True

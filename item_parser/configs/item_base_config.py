@@ -1,4 +1,4 @@
-from item_parser.configs.affix_config import AffixConfig
+from item_parser.configs.affix_config import AffixConfig, ExtraStringConfig
 from item_parser.constants import Operator
 from item_parser.item import Item
 from typing import TypedDict, Callable
@@ -14,10 +14,16 @@ class Config(TypedDict):
 
 class CustomIsValid:
   def LargeClusterSpellDamage(item: Item) -> bool:
+    # If we have 4 tier 1 affixes, we don't need to check anything else
+    t1_affixes = {"Powerful", "Sanguine", "Glowing", "Bear", "Prodigy", "Meteor", "Dangerous"}
+    if len([a for a in t1_affixes if item.affixes.get(a)]) >= 4:
+      print(f"[✅] Passed T1 LargeClusterSpellDamage validation test")
+      return True
+    
     mustHave3GoodAffixes = ConfigsModule.good_prefixes(item, ConfigsModule.LargeClusterSpellDamage) + ConfigsModule.good_suffixes(item, ConfigsModule.LargeClusterSpellDamage) >= 3
-    mustHaveIncreasedEffectIfTwoPrefix = item.num_prefixes < 2 or (item.affixes.get("Potent") or item.affixes.get("Powerful")) and item.num_prefixes >= 2
-    mustHaveOneT1MaxStrOrIntIfTwoSuffix = item.num_suffixes < 2 or (item.affixes.get("Bear") or item.affixes.get("Prodigy")) and item.num_suffixes >= 2
-    mustHaveT1EverythingIf25Effect = not item.affixes.get("Potent") or (item.affixes.get("Potent") and (item.affixes.get("Bear") or item.affixes.get("Prodigy")) and (item.affixes.get("Meteor") or item.affixes.get("Dangerous") or item.affixes.get("Sanguine") or item.affixes.get("Glowing")))
+    mustHaveIncreasedEffectIfTwoPrefix = item.num_prefixes < 2 or (item.affixes.get("Potent") or item.affixes.get("Powerful"))
+    mustHaveOneT1MaxStrOrIntIfTwoSuffix = item.num_suffixes < 2 or (item.affixes.get("Bear") or item.affixes.get("Prodigy"))
+    mustHaveT1EverythingIf25Effect = not item.affixes.get("Potent") or (item.affixes.get("Potent") and (item.affixes.get("Bear") or item.affixes.get("Prodigy")) and item.affixes.get("Meteor"))
     mustNotHaveStrAndIntTogether = not ((item.affixes.get("Wrestler") or item.affixes.get("Bear")) and (item.affixes.get("Student") or item.affixes.get("Prodigy")))
     mustNotHaveStrAndES = not ((item.affixes.get("Glimmering") or item.affixes.get("Glowing")) and (item.affixes.get("Wrestler") or item.affixes.get("Bear")))
     mustNotHaveIntAndLife = not ((item.affixes.get("Healthy") or item.affixes.get("Sanguine")) and (item.affixes.get("Student") or item.affixes.get("Prodigy")))
@@ -37,11 +43,17 @@ class CustomIsValid:
     validFor4Affixes = True # Will always be true if we have less than 4 affixes
 
     return validFor3Affixes and validFor4Affixes
-  
+
   def LargeClusterBow(item: Item) -> bool:
+    # If we have 4 tier 1 affixes, we don't need to check anything else
+    t1_affixes = {"Powerful", "Bear", "Prodigy", "Dangerous", "Fox", "Penguin", "Eviction", "Kaleidoscope"}
+    if len([a for a in t1_affixes if item.affixes.get(a)]) >= 4:
+      print(f"[✅] Passed T1 LargeClusterBow validation test")
+      return True
+    
     mustHave3GoodAffixes = ConfigsModule.good_prefixes(item, ConfigsModule.LargeClusterBow12) + ConfigsModule.good_suffixes(item, ConfigsModule.LargeClusterBow12) >= 3
-    mustHaveIncreasedEffectIfTwoPrefix = item.num_prefixes < 2 or (item.affixes.get("Potent") or item.affixes.get("Powerful")) and item.num_prefixes >= 2
-    mustHaveLifeOrDamageIfTwoPrefix = item.num_prefixes < 2 or (item.affixes.get("Healthy") or item.affixes.get("Sanguine") or item.affixes.get("Hazardous") or item.affixes.get("Dangerous")) and item.num_prefixes >= 2
+    mustHaveIncreasedEffectIfTwoPrefix = item.num_prefixes < 2 or (item.affixes.get("Potent") or item.affixes.get("Powerful"))
+    mustHaveLifeOrDamageIfTwoPrefix = item.num_prefixes < 2 or (item.affixes.get("Healthy") or item.affixes.get("Sanguine") or item.affixes.get("Hazardous") or item.affixes.get("Dangerous"))
     mustHaveAtLeast1GoodSuffixIfTwoSuffix = item.num_suffixes < 2 or (item.affixes.get("Ease") or item.affixes.get("Mastery"))
     mustNotHaveNotable = not (item.affixes.get("Notable") or item.affixes.get("Significance"))
     ret = bool(mustHaveIncreasedEffectIfTwoPrefix) and bool(mustHave3GoodAffixes) and bool(mustNotHaveNotable) and bool(mustHaveAtLeast1GoodSuffixIfTwoSuffix) and bool(mustHaveLifeOrDamageIfTwoPrefix)
@@ -53,11 +65,45 @@ class CustomIsValid:
     print(f"\tmustHaveAtLeast1GoodSuffixIfTwoSuffix={bool(mustHaveAtLeast1GoodSuffixIfTwoSuffix)}")
     return ret
   
+  def LargeClusterMinion(item: Item) -> bool:
+    mustHave3GoodAffixes = ConfigsModule.good_prefixes(item, ConfigsModule.LargeClusterMinion) + ConfigsModule.good_suffixes(item, ConfigsModule.LargeClusterMinion) >= 3
+    mustHaveMinionAttackSpeed = item.affixes.get("Ravaging") or item.affixes.get("Razing")
+    mustHaveIncreasedEffect = item.affixes.get("Powerful") or item.affixes.get("Potent")
+    mustNotHaveNotable = not (item.affixes.get("Notable") or item.affixes.get("Significance"))
+    ret = bool(mustHave3GoodAffixes) and bool(mustHaveMinionAttackSpeed) and bool(mustHaveIncreasedEffect) and bool(mustNotHaveNotable)
+    print(f"[✅] Passed custom LargeClusterMinion validation test" if ret else f"[❌] Failed custom LargeClusterMinion validation test")
+    print(f"\tmustHave3GoodAffixes={bool(mustHave3GoodAffixes)}")
+    print(f"\tmustHaveMinionAttackSpeed={bool(mustHaveMinionAttackSpeed)}")
+    print(f"\tmustHaveIncreasedEffect={bool(mustHaveIncreasedEffect)}")
+    print(f"\tmustNotHaveNotable={bool(mustNotHaveNotable)}")
+    return ret
+  
   def AdornedJewels(item: Item) -> bool:
     mustHaveLifeIfFireDoTMulti = not item.affixes.get("Zealousness") or (item.affixes.get("Zealousness") and item.affixes.get("Vivid"))
-    ret = bool(mustHaveLifeIfFireDoTMulti)
+    mustHaveLifeIfBurning = not item.affixes.get("Combusting") or (item.affixes.get("Combusting") and item.affixes.get("Vivid"))
+    musthaveLifeIfRarity = not item.affixes.get("Raiding") or (item.affixes.get("Raiding") and item.affixes.get("Vivid"))
+    mustHaveLifeIfChaosRes = not item.affixes.get("Order") or (item.affixes.get("Order") and item.affixes.get("Vivid"))
+    mustHaveMineSpeedIfGlobalCrit = not item.affixes.get("Potency") or (item.affixes.get("Potency") and item.affixes.get("Arming"))
+    ret = bool(mustHaveLifeIfFireDoTMulti) and bool(mustHaveLifeIfBurning) and bool(musthaveLifeIfRarity) and bool(mustHaveLifeIfChaosRes) and bool(mustHaveMineSpeedIfGlobalCrit)
     print(f"[✅] Passed custom AdornedJewels validation test" if ret else f"[❌] Failed custom AdornedJewels validation test")
     print(f"\tmustHaveLifeIfFireDoTMulti={bool(mustHaveLifeIfFireDoTMulti)}")
+    print(f"\tmustHaveLifeIfBurning={bool(mustHaveLifeIfBurning)}")
+    print(f"\tmusthaveLifeIfRarity={bool(musthaveLifeIfRarity)}")
+    print(f"\tmustHaveLifeIfChaosRes={bool(mustHaveLifeIfChaosRes)}")
+    print(f"\tmustHaveMineSpeedIfGlobalCrit={bool(mustHaveMineSpeedIfGlobalCrit)}")
+    return ret
+  
+  def Maps(item: Item) -> bool:
+    mustNotHaveInsulation = not item.affixes.get("Insulation")
+    mustNotHaveExposure = not item.affixes.get("Exposure")
+    mustNotHaveSmothering = not item.affixes.get("Smothering")
+    mustNotHaveStasis = not item.affixes.get("Stasis")
+    ret = bool(mustNotHaveInsulation) and bool(mustNotHaveExposure) and bool(mustNotHaveSmothering) and bool(mustNotHaveStasis)
+    print(f"[✅] Passed custom Maps validation test" if ret else f"[❌] Failed custom Maps validation test")
+    print(f"\tmustNotHaveInsulation={bool(mustNotHaveInsulation)}")
+    print(f"\tmustNotHaveExposure={bool(mustNotHaveExposure)}")
+    print(f"\tmustNotHaveSmothering={bool(mustNotHaveSmothering)}")
+    print(f"\tmustNotHaveStasis={bool(mustNotHaveStasis)}")
     return ret
   
 class CustomShouldExalt:
@@ -69,17 +115,34 @@ class CustomShouldExalt:
   
   def LargeClusterBow(item: Item) -> bool:
     return CustomIsValid.LargeClusterBow(item)
+  
+  def LargeClusterMinion(item: Item) -> bool:
+    return CustomIsValid.LargeClusterMinion(item)
     
 class CustomShouldRegal:
   def LargeClusterSpellDamage(item: Item) -> bool:
     mustHave2GoodAffixes = ConfigsModule.good_prefixes(item, ConfigsModule.LargeClusterSpellDamage) + ConfigsModule.good_suffixes(item, ConfigsModule.LargeClusterSpellDamage) >= 2
+    mustHaveOneImportantAffix = item.affixes.get("Powerful") or item.affixes.get("Potent") or item.affixes.get("Meteor") or item.affixes.get("Bear") or item.affixes.get("Prodigy")
     mustNotHaveStrAndES = not ((item.affixes.get("Glimmering") or item.affixes.get("Glowing")) and (item.affixes.get("Wrestler") or item.affixes.get("Bear")))
     mustNotHaveIntAndLife = not ((item.affixes.get("Healthy") or item.affixes.get("Sanguine")) and (item.affixes.get("Student") or item.affixes.get("Prodigy")))
-    ret = bool(mustHave2GoodAffixes) and bool(mustNotHaveStrAndES) and bool(mustNotHaveIntAndLife)
+    ret = bool(mustHave2GoodAffixes) and bool(mustNotHaveStrAndES) and bool(mustNotHaveIntAndLife) and bool(mustHaveOneImportantAffix)
     # print(f"[✅] Passed custom LargeClusterSpellDamage regal test" if ret else f"[❌] Failed custom LargeClusterSpellDamage regal test")
     # print(f"\tmustHave2GoodAffixes={bool(mustHave2GoodAffixes)}")
     # print(f"\tmustNotHaveStrAndES={bool(mustNotHaveStrAndES)}")
     # print(f"\tmustNotHaveIntAndLife={bool(mustNotHaveIntAndLife)}")
+    # print(f"\tmustHaveOneImportantAffix={bool(mustHaveOneImportantAffix)}")
+    return ret
+  
+  def LargeClusterBow(item: Item) -> bool:
+    mustHave2GoodAffixes = ConfigsModule.good_prefixes(item, ConfigsModule.LargeClusterBow12) + ConfigsModule.good_suffixes(item, ConfigsModule.LargeClusterBow12) >= 2
+    mustHaveEffectOrAttackSpeed = item.affixes.get("Powerful") or item.affixes.get("Potent") or item.affixes.get("Ease") or item.affixes.get("Mastery") or item.affixes.get("Dangerous")
+    ret = bool(mustHave2GoodAffixes) and bool(mustHaveEffectOrAttackSpeed)
+    return ret
+  
+  def LargeClusterMinion(item: Item) -> bool:
+    mustHave2GoodAffixes = ConfigsModule.good_prefixes(item, ConfigsModule.LargeClusterMinion) + ConfigsModule.good_suffixes(item, ConfigsModule.LargeClusterMinion) >= 2
+    mustHaveEffectOrAttackSpeed = item.affixes.get("Powerful") or item.affixes.get("Potent") or item.affixes.get("Ravaging") or item.affixes.get("Razing")
+    ret = bool(mustHave2GoodAffixes) and bool(mustHaveEffectOrAttackSpeed)
     return ret
   
 class ConfigsModule:
@@ -112,11 +175,11 @@ class ConfigsModule:
     ],
     "suffixes": [
       AffixConfig("Rainbow", [40], Operator.GE),
-      AffixConfig("Impala", [59], Operator.GE),
+      AffixConfig("Impala", [56], Operator.GE),
       # AffixConfig("Owl", [65], Operator.GE),
       # AffixConfig("Cheetah", [14], Operator.GE),
       # AffixConfig("Armadillo", [60], Operator.GE),
-      # AffixConfig("Bog Moss", [53], Operator.GE)
+      AffixConfig("Bog Moss", [53], Operator.GE)
     ],
     "num_affixes_required": 2,
     "min_item_level": 84
@@ -133,9 +196,9 @@ class ConfigsModule:
       AffixConfig("Rainbow", [40], Operator.GE),
       # AffixConfig("Impala", [60], Operator.GE),
       # AffixConfig("Owl", [64], Operator.GE),
-      AffixConfig("Cheetah", [13], Operator.GE),
+      AffixConfig("Cheetah", [12], Operator.GE),
       # AffixConfig("Armadillo", [60], Operator.GE),
-      AffixConfig("Bog Moss", [53], Operator.GE)
+      AffixConfig("Bog Moss", [53], Operator.GE),
     ],
     "num_affixes_required": 2,
     "min_item_level": 84
@@ -150,11 +213,11 @@ class ConfigsModule:
     ],
     "suffixes": [
       AffixConfig("Rainbow", [40], Operator.GE),
-      # AffixConfig("Impala", [60], Operator.GE),
+      AffixConfig("Impala", [60], Operator.GE),
       # AffixConfig("Owl", [65], Operator.GE),
       # AffixConfig("Cheetah", [14], Operator.GE),
-      AffixConfig("Armadillo", [59], Operator.GE),
-      # AffixConfig("Bog Moss", [53], Operator.GE)
+      AffixConfig("Armadillo", [56], Operator.GE),
+      AffixConfig("Bog Moss", [53], Operator.GE)
     ],
     "num_affixes_required": 2,
     "min_item_level": 84
@@ -169,19 +232,18 @@ class ConfigsModule:
     ],
     "suffixes": [
       AffixConfig("Rainbow", [39], Operator.GE),
-      AffixConfig("Impala", [59], Operator.GE),
+      AffixConfig("Impala", [60], Operator.GE),
       AffixConfig("Owl", [64], Operator.GE),
       AffixConfig("Cheetah", [13], Operator.GE),
-      AffixConfig("Armadillo", [59], Operator.GE),
+      AffixConfig("Armadillo", [60], Operator.GE),
       AffixConfig("Bog Moss", [53], Operator.GE)
     ],
     "num_affixes_required": 2,
     "min_item_level": 84
   }
 
-
   OtherFlask: Config = {
-    "name": "Elemental Flask",
+    "name": "Other Flask",
     "prefixes": [
       AffixConfig("Abecedarian", None, Operator.ANY),
       AffixConfig("Alchemist", None, Operator.ANY),
@@ -193,7 +255,7 @@ class ConfigsModule:
       AffixConfig("Owl", [64], Operator.GE),
       AffixConfig("Cheetah", [13], Operator.GE),
       AffixConfig("Armadillo", [60], Operator.GE),
-      AffixConfig("Bog Moss", [53], Operator.GE)
+      AffixConfig("Bog Moss", [53], Operator.GE),
     ],
     "num_affixes_required": 2,
     "min_item_level": 84
@@ -212,7 +274,7 @@ class ConfigsModule:
   }
 
   Amulet: Config = {
-    "name": "Amulet",
+    "name": "Fractured Amulet",
     "prefixes": [
       AffixConfig("Exalter", None, Operator.ANY),
       # AffixConfig("Vulcanist", None, Operator.ANY),
@@ -223,6 +285,20 @@ class ConfigsModule:
     ],
     "num_affixes_required": 2,
   }
+
+  # Amulet: Config = {
+  #   "name": "Shaper Amulet",
+  #   "prefixes": [
+  #     # AffixConfig("Exalter", None, Operator.ANY),
+  #     # AffixConfig("Vulcanist", None, Operator.ANY),
+  #   ],
+  #   "suffixes": [
+  #     AffixConfig("Shaping", [6], Operator.GE, [
+  #       ExtraStringConfig("butes", Operator.ENDS_WITH)
+  #     ]),
+  #   ],
+  #   "num_affixes_required": 1,
+  # }
 
   # Hunter Tailwind
   Boots: Config = {
@@ -274,38 +350,70 @@ class ConfigsModule:
     "num_affixes_required": 1,
   }
 
+  # AdornedJewels: Config = {
+  #   "name": "Adorned Jewels", 
+  #   "prefixes": [
+  #     AffixConfig("Arctic", [15], Operator.GE),             # Cold Crit Multi (15-18)
+  #     # AffixConfig("Surging", [15], Operator.GE),            # Lightning Crit Multi (15-18)
+  #     # AffixConfig("Infernal", [15], Operator.GE),           # Fire Crit Multi (15-18)
+  #     # AffixConfig("Puncturing", [15], Operator.GE),         # Dual Wield Crit Multi (15-18)
+  #     # AffixConfig("Piercing", [15], Operator.GE),           # One Handed Melee Crit Multi (15-18)
+  #     # AffixConfig("Rupturing", [15], Operator.GE),          # Two Handed Melee Crit Multi (15-18)
+
+  #     AffixConfig("Vivid", [5], Operator.GE),               # Life (5-7)
+  #     # AffixConfig("Shimmering", [6], Operator.GE),          # ES (6-8)
+  #     AffixConfig("Arming", [6], Operator.GE),              # Mine Throw Speed (6-8)
+  #   ],
+  #   "suffixes": [ 
+  #     AffixConfig("Elements", [12], Operator.GE),           # Elemental Crit Multi (12-15)
+  #     AffixConfig("Potency", [9], Operator.GE),             # Global Crit Multi (9-12)
+  #     AffixConfig("Unmaking", [12], Operator.GE),           # Spell Crit Multi (12-15)
+  #     # AffixConfig("Demolishing", [12], Operator.GE),        # Melee Crit Multi (12-15)
+      
+  #     AffixConfig("Zealousness", [6], Operator.GE),         # Fire DoT Multi (6-8)
+  #     AffixConfig("Combusting", [16], Operator.GE),          # Burning Damage
+  #     AffixConfig("Raiding", [None], Operator.ANY),          # Rarity
+  #     AffixConfig("Order", [None], Operator.ANY),            # Chaos Res
+  #     # AffixConfig("Gelidity", [6], Operator.GE),            # Cold DoT Multi (6-8)
+  #     # AffixConfig("Atrophy", [6], Operator.GE),             # Chaos DoT Multi (6-8)
+  #     # AffixConfig("Exsanguinating", [6], Operator.GE),      # Phys DoT Multi (6-8)
+
+  #     # AffixConfig("Intelligence", [12], Operator.GE),       # Int (12-16)
+  #     # AffixConfig("Strength", [12], Operator.GE),           # Str (12-16)
+  #     # AffixConfig("Spirit", [8], Operator.GE),              # Int/Str (8-10)
+
+  #   ],
+  #   "num_affixes_required": 2,
+  #   "custom_is_valid": CustomIsValid.AdornedJewels,
+  # }
+
   AdornedJewels: Config = {
     "name": "Adorned Jewels", 
     "prefixes": [
-      AffixConfig("Arctic", [15], Operator.GE),             # Cold Crit Multi (15-18)
-      AffixConfig("Surging", [15], Operator.GE),            # Lightning Crit Multi (15-18)
-      # AffixConfig("Infernal", [15], Operator.GE),           # Fire Crit Multi (15-18)
-      # AffixConfig("Puncturing", [15], Operator.GE),         # Dual Wield Crit Multi (15-18)
-      # AffixConfig("Piercing", [15], Operator.GE),           # One Handed Melee Crit Multi (15-18)
-      # AffixConfig("Rupturing", [15], Operator.GE),          # Two Handed Melee Crit Multi (15-18)
-
       AffixConfig("Vivid", [5], Operator.GE),               # Life (5-7)
-      # AffixConfig("Shimmering", [6], Operator.GE),          # ES (6-8)
-      AffixConfig("Arming", [6], Operator.GE),              # Mine Throw Speed (6-8)
     ],
     "suffixes": [ 
-      AffixConfig("Elements", [12], Operator.GE),           # Elemental Crit Multi (12-15)
-      AffixConfig("Potency", [9], Operator.GE),             # Global Crit Multi (9-12)
-      AffixConfig("Unmaking", [12], Operator.GE),           # Spell Crit Multi (12-15)
-      # AffixConfig("Demolishing", [12], Operator.GE),        # Melee Crit Multi (12-15)
-      
-      AffixConfig("Zealousness", [6], Operator.GE),         # Fire DoT Multi (6-8)
-      # AffixConfig("Gelidity", [6], Operator.GE),            # Cold DoT Multi (6-8)
-      # AffixConfig("Atrophy", [6], Operator.GE),             # Chaos DoT Multi (6-8)
-      # AffixConfig("Exsanguinating", [6], Operator.GE),      # Phys DoT Multi (6-8)
-
-      # AffixConfig("Intelligence", [12], Operator.GE),       # Int (12-16)
-      # AffixConfig("Strength", [12], Operator.GE),           # Str (12-16)
-      # AffixConfig("Spirit", [8], Operator.GE),              # Int/Str (8-10)
-      
+      # AffixConfig("Raiding", [None], Operator.ANY),          # Rarity
+      # AffixConfig("Order", [None], Operator.ANY),            # Chaos Res
+      AffixConfig("Zealousness", [6], Operator.GE),          # Fire DoT Multi (6-8)
+      # AffixConfig("Infusion", [None], Operator.ANY),          # Recoup
+      AffixConfig("Combusting", [16], Operator.GE),          # Burning Damage
     ],
     "num_affixes_required": 2,
     "custom_is_valid": CustomIsValid.AdornedJewels,
+  }
+
+  AbyssJewel: Config = {
+    "name": "Abyss Jewels", 
+    "prefixes": [
+      AffixConfig("Sanguine", [None], Operator.ANY),
+      AffixConfig("Stalwart", [None], Operator.ANY),
+      AffixConfig("Deleterious", [None], Operator.ANY),
+    ],
+    "suffixes": [ 
+      AffixConfig("Lightning Rod", [None], Operator.ANY),
+    ],
+    "num_affixes_required": 2,
   }
 
   SadistGarb: Config = {
@@ -346,10 +454,10 @@ class ConfigsModule:
       # AffixConfig("Student", None, Operator.ANY),         # T2 Int 
       AffixConfig("Prodigy", None, Operator.ANY),         # T1 Int 
 
-      AffixConfig("Drake", None, Operator.ANY),           # T1 Fire Res 
+      # AffixConfig("Drake", None, Operator.ANY),           # T1 Fire Res 
       # AffixConfig("Penguin", None, Operator.ANY),         # T1 Cold Res
       # AffixConfig("Storm", None, Operator.ANY),           # T1 Lightning Res
-      AffixConfig("Eviction", None, Operator.ANY),        # T1 Chaos Res
+      # AffixConfig("Eviction", None, Operator.ANY),        # T1 Chaos Res
       # AffixConfig("Kaleidoscope", None, Operator.ANY),    # T1 All Ele Res
 
     ],
@@ -386,7 +494,7 @@ class ConfigsModule:
       # AffixConfig("Lynx", None, Operator.ANY),            # T2 Dex 
       AffixConfig("Fox", None, Operator.ANY),             # T1 Dex
 
-      AffixConfig("Ease", None, Operator.ANY),            # T2 Attack Speed 
+      # AffixConfig("Ease", None, Operator.ANY),            # T2 Attack Speed 
       AffixConfig("Mastery", None, Operator.ANY),         # T1 Attack Speed
 
       # AffixConfig("Drake", None, Operator.ANY),           # T1 Fire Res 
@@ -397,31 +505,79 @@ class ConfigsModule:
       AffixConfig("Eviction", None, Operator.ANY),        # T1 Chaos Res
       AffixConfig("Kaleidoscope", None, Operator.ANY),    # T1 All Ele Res
     ],
+    "custom_should_regal": CustomShouldRegal.LargeClusterBow,
     "custom_should_exalt": CustomShouldExalt.LargeClusterBow, # We are exalting but leaving num_affixes_required as 3 because the 4th one is not strict
     "custom_is_valid": CustomIsValid.LargeClusterBow,
     "num_affixes_required": 3,
     "min_item_level": 84
   }
 
-  # NOT SUPPORTED: Large Cluster 8-9 Passives Bow Damage
-  LargeClusterBow8: Config = {
-    "name": "Large Cluster Jewel - Bow Damage 8",
+  # Large Cluster 12 Passives Minion Damage
+  LargeClusterMinion: Config = {
+    "name": "Large Cluster Jewel - Minion Damage",
     "prefixes": [
-      AffixConfig("Notable", None, Operator.ANY),
+      # AffixConfig("Potent", None, Operator.ANY),          # T2 Effect
+      AffixConfig("Powerful", None, Operator.ANY),        # T1 Effect
+
+      AffixConfig("Healthy", None, Operator.ANY),         # T2 Life
+      AffixConfig("Sanguine", None, Operator.ANY),        # T1 Life
+      
+      AffixConfig("Glimmering", None, Operator.ANY),      # T2 ES
+      AffixConfig("Glowing", None, Operator.ANY),         # T1 ES
+
+      AffixConfig("Hazardous", None, Operator.ANY),       # T2 % Damage
+      AffixConfig("Dangerous", None, Operator.ANY),       # T1 % Damage
     ],
     "suffixes": [
-      AffixConfig("Significance", None, Operator.ANY),
+      # AffixConfig("Sky", None, Operator.ANY),             # T2 Attribute
+      AffixConfig("Meteor", None, Operator.ANY),          # T1 Attribute
+
+      # AffixConfig("Wrestler", None, Operator.ANY),        # T2 Str
+      AffixConfig("Bear", None, Operator.ANY),            # T1 Str
+
+      # AffixConfig("Lynx", None, Operator.ANY),            # T2 Dex 
+      AffixConfig("Fox", None, Operator.ANY),             # T1 Dex
+
+      # AffixConfig("Student", None, Operator.ANY),         # T2 Int 
+      AffixConfig("Prodigy", None, Operator.ANY),         # T1 Int 
+
+      AffixConfig("Ravaging", None, Operator.ANY),         # T2 Minion Attack Speed 
+      AffixConfig("Razing", None, Operator.ANY),          # T1 Minion Attack Speed
+
+      AffixConfig("Drake", None, Operator.ANY),           # T1 Fire Res 
+      AffixConfig("Penguin", None, Operator.ANY),         # T1 Cold Res
+      AffixConfig("Storm", None, Operator.ANY),           # T1 Lightning Res
+      AffixConfig("Eviction", None, Operator.ANY),        # T1 Chaos Res
+      AffixConfig("Kaleidoscope", None, Operator.ANY),    # T1 All Ele Res
+
     ],
-    "num_affixes_required": 2,
-    "min_item_level": 50
+    "custom_should_regal": CustomShouldRegal.LargeClusterMinion,
+    "custom_should_exalt": CustomShouldExalt.LargeClusterMinion,
+    "custom_is_valid": CustomIsValid.LargeClusterMinion,
+    "num_affixes_required": 3,
+    "min_item_level": 84
   }
 
-  def get_config_by_base_name(item: Item):
+  # Large Cluster 12 Passives Minion Damage
+  Maps: Config = {
+    "name": "Map",
+    "prefixes": [
+      AffixConfig("Splitting", [2], Operator.GE),
+    ],
+    "suffixes": [
+    ],
+    "custom_is_valid": CustomIsValid.Maps,
+    "num_affixes_required": 1,
+  }
+
+
+  def get_config_by_base_name(item: Item) -> Config:
     ret = None
     item_base_name = item.base
     item_class = item.type
     item_level = item.ilvl
     item_rarity = item.rarity
+    item_corrupted = item.is_corrupted
     item_num_prefixes = item.num_prefixes
     item_num_suffixes = item.num_suffixes
     name_arr = item_base_name.split()
@@ -450,13 +606,19 @@ class ConfigsModule:
       ret = ConfigsModule.Wand
     elif item_class == "Jewels" and "Large" in name_arr and "Cluster" in name_arr:
       if item.cluster_jewel_has("Bow"):
-        ret = ConfigsModule.LargeClusterBow12 if item.cluster_jewel_passives == 12 else ConfigsModule.LargeClusterBow8
+        ret = ConfigsModule.LargeClusterBow12
+      elif item.cluster_jewel_has("Minion"):
+        ret = ConfigsModule.LargeClusterMinion
       else:
         ret = ConfigsModule.LargeClusterSpellDamage
     elif item_class == "Jewels":
       ret = ConfigsModule.AdornedJewels
+    elif item_class == "Abyss Jewels":
+      ret = ConfigsModule.AbyssJewel
     elif item_class == "Body Armours" and "Sadist" in name_arr:
       ret = ConfigsModule.SadistGarb
+    elif item_class == "Maps":
+      ret = ConfigsModule.Maps
     else:
       raise ValueError(f"Unknown base name: {item_base_name}")
     
@@ -468,6 +630,7 @@ class ConfigsModule:
           \n\titem class=\"{item_class}\" \
           \n\titem level=\"{item_level}\" \
           \n\titem rarity=\"{item_rarity}\" \
+          \n\titem corrupted=\"{item_corrupted}\" \
           \n\titem num_prefixes=\"{item_num_prefixes}\" \
           \n\titem num_suffixes=\"{item_num_suffixes}\"")
     return ret

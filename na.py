@@ -2,7 +2,7 @@ import pyautogui as pag
 import time
 from datetime import datetime, timedelta
 import threading
-from base import Images, Audio, KeyListener
+from base import Images, Audio, KeyListener, shutdown_computer
 Images = Images.POE
 import pyautogui as pag
 import interception as it
@@ -26,11 +26,8 @@ class Scripts:
       setattr(self, key, value)
 
 # Hotkeys
-CRAFTING_1x2_KEY = 'f1'
-CRAFTING_2x4_KEY = 'f2'
-CRATING_1x1_KEY = 'f3'
-ATTACK_OR_VAAL_HASTE_KEY = 'f4'
-PRESS_R_EVERY_INTERVAL_KEY = 'f6'
+CRAFT_MAPS_KEY = 'f4'
+AUTO_SOMETHING_KEY = 'f6'
 CRAFT_FROM_QUEUE_TAB_KEY = 'f7'
 CANCEL_KEY = 'f12'
 
@@ -46,7 +43,8 @@ data = {
 # Locations
 LOCATIONS = {
   "showcase": (440, 625),
-  "tl_corner_inventory": (1725, 805)
+  "tl_corner_inventory": (1725, 805),
+  "chat_x_button": (1805, 558)
 }
 
 # Currency Locations - Currency Tab
@@ -62,18 +60,31 @@ INACTIVE_CURRENCY_IMGS = {
   "regal": Images.inactive_regal,
   "scour": Images.inactive_scour,
   "exalt": Images.inactive_exalt,
-  "annul": Images.inactive_annul
+  "annul": Images.inactive_annul,
+  "chaos": Images.inactive_chaos,
+}
+CACHED_REGIONS = {
+  "transmuate": None,
+  "alt": None,
+  "aug": None,
+  "regal": None,
+  "scour": None,
+  "exalt": None,
+  "annul": None,
+  "chaos": None
 }
 
 # Areas (x, y, width, height)
 REGION = {
   "stash": (0, 0, 870, 1150),
+  "stash_currency_bottom": (175, 775, 715-175, 925-775),
   "inventory": (1685, 775, 2554-1685, 1150-775),
   "showcase_item_name": (0, 0, 1300, 475),
   "highlight_showcase": (380, 700, 509-380, 732-700),
   "managlobe40": (2363, 1316, 2405-2363, 1340-1316),
   "hpglobe60": (151, 1257, 169-151, 1272-1257),
-  "showcase_box": (415, 575, 461-415, 624-575)
+  "showcase_box": (415, 575, 461-415, 624-575),
+  "chat": (875, 400, 1845-875, 595-400)
 }
 INVENTORY_COORDS = [
   [(1730+(x*70), 820) for x in range(12)],
@@ -131,48 +142,31 @@ def main():
   # Interception Key Listener Setup (seperate thread)
   global scripts
   scripts = Scripts({
-  "Crafting_1x2": {
-    "name": "Crafting 1x2 Items",
-    "fn": crafting_1x2,
-  },
-  "Crafting_2x4": {
-    "name": "Crafting 2x4 Items",
-    "fn": crafting_2x4
-  },
-  "Crafting_1x1": {
-    "name": "Crafting 1x1 Items",
-    "fn": crafting_1x1
-  },
-  "AttackAndVaalHaste": {
-    "name": "Attack (w) and Vaal Haste (r)",
-    "fn": attack_and_vaal_haste
+  "CraftMaps": {
+    "name": "Craft maps",
+    "fn": craft_maps
   },
   "CraftFromQueueTab": {
     "name": "Craft from queue tab",
     "fn": craft_from_queue_tab
   },
-  "AutoVaalHaste": {
-    "name": "Auto Vaal Haste",
-    "fn": auto_vaal_haste
+  "AutoSomething": {
+    "name": "Auto Something",
+    "fn": auto_divination_flask_and_vaal_haste
   },
 })
   kl = KeyListener(data)
-  kl.add(CRAFTING_1x2_KEY, lambda: toggleScript(scripts.Crafting_1x2))
-  kl.add(CRAFTING_2x4_KEY, lambda: toggleScript(scripts.Crafting_2x4))
-  kl.add(CRATING_1x1_KEY, lambda: toggleScript(scripts.Crafting_1x1))
-  kl.add(ATTACK_OR_VAAL_HASTE_KEY, lambda: toggleScript(scripts.AttackAndVaalHaste))
+  kl.add(CRAFT_MAPS_KEY, lambda: toggleScript(scripts.CraftMaps))
   kl.add(CRAFT_FROM_QUEUE_TAB_KEY, lambda: toggleScript(scripts.CraftFromQueueTab))
-  kl.add(PRESS_R_EVERY_INTERVAL_KEY, lambda: toggleScript(scripts.AutoVaalHaste))
+  kl.add(AUTO_SOMETHING_KEY, lambda: toggleScript(scripts.AutoSomething))
   kl.add(CANCEL_KEY, cancel)
   kl.run()
 
-  # highlight=bow for crafting all bows in your inventory until you find a good one
-  for arg in sys.argv[1:]:
-    print(arg)
-    print(arg.split("="))
+  for arg in sys.argv[1:]: # shutdownwhendone
     key, value = arg.split("=")
     data["cmd"][key] = value
 
+  print("\nArguments:", sys.argv[1:])
   commands()
   try:
     while True:
@@ -210,6 +204,15 @@ def auto_vaal_haste(scriptobj):
     time.sleep(3)
     if data["target"] != scriptobj:
       break
+  
+def auto_divination_flask_and_vaal_haste(scriptobj):
+  while data["target"] == scriptobj:
+    if GetWindowText(GetForegroundWindow()) == "Path of Exile":
+        press_release("1")
+        press_release("r")
+    time.sleep(5)
+    if data["target"] != scriptobj:
+      break
     
 def auto_pot(scripts):
   def mana_more_than_40():
@@ -236,9 +239,18 @@ def auto_pot(scripts):
       break
   data["target"] = None
 
+def perform_actions_until_different_item(item: Item, actions: list):
+  new_item = safe_copy_item(item)
+  while new_item == item:
+    print("Same item! Performing actions...")
+    for action in actions:
+      action()
+    new_item = safe_copy_item(item)
+  return new_item
+
 def safe_copy_item(current_item: Item):
   new_item = current_item
-  n = 35
+  n = 70
   while n > 0:
     press_release('c', delay=0, pressdelay=0.01)
     try:
@@ -247,7 +259,7 @@ def safe_copy_item(current_item: Item):
       raise_and_stop(f"[safe_copy_item] Item parser failed: {e}")
     if current_item != new_item:
       return new_item
-    time.sleep(0.01)
+    time.sleep(0.005)
     n -= 1
   return new_item
 
@@ -288,9 +300,9 @@ def craft_from_queue_tab(scriptobj):
     click()
     click()
     press('ctrl', 0.1)
-    for i in range(12):
-      for j in range(12):
-        moveto(STASH_CORDS[i][j])
+    for r in range(12):
+      for c in range(12):
+        moveto(STASH_CORDS[c][r])
         click()
         click()
         if data["target"] != scriptobj:
@@ -316,7 +328,10 @@ def craft_from_queue_tab(scriptobj):
     empty_slots = crafting(scriptobj, workitem, resetscript=False)
     if empty_slots == 60: 
       number_of_fully_empty_cycles += 1
-      if number_of_fully_empty_cycles >= 3: data["target"] = None
+      if number_of_fully_empty_cycles >= 5: 
+        data["target"] = None
+        if "shutdownwhendone" in data["cmd"]:
+          shutdown_computer()
     if data["target"] != scriptobj: break
     refill_inventory_from_queue()
     if data["target"] != scriptobj: break
@@ -335,17 +350,13 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
       print("Showcase empty, going to the next one...")
       empty_slots += 1
       continue
-    pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
-    moveto(LOCATIONS["showcase"])
-    press('ctrl')
-    press('altleft')
-    press('shift')
-    click()
-    time.sleep(0.2)
-    press_release('c', delay=0.2)
-    press_release('c', delay=0.2)
     try:
-      item = Item(pc.paste())
+      pick_up_by_name("alt")
+      press('ctrl')
+      press('altleft')
+      press('shift')
+      moveto_flicker(LOCATIONS["showcase"], delay=0.05)
+      item = safe_copy_item(Item.get_default())
       item_config = ConfigsModule.get_config_by_base_name(item)
     except Exception as e:
       print(f"Item parser failed: {e}")
@@ -355,8 +366,11 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
       move_back_to_currency_tab()
       continue
 
+    same_item_seq = 0
     num_affixes_required = item_config.get("num_affixes_required")
+    # time_since_last_close_chat = datetime.now()
     while not is_valid(item, item_config):
+      start_item = item
       # Scour and transmute if we have a rare item
       pick_up_alt = item.rarity == "Rare" or item.rarity == "Normal"
       if item.rarity == "Rare":
@@ -367,7 +381,7 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
 
       if pick_up_alt:
         time.sleep(0.3)
-        pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
+        pick_up_by_name("alt")
         press('shift')
         moveto(LOCATIONS["showcase"], delay=0.2)
 
@@ -378,9 +392,10 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
       augged = False
       if num_affixes_required >= 2 and len(item.affixes) < 2 and (ConfigsModule.good_prefixes(item, item_config) + ConfigsModule.good_suffixes(item, item_config) >= 1):
         augged = True
+        print("\n💎 Augging!")
         aug_it()
-        try_close_chat()
-        item = safe_copy_item(item)
+        item = perform_actions_until_different_item(item, [try_close_chat, aug_it])
+        print(item)
 
       # Regal if we have less than 3 affixes and we have 2 good prefixes or suffixes
       regaled = False
@@ -389,7 +404,7 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
         regaled = True
         print("\n💎 Regaling!")
         regal_it()
-        item = safe_copy_item(item)
+        item = perform_actions_until_different_item(item, [try_close_chat, regal_it])
         print(item)
 
       custom_should_exalt = item_config.get("custom_should_exalt")
@@ -398,25 +413,33 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
         print("\n💎 Exalting!")
         play_audio("images/retro_ping.wav", 1)
         exalt_it()
-        item = safe_copy_item(item)
+        item = perform_actions_until_different_item(item, [try_close_chat, exalt_it])
         print(item)
         while not is_valid(item, item_config):
           print("\n💎 Annuling!")
           annul_it()
-          item = safe_copy_item(item)
+          item = perform_actions_until_different_item(item, [try_close_chat, annul_it])
           print(item)
           if item_config.get("custom_should_exalt") is not None and item_config.get("custom_should_exalt")(item):
             print("\n💎 Exalting again!")
             exalt_it()
-            item = safe_copy_item(item)
+            item = perform_actions_until_different_item(item, [try_close_chat, exalt_it])
             print(item)
           else:
             break
 
       if augged:
-        pick_up_by_image(INACTIVE_CURRENCY_IMGS["alt"])
+        pick_up_by_name("alt")
         press('shift')
         moveto(LOCATIONS["showcase"], delay=0.06)
+      same_item_seq = same_item_seq + 1 if start_item == item else 0
+      if same_item_seq >= 10:
+        print("Same item sequence reached 10, breaking, this either means we bug out or we ran out of currencies to use...")
+        # if "shutdownwhendone" in data["cmd"]:
+        #   shutdown_computer()
+        double_release(["ctrl", "shift", "altleft"])
+        time.sleep(0.5)
+        break
       if data["target"] != scriptobj: break
 
     double_release(["ctrl", "shift", "altleft"])
@@ -435,23 +458,35 @@ def crafting(scriptobj, workitem: CraftingWorkItem, resetscript=True):
     data["target"] = None
   return empty_slots
 
-def crafting_1x2(scriptobj):
-  workitem = CraftingWorkItem(
-    [(0,0), (2,0), (0,1), (2,1), (0,2), (2,2), (0,3), (2,3), (0,4), (2,4), (0,5), (2,5), (0,6), (2,6), (0,7), (2,7), (0,8), (2,8), (0,9), (2,9), (0,10), (2,10)]
-  )
-  crafting(scriptobj, workitem)
-
-def crafting_2x4(scriptobj):
-  workitem = CraftingWorkItem(
-    [(0,0), (0,2), (0,4), (0,6), (0,8), (0,10)]
-  )
-  crafting(scriptobj, workitem)
-  
-def crafting_1x1(scriptobj):
-  workitem = CraftingWorkItem(
-    [(0,0), (1,0), (2,0), (3,0), (4,0)]
-  )
-  crafting(scriptobj, workitem)
+def craft_maps(scriptobj):
+  press('ctrl', 0.05)
+  press('shift', 0.05)
+  press('altleft', 0.05)
+  pick_up_by_name("chaos")
+  press('shift', 0.05)
+  for r in range(12):
+    for c in range(12):
+      if data["target"] != scriptobj:
+        break
+      moveto(STASH_CORDS[r][c], 0.05)
+      try:
+        item = safe_copy_item(Item.get_default())
+        print(item)
+        if item.is_corrupted or item.type != "Maps":
+          continue
+        item_config: Config = ConfigsModule.get_config_by_base_name(item)
+      except Exception as e:
+        print(f"Item parser failed: {e}")
+        continue
+      while not is_valid(item, item_config):
+        click()
+        item = safe_copy_item(item)
+        if data["target"] != scriptobj:
+          break
+      if data["target"] != scriptobj:
+        break
+    if data["target"] != scriptobj:
+      break
 
 def attack_and_vaal_haste(scriptobj):
   def can_vaal_haste(now): return last_vaal_haste + timedelta(seconds=8) < now
@@ -485,8 +520,12 @@ def place_item(pos):
   time.sleep(0.05)
 
 def try_close_chat():
-  while pag.locateOnScreen(Images.chat_local_tab, grayscale=True, confidence=0.8):
-    press('enter', 0.1)
+  moveto((0,0))
+  while pag.locateOnScreen(Images.chat_local_tab, grayscale=True, confidence=0.8, region=REGION["chat"]):
+    loc = pag.locateOnScreen(Images.poe_window_x, grayscale=True, confidence=0.8, region=REGION["chat"])
+    if loc is None:
+      loc = (1805, 558)
+    click(loc)
 
 # We have a 2x4 space in the back of the inventory, we can return the item to the dump tab
 def return_item():
@@ -517,12 +556,16 @@ def move_back_to_currency_tab():
 def use_it(currency):
   release('shift', delay=0)
   release('shift', delay=0.01)
-  pick_up_by_image(INACTIVE_CURRENCY_IMGS[currency])
+  pick_up_by_name(currency)
   x, y = LOCATIONS["showcase"]
   moveto((x+5, y+5), delay=0)
-  moveto((x-5,y-5), delay=0)
+  moveto((x-5,y-5), delay=0.01)
+  moveto((x-5,y+5), delay=0.01)
   moveto((x,y), delay=0.03)
   click(delay=0.05)
+
+def alt_it():
+  use_it("alt")
 
 def aug_it():
   use_it("aug")
@@ -547,22 +590,36 @@ def pick_up(name):
   moveto(CURRENCY_LOCATIONS[name])
   right_click()
   
-# I have more than 2 stacks of alts > 5000 quantity, they're in different coordinates
-def pick_up_by_image(img: Image):
-  release('shift', delay=0)
-  release('shift', delay=0.01)
-  moveto((randint(510, 540), randint(490, 725)), delay=0)
-  loc = pag.locateOnScreen(img, confidence=0.9, grayscale=True, region=REGION["stash"])
+def get_image_location(cachekey, img):
+  if cachekey not in CACHED_REGIONS or CACHED_REGIONS[cachekey] is None:
+    CACHED_REGIONS[cachekey] = REGION["stash"]
+  # moveto((randint(510, 540), randint(490, 725)), delay=0)
+  loc = pag.locateOnScreen(img, confidence=0.85, grayscale=True, region=CACHED_REGIONS[cachekey]) or pag.locateOnScreen(img, confidence=0.85, grayscale=True, region=REGION["stash"]) or pag.locateOnScreen(img, confidence=0.85, grayscale=True)
   if not loc:
     print(f"Image not found, moving mouse away")
     moveto((randint(0, 2400), randint(0, 115)), delay=0.1)
-  loc = pag.locateOnScreen(img, confidence=0.9, grayscale=True, region=REGION["stash"])
+    loc = pag.locateOnScreen(img, confidence=0.85, grayscale=True, region=CACHED_REGIONS[cachekey]) or pag.locateOnScreen(img, confidence=0.85, grayscale=True, region=REGION["stash"]) or pag.locateOnScreen(img, confidence=0.85, grayscale=True)
   if not loc:
     raise_and_stop(f"Image not found on screen")
+  x, y = loc.left, loc.top
+  CACHED_REGIONS[cachekey] = (x-loc.width, y-loc.height, loc.width*3, loc.height*3)
+  # print(CACHED_REGIONS[cachekey])
+  return loc
+
+# I have more than 2 stacks of alts > 5000 quantity, they're in different coordinates
+def pick_up_by_name(name: str):
+  release('shift', delay=0)
+  release('shift', delay=0.01)
+  try:
+    img = INACTIVE_CURRENCY_IMGS[name]
+  except Exception as e:
+    raise_and_stop(f"Invalid currency name: {name}")
+  loc = get_image_location(name, img)
   moveto((loc.left+5, loc.top+5), delay=0)
   moveto((loc.left-5, loc.top-5), delay=0)
-  moveto(loc, delay=0.03)
-  right_click(delay=0.01)
+  moveto((loc.left-5, loc.top+5), delay=0.01)
+  moveto(loc, delay=0.05)
+  right_click(delay=0.05)
   
 def highlight():
   return pag.locateOnScreen(Images.highlight, confidence=0.8, grayscale=True, region=REGION["highlight_showcase"])
@@ -597,6 +654,13 @@ def right_click(location=None, delay=0.05):
   if delay > 0:
     time.sleep(delay)
 
+def moveto_flicker(location, delay=0.05):
+  moveto((location[0]+5, location[1]+5), delay=0)
+  moveto((location[0]-5, location[1]-5), delay=0)
+  moveto(location, delay=0)
+  if delay > 0:
+    time.sleep(delay)
+    
 def moveto(location, delay=0.05):
   it.move_to(location)
   if delay > 0:
@@ -636,14 +700,11 @@ def press_release(key, delay=0.05, pressdelay=0.05):
 
 def commands():
   print("Commands:")
-  print(f"  {CRAFTING_1x2_KEY} - start/end 1x2 craft")
-  print(f"  {CRATING_1x1_KEY} - start/end 2x4 craft")
-  print(f"  {CRATING_1x1_KEY} - start/end 1x1 craft")
-  # print(f"  {AUTO_POT_KEY} - start/end auto pot (press 2 when mana reaches 40%, press 1 when hp reaches 60%)")
-  print(f"  {ATTACK_OR_VAAL_HASTE_KEY} - start/end attack or vaal haste")
-  print(f"  {CRAFT_FROM_QUEUE_TAB_KEY} - start/end craft from queue tab")
-  print(f"  {PRESS_R_EVERY_INTERVAL_KEY} - start/end press E every interval (for auto vaal haste)")
-  print(f"  {CANCEL_KEY} - cancel all scripts")
+  # print(f"\t{AUTO_POT_KEY} - start/end auto pot (press 2 when mana reaches 40%, press 1 when hp reaches 60%)")
+  print(f"\t{CRAFT_MAPS_KEY} - start/end craft maps")
+  print(f"\t{AUTO_SOMETHING_KEY} - start/end auto something")
+  print(f"\t{CRAFT_FROM_QUEUE_TAB_KEY} - start/end craft from queue tab")
+  print(f"\t{CANCEL_KEY} - cancel all scripts")
 
 if __name__=="__main__":
   main()

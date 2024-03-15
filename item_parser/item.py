@@ -7,7 +7,11 @@ RE_GET_CONTENT_AFTER_COLON = r'(?<=:\s)(.*?)(?=$)'
 RE_GET_CLUSTER_PASSIVES_NUM = r'(?<=Adds\s)(\d*?)(?=\sPassive)'
                                            
 class Item:
-  def __init__(self, raw_string: str):
+  def __init__(self, raw_string: str|None = None):
+    if raw_string is None:
+      self._empty_cstor()
+      return
+    
     self._raw_string: str = raw_string
     self._item_affixes: list[str] = []
     self._item_affixes_parsed: dict = {}
@@ -17,6 +21,7 @@ class Item:
     self._item_class = ""
     self._item_rarity = ""
     self._item_level = ""
+    self._is_corrupted = False
 
     # Cluster Jewel Enchants
     self._cluster_jewel_enchants = []
@@ -80,7 +85,9 @@ class Item:
           i += 1
         end = i
         self._item_affixes = lines[start:end]
-        break       
+
+      if lines[i].startswith("Corrupted"):
+        self._is_corrupted = True
       i += 1 
       
     i = 0
@@ -97,6 +104,20 @@ class Item:
         i += 1
       line = Line(affix_type, affix_descriptions[:])
       self._item_affixes_parsed[line.affix_name] = line
+
+  def _empty_cstor(self):
+    self._raw_string = ""
+    self._item_affixes = []
+    self._item_affixes_parsed = {}
+    self._num_prefixes = -1
+    self._num_suffixes = -1
+    self._item_base = "Empty Item Base"
+    self._item_class = ""
+    self._item_rarity = ""
+    self._item_level = ""
+    self._is_corrupted = False
+    self._cluster_jewel_enchants = []
+    self._cluster_jewel_passives = 0
 
   @property
   def affixes(self):
@@ -117,6 +138,10 @@ class Item:
   @property
   def rarity(self):
     return self._item_rarity
+  
+  @property
+  def is_corrupted(self):
+    return self._is_corrupted
   
   @property
   def num_prefixes(self):
@@ -140,6 +165,10 @@ class Item:
         return True
     return False
   
+  def get_default():
+    empty_item = Item(None)
+    return empty_item
+  
   def __str__(self):
     return f"({self.num_prefixes}p {self.num_suffixes}s]) {([str(v) for k, v in self._item_affixes_parsed.items()])}"
     # return f"{self._item_base} {([str(v) for k, v in self._item_affixes_parsed.items()])}"
@@ -149,7 +178,12 @@ class Item:
       return False
     if len(self.affixes) != len(other.affixes):
       return False
+    if self.num_prefixes != other.num_prefixes or self.num_suffixes != other.num_suffixes:
+      return False
     for affix in self.affixes:
-      if not other.affixes.get(affix) or (other.affixes.get(affix) != self.affixes.get(affix)):
+      if not other.affixes.get(affix):
+        return False
+    for affix in other.affixes:
+      if other.affixes.get(affix) != self.affixes.get(affix):
         return False
     return True

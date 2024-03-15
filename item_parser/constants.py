@@ -7,6 +7,9 @@ class Operator:
   NE = 5
   ANY = 6
 
+  ENDS_WITH = 100
+  STARTS_WITH = 101
+
   def parse(operator: int):
     if operator == Operator.EQ:
       return "="
