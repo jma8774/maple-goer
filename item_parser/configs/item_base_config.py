@@ -10,8 +10,27 @@ class Config(TypedDict):
   num_affixes_required: int
   min_item_level: int | None
   custom_should_exalt: Callable[[Item], bool] | None
-  custom_is_valid: Callable[[Item], bool] | None  
+  custom_is_valid: Callable[[Item], bool] | None 
+  custom_is_valid_pre: Callable[[Item], bool] | None
 
+class CustomIsValidPre:
+  def LeagueStartFlasks(item: Item) -> bool:
+    # If has bad prefix, return false
+    if item.affixes.get("Doled") or \
+      item.affixes.get("Provisioned") or \
+      item.affixes.get("Measured") or \
+      item.affixes.get("Allocated") or \
+      item.affixes.get("Rationed"):
+      return False
+    
+    if "Granite Flask" in item.base and item.affixes.get("Armadillo"):
+      return True
+    
+    if "Jade Flask" in item.base and item.affixes.get("Impala"):
+      return True
+      
+    return item.affixes.get("Cheetah")
+  
 class CustomIsValid:
   def LargeClusterSpellDamage(item: Item) -> bool:
     # If we have 4 tier 1 affixes, we don't need to check anything else
@@ -80,17 +99,19 @@ class CustomIsValid:
   
   def AdornedJewels(item: Item) -> bool:
     mustHaveLifeIfFireDoTMulti = not item.affixes.get("Zealousness") or (item.affixes.get("Zealousness") and item.affixes.get("Vivid"))
-    mustHaveLifeIfBurning = not item.affixes.get("Combusting") or (item.affixes.get("Combusting") and item.affixes.get("Vivid"))
-    musthaveLifeIfRarity = not item.affixes.get("Raiding") or (item.affixes.get("Raiding") and item.affixes.get("Vivid"))
-    mustHaveLifeIfChaosRes = not item.affixes.get("Order") or (item.affixes.get("Order") and item.affixes.get("Vivid"))
     mustHaveMineSpeedIfGlobalCrit = not item.affixes.get("Potency") or (item.affixes.get("Potency") and item.affixes.get("Arming"))
-    ret = bool(mustHaveLifeIfFireDoTMulti) and bool(mustHaveLifeIfBurning) and bool(musthaveLifeIfRarity) and bool(mustHaveLifeIfChaosRes) and bool(mustHaveMineSpeedIfGlobalCrit)
+    mustHaveLifeIfChaosDoTMulti = not item.affixes.get("Atrophy") or (item.affixes.get("Atrophy") and item.affixes.get("Vivid"))
+    mustHaveLifeIfChaosDamage = not item.affixes.get("Chaotic") or (item.affixes.get("Chaotic") and item.affixes.get("Vivid"))
+    mustHaveLifeIfDot = not item.affixes.get("Entropy") or (item.affixes.get("Entropy") and item.affixes.get("Vivid"))
+    mustHaveLifeIfArea = not item.affixes.get("Blasting") or (item.affixes.get("Blasting") and item.affixes.get("Vivid"))
+    mustHaveLifeIfProj = not item.affixes.get("Archery") or (item.affixes.get("Archery") and item.affixes.get("Vivid"))
+    ret = bool(mustHaveLifeIfFireDoTMulti) and bool(mustHaveMineSpeedIfGlobalCrit) and bool(mustHaveLifeIfChaosDoTMulti) and bool(mustHaveLifeIfChaosDamage) and bool(mustHaveLifeIfDot) and bool(mustHaveLifeIfArea) and bool(mustHaveLifeIfProj)
     print(f"[✅] Passed custom AdornedJewels validation test" if ret else f"[❌] Failed custom AdornedJewels validation test")
     print(f"\tmustHaveLifeIfFireDoTMulti={bool(mustHaveLifeIfFireDoTMulti)}")
-    print(f"\tmustHaveLifeIfBurning={bool(mustHaveLifeIfBurning)}")
-    print(f"\tmusthaveLifeIfRarity={bool(musthaveLifeIfRarity)}")
-    print(f"\tmustHaveLifeIfChaosRes={bool(mustHaveLifeIfChaosRes)}")
     print(f"\tmustHaveMineSpeedIfGlobalCrit={bool(mustHaveMineSpeedIfGlobalCrit)}")
+    print(f"\tmustHaveLifeIfChaosDoTMulti={bool(mustHaveLifeIfChaosDoTMulti)}")
+    print(f"\tmustHaveLifeIfChaosDamage={bool(mustHaveLifeIfChaosDamage)}")
+    print(f"\tmustHaveLifeIfDot={bool(mustHaveLifeIfDot)}")
     return ret
   
   def Maps(item: Item) -> bool:
@@ -104,6 +125,12 @@ class CustomIsValid:
     print(f"\tmustNotHaveExposure={bool(mustNotHaveExposure)}")
     print(f"\tmustNotHaveSmothering={bool(mustNotHaveSmothering)}")
     print(f"\tmustNotHaveStasis={bool(mustNotHaveStasis)}")
+    return ret
+  
+  def LeagueStartFlasks(item: Item) -> bool:
+    mustHaveEffectIfBogMoss = not item.affixes.get("Bog Moss") or (item.affixes.get("Bog Moss") and (item.affixes.get("Abecedarian") or item.affixes.get("Alchemist") or item.affixes.get("Dabbler")))
+    mustHaveEffectIfRainbow = not item.affixes.get("Rainbow") or (item.affixes.get("Rainbow") and (item.affixes.get("Abecedarian") or item.affixes.get("Alchemist") or item.affixes.get("Dabbler")))
+    ret = bool(mustHaveEffectIfBogMoss) and bool(mustHaveEffectIfRainbow)
     return ret
   
 class CustomShouldExalt:
@@ -152,6 +179,8 @@ class ConfigsModule:
       return 0
     num_good = 0
     for p in good_prefixes:
+      if p._operator == Operator.PASS:
+        return item.num_prefixes
       if item.affixes.get(p._affix_name) and p.pass_check(item.affixes.get(p._affix_name)):
         num_good += 1
     return num_good
@@ -162,6 +191,8 @@ class ConfigsModule:
       return 0
     num_good = 0
     for s in good_suffixes:
+      if s._operator == Operator.PASS:
+        return item.num_suffixes
       if item.affixes.get(s._affix_name) and s.pass_check(item.affixes.get(s._affix_name)):
         num_good += 1
     return num_good 
@@ -261,6 +292,56 @@ class ConfigsModule:
     "min_item_level": 84
   }
 
+  LeagueStartFlasks: Config = {
+    "name": "League Start Flasks",
+    "prefixes": [
+      AffixConfig("Abecedarian", None, Operator.ANY),
+      AffixConfig("Alchemist", None, Operator.ANY),
+      AffixConfig("Dabbler", None, Operator.ANY),
+
+      # Charge Recovery
+      # AffixConfig("Continuous", None, Operator.ANY),
+      # AffixConfig("Endless", None, Operator.ANY),
+      # AffixConfig("Bottomless", None, Operator.ANY),
+      AffixConfig("Perpetual", None, Operator.ANY),
+
+      # Reduced Charges Used
+      # AffixConfig("Practitioner", None, Operator.ANY),
+      # AffixConfig("Brewer", None, Operator.ANY),
+      AffixConfig("Chemist", None, Operator.ANY),
+
+      # Increased Duration
+      # AffixConfig("Examiner", None, Operator.ANY),
+      # AffixConfig("Clinician", None, Operator.ANY),
+      # AffixConfig("Experimenter", None, Operator.ANY),
+
+      # Max Chargrs
+      # AffixConfig("Ample", None, Operator.ANY),
+
+      # Critical Strike Charge Gain
+      # AffixConfig("Specialist", None, Operator.ANY),
+      AffixConfig("Surgeon", None, Operator.ANY),
+
+      # Charge on Hit
+      AffixConfig("Flagellant", None, Operator.ANY),
+      # AffixConfig("Masochist", None, Operator.ANY), # 2 charge on hit
+    ],
+    "suffixes": [
+      AffixConfig("Rainbow", None, Operator.ANY),
+      AffixConfig("Impala", None, Operator.ANY),
+      AffixConfig("Owl", None, Operator.ANY),
+      AffixConfig("Cheetah", None, Operator.ANY),
+      AffixConfig("Armadillo", None, Operator.ANY),
+      AffixConfig("Bog Moss", None, Operator.ANY),
+      AffixConfig("Dove", None, Operator.ANY),
+      # AffixConfig("Tenaciousness", None, Operator.ANY),
+    ],
+    "num_affixes_required": 2,
+    "min_item_level": 84,
+    "custom_is_valid_pre": CustomIsValidPre.LeagueStartFlasks,
+    "custom_is_valid": CustomIsValid.LeagueStartFlasks
+  }
+
   SpineBow: Config = {
     "name": "Spine Bow",
     "prefixes": [
@@ -273,6 +354,19 @@ class ConfigsModule:
     "min_item_level": 86
   }
 
+  Quiver: Config = {
+    "name": "Quiver",
+    "prefixes": [
+      AffixConfig(None, None, Operator.PASS),
+    ],
+    "suffixes": [
+      AffixConfig("Dissolution", None, Operator.ANY),
+      # AffixConfig("Melting", None, Operator.ANY),
+    ],
+    "num_affixes_required": 2,
+    "min_item_level": 82
+  }
+
   Amulet: Config = {
     "name": "Fractured Amulet",
     "prefixes": [
@@ -281,9 +375,20 @@ class ConfigsModule:
     ],
     "suffixes": [
       AffixConfig("Dissolution", None, Operator.ANY),
-      AffixConfig("Destruction", None, Operator.ANY)
+      AffixConfig("Destruction", None, Operator.ANY),
+      AffixConfig("Melting", None, Operator.ANY)
     ],
     "num_affixes_required": 2,
+  }
+
+  FocusedAmulet: Config = {
+    "name": "Focused Amulet",
+    "prefixes": [
+      AffixConfig("Exalter", None, Operator.ANY),
+    ],
+    "suffixes": [
+    ],
+    "num_affixes_required": 1,
   }
 
   # Amulet: Config = {
@@ -350,58 +455,63 @@ class ConfigsModule:
     "num_affixes_required": 1,
   }
 
-  # AdornedJewels: Config = {
-  #   "name": "Adorned Jewels", 
-  #   "prefixes": [
-  #     AffixConfig("Arctic", [15], Operator.GE),             # Cold Crit Multi (15-18)
-  #     # AffixConfig("Surging", [15], Operator.GE),            # Lightning Crit Multi (15-18)
-  #     # AffixConfig("Infernal", [15], Operator.GE),           # Fire Crit Multi (15-18)
-  #     # AffixConfig("Puncturing", [15], Operator.GE),         # Dual Wield Crit Multi (15-18)
-  #     # AffixConfig("Piercing", [15], Operator.GE),           # One Handed Melee Crit Multi (15-18)
-  #     # AffixConfig("Rupturing", [15], Operator.GE),          # Two Handed Melee Crit Multi (15-18)
-
-  #     AffixConfig("Vivid", [5], Operator.GE),               # Life (5-7)
-  #     # AffixConfig("Shimmering", [6], Operator.GE),          # ES (6-8)
-  #     AffixConfig("Arming", [6], Operator.GE),              # Mine Throw Speed (6-8)
-  #   ],
-  #   "suffixes": [ 
-  #     AffixConfig("Elements", [12], Operator.GE),           # Elemental Crit Multi (12-15)
-  #     AffixConfig("Potency", [9], Operator.GE),             # Global Crit Multi (9-12)
-  #     AffixConfig("Unmaking", [12], Operator.GE),           # Spell Crit Multi (12-15)
-  #     # AffixConfig("Demolishing", [12], Operator.GE),        # Melee Crit Multi (12-15)
-      
-  #     AffixConfig("Zealousness", [6], Operator.GE),         # Fire DoT Multi (6-8)
-  #     AffixConfig("Combusting", [16], Operator.GE),          # Burning Damage
-  #     AffixConfig("Raiding", [None], Operator.ANY),          # Rarity
-  #     AffixConfig("Order", [None], Operator.ANY),            # Chaos Res
-  #     # AffixConfig("Gelidity", [6], Operator.GE),            # Cold DoT Multi (6-8)
-  #     # AffixConfig("Atrophy", [6], Operator.GE),             # Chaos DoT Multi (6-8)
-  #     # AffixConfig("Exsanguinating", [6], Operator.GE),      # Phys DoT Multi (6-8)
-
-  #     # AffixConfig("Intelligence", [12], Operator.GE),       # Int (12-16)
-  #     # AffixConfig("Strength", [12], Operator.GE),           # Str (12-16)
-  #     # AffixConfig("Spirit", [8], Operator.GE),              # Int/Str (8-10)
-
-  #   ],
-  #   "num_affixes_required": 2,
-  #   "custom_is_valid": CustomIsValid.AdornedJewels,
-  # }
-
   AdornedJewels: Config = {
     "name": "Adorned Jewels", 
     "prefixes": [
-      AffixConfig("Vivid", [5], Operator.GE),               # Life (5-7)
+      AffixConfig("Arctic", [15], Operator.GE),             # Cold Crit Multi (15-18)
+      # AffixConfig("Surging", [15], Operator.GE),            # Lightning Crit Multi (15-18)
+      # AffixConfig("Infernal", [15], Operator.GE),           # Fire Crit Multi (15-18)
+      # AffixConfig("Puncturing", [15], Operator.GE),         # Dual Wield Crit Multi (15-18)
+      # AffixConfig("Piercing", [15], Operator.GE),           # One Handed Melee Crit Multi (15-18)
+      # AffixConfig("Rupturing", [15], Operator.GE),          # Two Handed Melee Crit Multi (15-18)
+
+      # AffixConfig("Vivid", [5], Operator.GE),               # Life (5-7)
+      AffixConfig("Vivid", [7], Operator.GE),               # Life (5-7)
+      # AffixConfig("Shimmering", [6], Operator.GE),          # ES (6-8)
+      AffixConfig("Arming", [6], Operator.GE),              # Mine Throw Speed (6-8)
     ],
     "suffixes": [ 
+      AffixConfig("Elements", [12], Operator.GE),           # Elemental Crit Multi (12-15)
+      AffixConfig("Potency", [9], Operator.GE),             # Global Crit Multi (9-12)
+      AffixConfig("Unmaking", [12], Operator.GE),           # Spell Crit Multi (12-15)
+      # AffixConfig("Demolishing", [12], Operator.GE),        # Melee Crit Multi (12-15)
+      
+      AffixConfig("Zealousness", [6], Operator.GE),         # Fire DoT Multi (6-8)
+      # AffixConfig("Combusting", [16], Operator.GE),          # Burning Damage
       # AffixConfig("Raiding", [None], Operator.ANY),          # Rarity
       # AffixConfig("Order", [None], Operator.ANY),            # Chaos Res
-      AffixConfig("Zealousness", [6], Operator.GE),          # Fire DoT Multi (6-8)
-      # AffixConfig("Infusion", [None], Operator.ANY),          # Recoup
-      AffixConfig("Combusting", [16], Operator.GE),          # Burning Damage
+      # AffixConfig("Gelidity", [6], Operator.GE),            # Cold DoT Multi (6-8)
+      AffixConfig("Atrophy", [6], Operator.GE),             # Chaos DoT Multi (6-8)
+      AffixConfig("Entropy", [12], Operator.GE),             # Inc Damage Over Time
+      AffixConfig("Blasting", [12], Operator.GE),             # Area Damage
+      AffixConfig("Archery", [12], Operator.GE),             # Projectile Damage
+      AffixConfig("Chaotic", [12], Operator.GE),             # Chaos Damage
+      # AffixConfig("Exsanguinating", [6], Operator.GE),      # Phys DoT Multi (6-8)
+
+      # AffixConfig("Intelligence", [12], Operator.GE),       # Int (12-16)
+      # AffixConfig("Strength", [12], Operator.GE),           # Str (12-16)
+      # AffixConfig("Spirit", [8], Operator.GE),              # Int/Str (8-10)
+
     ],
     "num_affixes_required": 2,
     "custom_is_valid": CustomIsValid.AdornedJewels,
   }
+
+  # AdornedJewels: Config = {
+  #   "name": "Adorned Jewels", 
+  #   "prefixes": [
+  #     AffixConfig("Vivid", [5], Operator.GE),               # Life (5-7)
+  #   ],
+  #   "suffixes": [ 
+  #     # AffixConfig("Raiding", [None], Operator.ANY),          # Rarity
+  #     # AffixConfig("Order", [None], Operator.ANY),            # Chaos Res
+  #     AffixConfig("Zealousness", [6], Operator.GE),          # Fire DoT Multi (6-8)
+  #     # AffixConfig("Infusion", [None], Operator.ANY),          # Recoup
+  #     AffixConfig("Combusting", [16], Operator.GE),          # Burning Damage
+  #   ],
+  #   "num_affixes_required": 2,
+  #   "custom_is_valid": CustomIsValid.AdornedJewels,
+  # }
 
   AbyssJewel: Config = {
     "name": "Abyss Jewels", 
@@ -582,20 +692,20 @@ class ConfigsModule:
     item_num_suffixes = item.num_suffixes
     name_arr = item_base_name.split()
 
-    if item_class == "Utility Flasks" and "Jade" in name_arr:
-      ret = ConfigsModule.Jade
-    elif item_class == "Utility Flasks" and "Quicksilver" in name_arr:
-      ret = ConfigsModule.Quicksilver
-    elif item_class == "Utility Flasks" and "Granite" in name_arr:
-      ret = ConfigsModule.Granite
-    elif item_class == "Utility Flasks" and "Silver" in name_arr:
-      ret = ConfigsModule.Silver
-    elif item_class == "Utility Flasks":
-      ret = ConfigsModule.OtherFlask
+    # if item_class == "Utility Flasks" and "Jade" in name_arr:
+    #   ret = ConfigsModule.Jade
+    # elif item_class == "Utility Flasks" and "Quicksilver" in name_arr:
+    #   ret = ConfigsModule.Quicksilver
+    # elif item_class == "Utility Flasks" and "Granite" in name_arr:
+    #   ret = ConfigsModule.Granite
+    # elif item_class == "Utility Flasks" and "Silver" in name_arr:
+    #   ret = ConfigsModule.Silver
+    if item_class == "Utility Flasks":
+      ret = ConfigsModule.LeagueStartFlasks
     elif item_class == "Bows" and "Spine" in name_arr:
       ret = ConfigsModule.SpineBow
-    elif item_class == "Amulets" and "Amulet" in name_arr:
-      ret = ConfigsModule.Amulet
+    elif item_class == "Amulets":
+      ret = ConfigsModule.FocusedAmulet if item_base_name == "Focused Amulet" else ConfigsModule.Amulet
     elif item_class == "Boots":
       ret = ConfigsModule.Boots
     elif item_class == "Gloves":
@@ -604,6 +714,8 @@ class ConfigsModule:
       ret = ConfigsModule.Helmet
     elif item_class == "Wands":
       ret = ConfigsModule.Wand
+    elif item_class == "Quivers":
+      ret = ConfigsModule.Quiver
     elif item_class == "Jewels" and "Large" in name_arr and "Cluster" in name_arr:
       if item.cluster_jewel_has("Bow"):
         ret = ConfigsModule.LargeClusterBow12

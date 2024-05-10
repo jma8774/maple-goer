@@ -24,6 +24,7 @@ except Exception:
 
 MOUSE_BUTTON_DELAY = 0.03
 KEY_PRESS_DELAY = 0.01
+# KEY_PRESS_DELAY = 0.025 # For Maplestory
 
 keyboard = 1
 mouse = 11
@@ -303,6 +304,11 @@ def capture_mouse() -> int:
     finally:
         context._destroy_context()
 
+@requires_driver
+def set_maplestory_delay():
+    global KEY_PRESS_DELAY
+    print("Setting Maplestory key press delay to 0.025")
+    KEY_PRESS_DELAY = 0.025
 
 @requires_driver
 def listen_to_keyboard() -> int:

@@ -1,0 +1,29 @@
+Item Class: Jewels
+Rarity: Rare
+Maelström Shard
+Large Cluster Jewel
+--------
+Requirements:
+Level: 67
+--------
+Item Level: 84
+--------
+Adds 12 Passive Skills (enchant)
+(Added Passive Skills are never considered to be in Radius by other Jewels) (enchant)
+(All Added Passive Skills are Small unless otherwise specified) (enchant)
+2 Added Passive Skills are Jewel Sockets (enchant)
+Added Small Passive Skills grant: 10% increased Spell Damage (enchant)
+(Passive Skills that are not Notable, Masteries, Keystones, or Jewel Sockets are Small) (enchant)
+--------
+{ Prefix Modifier "Powerful" (Tier: 1) }
+Added Small Passive Skills have 35% increased Effect
+{ Prefix Modifier "Sanguine" (Tier: 1) — Life }
+Added Small Passive Skills also grant: +10(8-10) to Maximum Life
+{ Suffix Modifier "of the Bear" (Tier: 1) — Attribute }
+Added Small Passive Skills also grant: +8(6-8) to Strength
+{ Suffix Modifier "of the Meteor" (Tier: 1) — Attribute }
+Added Small Passive Skills also grant: +4 to All Attributes
+--------
+Place into an allocated Large Jewel Socket on the Passive Skill Tree. Added passives do not interact with jewel radiuses. Right click to remove from the Socket.
+--------
+Note: ~price 500 divine

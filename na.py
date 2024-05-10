@@ -19,6 +19,7 @@ from item_parser.configs.item_base_config import ConfigsModule, Config
 from item_parser.work_item import CraftingWorkItem
 from random import randint
 from PIL import Image
+import traceback
 
 class Scripts:
   def __init__(self, obj):
@@ -26,8 +27,9 @@ class Scripts:
       setattr(self, key, value)
 
 # Hotkeys
+AUTO_SOMETHING_KEY = 'f1'
+CRAFT_CHAOS_SPAM_KEY = 'f2'
 CRAFT_MAPS_KEY = 'f4'
-AUTO_SOMETHING_KEY = 'f6'
 CRAFT_FROM_QUEUE_TAB_KEY = 'f7'
 CANCEL_KEY = 'f12'
 
@@ -83,6 +85,10 @@ REGION = {
   "highlight_showcase": (380, 700, 509-380, 732-700),
   "managlobe40": (2363, 1316, 2405-2363, 1340-1316),
   "hpglobe60": (151, 1257, 169-151, 1272-1257),
+  "managlobe40wide": (2390, 1160, 2416-2390, 1200-1160),
+  "managlobe40widefs": (2390, 968, 2416-2390, 1008-968),
+  "hpglobe60wide": (150, 1100, 173-150, 1122-1100),
+  "hpglobe60widefs": (150, 900, 173-150, 940-900),
   "showcase_box": (415, 575, 461-415, 624-575),
   "chat": (875, 400, 1845-875, 595-400)
 }
@@ -126,6 +132,7 @@ def test():
     print()
   except Exception as e:
     print("Item parser test failed: ", e)
+    traceback.print_exception(type(e), e, e.__traceback__)
     print(pc.paste())
     print()
 
@@ -142,6 +149,10 @@ def main():
   # Interception Key Listener Setup (seperate thread)
   global scripts
   scripts = Scripts({
+  "CraftChaosSpam": {
+    "name": "Craft chaos spam",
+    "fn": craft_chaos_spam
+  },
   "CraftMaps": {
     "name": "Craft maps",
     "fn": craft_maps
@@ -152,11 +163,12 @@ def main():
   },
   "AutoSomething": {
     "name": "Auto Something",
-    "fn": auto_divination_flask_and_vaal_haste
+    "fn": auto_pf
   },
 })
   kl = KeyListener(data)
-  kl.add(CRAFT_MAPS_KEY, lambda: toggleScript(scripts.CraftMaps))
+  # kl.add(CRAFT_MAPS_KEY, lambda: toggleScript(scripts.CraftMaps))
+  kl.add(CRAFT_CHAOS_SPAM_KEY, lambda: toggleScript(scripts.CraftChaosSpam))
   kl.add(CRAFT_FROM_QUEUE_TAB_KEY, lambda: toggleScript(scripts.CraftFromQueueTab))
   kl.add(AUTO_SOMETHING_KEY, lambda: toggleScript(scripts.AutoSomething))
   kl.add(CANCEL_KEY, cancel)
@@ -197,47 +209,100 @@ def cancel():
   data["target"] = None
   print("All scripts stopped")
 
-def auto_vaal_haste(scriptobj):
-  while data["target"] == scriptobj:
-    if GetWindowText(GetForegroundWindow()) == "Path of Exile":
-        press_release("r")
-    time.sleep(3)
-    if data["target"] != scriptobj:
-      break
-  
-def auto_divination_flask_and_vaal_haste(scriptobj):
-  while data["target"] == scriptobj:
-    if GetWindowText(GetForegroundWindow()) == "Path of Exile":
-        press_release("1")
-        press_release("r")
-    time.sleep(5)
-    if data["target"] != scriptobj:
-      break
-    
-def auto_pot(scripts):
+def auto_pf(scriptobj):
+  # it's actually 20%
   def mana_more_than_40():
-    return pag.locateOnScreen(Images.mana40, confidence=0.7, grayscale=True, region=REGION["managlobe40"])
+    return pag.locateOnScreen(Images.mana40wide, confidence=0.8, grayscale=True, region=REGION["managlobe40widefs"])
   
   def hp_more_than_60():
-    return pag.locateOnScreen(Images.hp60, confidence=0.8, grayscale=True, region=REGION["hpglobe60"])
+    return pag.locateOnScreen(Images.hp60wide, confidence=0.8, grayscale=True, region=REGION["hpglobe60widefs"])
   
   mana_cd = datetime.now()
   hp_cd = datetime.now()
-  while data["target"] == scripts.AutoPot:
+  hp_interval_cd = datetime.now()
+  phase_run_cd = datetime.now()
+  cd_2 = datetime.now()
+  cd_3 = datetime.now()
+  cd_4 = datetime.now()
+  cd_5 = datetime.now()
+  vaal_haste_cd = datetime.now()
+  blessing_cd = datetime.now()
+  leftbracket_cd = datetime.now()
+  rightbracket_cd = datetime.now()
+  semicolon_cd = datetime.now()
+  singlequote_cd = datetime.now()
+  while data["target"] == scriptobj:  
     if GetWindowText(GetForegroundWindow()) == "Path of Exile":
       now = datetime.now()
       # if now > mana_cd and not mana_more_than_40():
       #   print("Potted MP!")
-      #   press_release("2")
+      #   press_release("5")
       #   mana_cd = datetime.now() + timedelta(seconds=2)
-      if now > hp_cd and not hp_more_than_60():
-        print("Potted HP!")
-        press_release("1")
-        hp_cd = datetime.now() + timedelta(seconds=2)
-    time.sleep(0.25)
-    if data["target"] != scripts.AutoPot:
-      break
+      if now > cd_2:
+        press_release("2")
+        cd_2 = datetime.now() + timedelta(seconds=4)
+      # if now > cd_3:
+      #   press_release("3")
+      #   cd_3 = datetime.now() + timedelta(seconds=11.5)
+      # if now > cd_4:
+      #   press_release("4")
+      #   cd_4 = datetime.now() + timedelta(seconds=15)
+      # if now > cd_5:
+      #   press_release("5")
+      #   cd_5 = datetime.now() + timedelta(seconds=9)
+      # healbecausehpislow = now > hp_cd and not hp_more_than_60()
+      # # if healbecausehpislow or now > hp_interval_cd:
+      # if healbecausehpislow:
+      #   # print("Potted HP!")
+      #   press_release("1", 0, 0.1)
+      #   if healbecausehpislow:
+      #     hp_cd = datetime.now() + timedelta(seconds=0.5)
+        # hp_interval_cd = datetime.now() + timedelta(seconds=3.4)
+      # if now > phase_run_cd:
+      #   # print("Phase Run!")
+      #   press_release("r")
+      #   phase_run_cd = datetime.now() + timedelta(seconds=4)
+      if now > blessing_cd:
+        # print("Blessing!")
+        press_release("r", 0, 0.1)
+        blessing_cd = datetime.now() + timedelta(seconds=16)
+      if now > vaal_haste_cd:
+        # print("Vaal Haste!")
+        press_release("t", 0, 0.01)
+        vaal_haste_cd = datetime.now() + timedelta(seconds=4)
+      if now > leftbracket_cd:
+        press_release("[")
+        leftbracket_cd = datetime.now() + timedelta(seconds=12.2)
+      if now > rightbracket_cd:
+        press_release("]", 0, 0.01) 
+        rightbracket_cd = datetime.now() + timedelta(seconds=4.3)
+      if now > semicolon_cd:
+        press_release(";", 0, 0.01)
+        semicolon_cd = datetime.now() + timedelta(seconds=17)
+      if now > singlequote_cd:
+        press_release("'", 0, 0.01)
+        singlequote_cd = datetime.now() + timedelta(seconds=5.7)
+      time.sleep(0.2)
+      if data["target"] != scriptobj:
+        break
   data["target"] = None
+  
+def craft_chaos_spam(scriptobj):
+  while data["target"] == scriptobj:
+    pick_up_by_name("chaos")
+    press('ctrl')
+    press('altleft')
+    press('shift')
+    moveto_flicker(LOCATIONS["showcase"], delay=0.05)
+    item = safe_copy_item(Item.get_default())
+    item_config = ConfigsModule.get_config_by_base_name(item)
+    while not is_valid(item, item_config):
+      click()
+      item = safe_copy_item(item)
+      if data["target"] != scriptobj:
+        break
+    double_release(["ctrl", "shift", "altleft"])
+  
 
 def perform_actions_until_different_item(item: Item, actions: list):
   new_item = safe_copy_item(item)
@@ -274,6 +339,9 @@ def is_valid(item: Item, item_config: Config):
   
   if len(item_config.get("prefixes")) == 0 and len(item_config.get("suffixes")) == 0:
     raise_and_stop("No affixes to check (2)")
+
+  if item_config.get("custom_is_valid_pre") is not None and item_config.get("custom_is_valid_pre")(item):
+    return True
   
   prefixes = ConfigsModule.good_prefixes(item, item_config)
   suffixes = ConfigsModule.good_suffixes(item, item_config)
@@ -700,9 +768,9 @@ def press_release(key, delay=0.05, pressdelay=0.05):
 
 def commands():
   print("Commands:")
-  # print(f"\t{AUTO_POT_KEY} - start/end auto pot (press 2 when mana reaches 40%, press 1 when hp reaches 60%)")
-  print(f"\t{CRAFT_MAPS_KEY} - start/end craft maps")
+  # print(f"\t{CRAFT_MAPS_KEY} - start/end craft maps")
   print(f"\t{AUTO_SOMETHING_KEY} - start/end auto something")
+  print(f"\t{CRAFT_CHAOS_SPAM_KEY} - start/end craft chaos spam")
   print(f"\t{CRAFT_FROM_QUEUE_TAB_KEY} - start/end craft from queue tab")
   print(f"\t{CANCEL_KEY} - cancel all scripts")
 

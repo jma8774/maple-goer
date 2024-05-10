@@ -41,6 +41,16 @@ KEYBOARD_MAPPING = {
     "pageup": 0xC9 + 1024,
     "pagedown": 0xD1 + 1024,
     "numlock": 0x45,
+    "num0": 0x60,
+    "num1": 0x61,
+    "num2": 0x62,
+    "num3": 0x63,
+    "num4": 0x64,
+    "num5": 0x65,
+    "num6": 0x66,
+    "num7": 0x67,
+    "num8": 0x68,
+    "num9": 0x68,
     "divide": 0xB5 + 1024,
     "multiply": 0x37,
     "subtract": 0x4A,
@@ -108,5 +118,11 @@ KEYBOARD_MAPPING = {
     "right": ctypes.windll.user32.MapVirtualKeyW(0x27, 0),
 }
 
-for c in range(32, 92):
-    KEYBOARD_MAPPING[chr(c).lower()] = win32api.MapVirtualKey(c, 0)
+# for c in range(32, 92):
+#     print(f"{chr(c).lower()}={win32api.MapVirtualKey(c, 0)}")
+#     KEYBOARD_MAPPING[chr(c).lower()] = win32api.MapVirtualKey(c, 0)
+
+# for k, v in KEYBOARD_MAPPING.items():
+#     print(f"{k}={v}")
+#     print(f"KEYBOARD_MAPPING[\"{k}\"] = {v}")
+#     print()

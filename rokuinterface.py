@@ -12,7 +12,8 @@ key_pressed = {}
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 
-monster_region = (800, 0, 600, 300)
+monster_outlaw4_region = (850, 180, 1360-850, 315-180)
+monster_1_5_region = (800, 0, 600, 300)
 minimap_map_icon_region = (5, 15, 40, 40)
 
 thread = None
@@ -33,21 +34,61 @@ def main():
   global b
   b = BotBase(data, {
     "user": "justin",
-    "script": end_1_5_macro,
+    "script": outlaw4_macro,
     "disable_extras": True,
   })
   b.run()
 
-def end_1_5_macro():
-  print("Started End of World 1-5 macro")
-  while not should_pause():
+def check():
     b.check_rune(play_sound=False)
     b.check_fam_leveling(fam_menu_key='f11', summon_fam_key='u')
     b.check_tof(",")
     b.check_wap()
-    b.check_fam_fuel()
     # b.check_elite_box()
+    b.check_fam_fuel()
+
+def outlaw4_macro():
+  def loot():
+    # data['next_loot'] = datetime.now() - timedelta(minutes=uniform(1.4, 1.6))
+    # if datetime.now() > data['next_loot']:
+    #   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.6))
+      # data['next_loot'] = datetime.now() + timedelta(minutes=0.2)
+    # Erda Fountain
+    b.press_release('left')
+    flash_jump(delayAfter=0.05)
+    glide()
+
+  
+  def rotation():
+    # Find mob before continuing
+    # count = 0
+    # mob_loc = None
+    # while mob_loc == None:
+    #   if should_pause(): return
+    #   mob_loc = pag.locateOnScreen(Images.IRONSHOT1, confidence=0.8, grayscale=True, region=monster_outlaw4_region) or pag.locateOnScreen(Images.IRONSHOT2, confidence=0.8, grayscale=True, region=monster_outlaw4_region)
+    #   time.sleep(0.3)
+    #   count += 1
+    #   if count > 20: break
+    # if mob_loc == None:
+    #   print(f"Couldn't find mob after {count} tries, continuing rotation")
+    # else:
+    #   print(f"Found mob at {mob_loc}, continuing rotation")
+    # if should_pause(): return
+    # b.release('a')
+    # if should_pause(): return
+    pass
+  
+  while not should_pause():
+    check()
+    rotation()
+    loot()
+  
+def end_1_5_macro():
+  print("Started End of World 1-5 macro")
+  while not should_pause():
+    check()
     end_1_5_rotation()
+    end_1_5_looting()
   print("Paused End of World 1-5 macro")
 
 def end_1_5_rotation():
@@ -98,7 +139,6 @@ def end_1_5_rotation():
     if should_pause(): return
 
 def end_1_5_looting():
-  data['next_loot'] = datetime.now() - timedelta(minutes=uniform(1.4, 1.6))
   if datetime.now() > data['next_loot']:
     if should_pause(): return
     b.press('left')
@@ -136,12 +176,15 @@ def end_1_5_looting():
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
     b.press('down')
-    b.press_release('f4')
+    b.press_release('9')
     b.release('down', delay=0.6)
     data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
     return True
   return False
 
+def glide(delayAfter=0.05):
+  b.press_release('s', delay=delayAfter)
+                  
 def gale_barrier(delayAfter=0.8):
   if datetime.now() > data['next_gale_barrier']:
     b.press_release('e', delay=delayAfter)
@@ -193,8 +236,8 @@ def web(delayAfter=0.6):
   
 def should_pause():
   # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  if not data['is_changed_map'] and pause_if_change_map(Images.LIMINIA_ICON):
-    data['is_changed_map'] = True
+  # if not data['is_changed_map'] and pause_if_change_map(Images.LIMINIA_ICON):
+  #   data['is_changed_map'] = True
   return data['is_paused']
 
 def pause_if_change_map(map):

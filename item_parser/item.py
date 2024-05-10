@@ -86,7 +86,7 @@ class Item:
         end = i
         self._item_affixes = lines[start:end]
 
-      if lines[i].startswith("Corrupted"):
+      if i < len(lines) and lines[i].startswith("Corrupted"):
         self._is_corrupted = True
       i += 1 
       

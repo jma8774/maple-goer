@@ -47,6 +47,7 @@ class BotBase:
     self.setup_audio()
 
     # Interception Setup for main loop
+    interception.set_maplestory_delay()
     kdevice = interception.listen_to_keyboard()
     mdevice = interception.listen_to_mouse()
     interception.inputs.keyboard = kdevice
@@ -60,8 +61,8 @@ class BotBase:
       kl.add(AUTO_LEVEL_FAM_KEY, self.handle_auto_level_fam)
       kl.add(WAP_KEY, self.handle_wap)
       kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
-    kl.add(PAUSE_KEY, self.pause)
     kl.add(START_KEY, self.start)
+    kl.add(PAUSE_KEY, self.pause)
     kl.add(RESET_LOOT_TIMER_KEY, self.reset_loot_timer)
     kl.run()
 
@@ -237,7 +238,7 @@ class BotBase:
     if quest_to_complete:
       interception.click(quest_to_complete)
       time.sleep(2)
-      while pag.locateOnScreen(Images.YES, confidence=0.90):
+      while pag.locateOnScreen(Images.YES, confidence=0.6):
         self.press_release(npc_chat_key, delay=0.15)
         self.press_release(npc_chat_key, delay=0.15)
         self.press_release(npc_chat_key, delay=0.15)
@@ -249,7 +250,7 @@ class BotBase:
       # Check if it was completed
       interception.click(bulb_loc)
       time.sleep(0.5)
-      if pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True):
+      if pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.6, grayscale=True):
         post_tof({ "user": self.config['user'], "status": "InProgress"})
         self.data['next_tof_check'] = datetime.now() + timedelta(minutes=5)
         self.press_release("escape")
@@ -292,7 +293,7 @@ class BotBase:
 
     # Check if next exist, if it exist, then we continue
     if self.data['is_paused']: return
-    if not pag.locateOnScreen(Images.NEXT, confidence=0.90):
+    if not pag.locateOnScreen(Images.NEXT, confidence=0.60):
       print("Can't find NEXT, we are done?")
       post_tof({ "user": self.config['user'], "status": "Done"})
       self.data['tof_done'] = True
@@ -302,7 +303,7 @@ class BotBase:
     # Accept the quest
     if self.data['is_paused']: return
     time.sleep(0.5)
-    while pag.locateOnScreen(Images.NEXT, confidence=0.90):
+    while pag.locateOnScreen(Images.NEXT, confidence=0.60):
       self.press_release(npc_chat_key, delay=0.15)
       self.press_release(npc_chat_key, delay=0.15)
       self.press_release(npc_chat_key, delay=0.15)
@@ -398,7 +399,7 @@ class BotBase:
     if datetime.now() > self.data['next_rune_check'] and state['checkrune']:
       if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
         if play_sound and not self.data['rune_playing']:
-          self.play_audio(Audio.get_random_rune_audio())
+          self.play_audio(Audio.PING, loops=2)
           self.data['rune_playing'] = True
         if post_request:
           post_status("rune", { "user": self.config['user'] })
@@ -511,8 +512,15 @@ class BotBase:
     time.sleep(delay)
 
   def press_release(self, key, delay=0.05):
+    print(key)
     self.press(key)
     self.release(key, delay)
+
+  def handle_next_config(self):
+    if "next_config" in self.config:
+      self.data['stop_flag'] = True
+      self.config["next_config"]()
+      self.commands(True)
 
   def commands(self, clearBefore=False):
     if clearBefore:
@@ -528,6 +536,7 @@ class BotBase:
     print(f"  {START_KEY} - start")
     print(f"  {PAUSE_KEY} - pause")
     print(f"  {RESET_LOOT_TIMER_KEY} - reset loot timer")
+    print(f"state: {state}")
 #endregion BOT
 
 #region ASSESTS
@@ -728,7 +737,9 @@ class Images:
 
     # Other
     mana40 = openImage("mana40.png")
+    mana40wide = openImage("mana40wide.png")
     hp60 = openImage("hp60.png")
+    hp60wide = openImage("hp60wide.png")
     showcase_empty = openImage("showcase_empty.png")
     helmet_tab = openImage("helmet_tab.png")
     currency_tab = openImage("currency_tab.png")

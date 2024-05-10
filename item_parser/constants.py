@@ -6,6 +6,7 @@ class Operator:
   LE = 4
   NE = 5
   ANY = 6
+  PASS = 7
 
   ENDS_WITH = 100
   STARTS_WITH = 101

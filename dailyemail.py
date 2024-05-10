@@ -51,11 +51,12 @@ def main():
     "mp": midpoint3_macro,
     "fs": firespirit3_macro,
     "ebon": ebonmage_macro,
-    "maru": maru2_macro,
+    "outlaw": outlaw2_macro,
     "gate1": gate1_macro,
     "alley3": alley3_macro,
     "spring1": spring1_macro,
     "default": gate1_macro,
+    "event": event_macro,
 
     "tiru": tiru_macro,
     "knight": knight_macro,
@@ -80,14 +81,13 @@ def main():
     
   def pause_cb():
     data['x_and_down_x'] = True
-
   b = BotBase(data, {
     "user": "jeemong",
     "script": scripts[state['script']],
     "setup": setup,
     "pause_cb": pause_cb
   })
-  print(state)
+  print(f"scripts={scripts.keys()}")
   b.run()
     
 def setup():
@@ -117,7 +117,7 @@ def spring1_macro():
     if should_pause(): return
     b.press_release('left')
     teleport_reset()
-    time.sleep(6)
+    time.sleep(3)
   print("Paused Blooming Spring 1 macro")
 
 def alley3_macro():
@@ -181,7 +181,7 @@ def alley3_macro():
     if should_pause(): return
     jump_attack(attackDelay=0.05, delayAfter=0.47)
     if should_pause(): return
-    jump_attack(attackDelay=0.05, delayAfter=0.7)
+    jump_attack(attackDelay=0.05, delayAfter=0.75)
     if datetime.now() < data['next_loot']:
       if should_pause(): return
       jump_down_attack(delayAfter=0.45)
@@ -201,11 +201,18 @@ def alley3_macro():
       data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
       teleport_reset()
   
-  print("Started Road to the Castle's Gate 1 macro")
+  print("Started Alley 3 macro")
   while not should_pause():
     buff_setup()
     alley3_rotation()
-  print("Paused Road to the Castle's Gate 1 macro")
+  print("Paused Alley 3 macro")
+
+def event_macro():
+  print("Started event macro")
+  while not should_pause():
+    b.press_release('e', 0.1)
+    time.sleep(uniform(1, 5))
+  print("Paused event macro")
 
 def gate1_macro():
   def gate1_rotation():
@@ -300,8 +307,8 @@ def gate1_macro():
     gate1_loot()
   print("Paused Road to the Castle's Gate 1 macro")
 
-def maru2_macro():
-  print("Started Marauder macro")
+def outlaw2_macro():
+  print("Started Outlaw Infested Wastes 2 macro")
   while not should_pause():
     buff_setup()
     if should_pause(): return
@@ -318,7 +325,7 @@ def maru2_macro():
     jump_attack(attackDelay=0.05, delayAfter=0.47)
     if should_pause(): return
     teleport_reset()
-  print("Paused Marauder macro")
+  print("Paused Outlaw Infested Wastes 2 macro")
 
 def ebonmage_macro():
   print("Started Ebon Mage macro")
@@ -482,7 +489,7 @@ def firespirit3_loot():
   if should_pause(): return
   jump_attack(jumpDelay=0.11, attackDelay=0.05, delayAfter=0.47)
   if should_pause(): return
-  b.check_rune(play_sound=False)
+  b.check_rune()
   if should_pause(): return
   teleport_reset()
   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
@@ -696,7 +703,7 @@ def buff_setup():
 
   b.check_elite_box()
 
-  b.check_rune(play_sound=False)
+  b.check_rune()
 
   if cur > data['next_boss_buff'] and pag.locateOnScreen(Images.ELITE_BOSS_HP, region=(200, 0, 1150-200, 30)):
     b.press_release('t', 0.5)
@@ -745,10 +752,8 @@ def buff_setup():
 
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
-    b.press('down')
     b.press_release('b')
     b.press_release('b')
-    b.release('down', delay=0.6)
     data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
     return True
   return False
