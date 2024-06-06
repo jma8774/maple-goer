@@ -10,3 +10,6 @@ asgiref
 asyncio
 PyNaCl
 gTTS
+pillow
+pypiwin32
+PyScreeze

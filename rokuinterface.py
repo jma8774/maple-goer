@@ -7,18 +7,27 @@ from datetime import datetime, timedelta
 import os
 from base import BotBase, Images, Audio, KeyListener, post_status
 import interception
-key_pressed = {}
+import sys
+from state import state
 
-START_KEY = 'f7'
-PAUSE_KEY = 'f8'
+def getMap():
+  maps = {
+    # "cernium": Images.CERNIUM_ICON,
+    # "odium": Images.ODIUM_ICON,
+
+    "liminia": Images.LIMINIA_ICON,
+    "arcus": Images.ARCUS_ICON,
+    "default": Images.ARCUS_ICON
+  }
+  return maps[state['script']] if state['script'] in maps else maps['default']
 
 monster_outlaw4_region = (850, 180, 1360-850, 315-180)
 monster_1_5_region = (800, 0, 600, 300)
 minimap_map_icon_region = (5, 15, 40, 40)
 
-thread = None
 b = None
 data = {
+  'next_mistral_spring': datetime.now(),
   'next_gale_barrier': datetime.now(),
   'next_monsoon': datetime.now(),
   'next_sphere': datetime.now(),
@@ -32,15 +41,22 @@ data = {
 
 def main():
   global b
-  b = BotBase(data, {
+  scripts = {
+    "liminia": end_1_5_macro,
+    "arcus": outlaw4_macro,
+    "default": outlaw4_macro
+  }
+  
+  config = {
     "user": "justin",
-    "script": outlaw4_macro,
+    "script": scripts[state['script']],
     "disable_extras": True,
-  })
+  }
+  b = BotBase(data, config, args=sys.argv, scripts=scripts)
   b.run()
 
 def check():
-    b.check_rune(play_sound=False)
+    b.check_rune()
     b.check_fam_leveling(fam_menu_key='f11', summon_fam_key='u')
     b.check_tof(",")
     b.check_wap()
@@ -48,40 +64,133 @@ def check():
     b.check_fam_fuel()
 
 def outlaw4_macro():
+  cycles = 1
   def loot():
-    # data['next_loot'] = datetime.now() - timedelta(minutes=uniform(1.4, 1.6))
-    # if datetime.now() > data['next_loot']:
-    #   data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.6))
-      # data['next_loot'] = datetime.now() + timedelta(minutes=0.2)
-    # Erda Fountain
-    b.press_release('left')
-    flash_jump(delayAfter=0.05)
-    glide()
+    nonlocal cycles
+    calibrate = cycles % 3 == 0
+    data['next_loot'] = datetime.now() - timedelta(minutes=uniform(1.4, 1.6))
+    if datetime.now() > data['next_erda_fountain']:
+      # Erda Fountain
+      b.press_release('left')
+      flash_jump(jumpDelay=0.2, delayAfter=0.1)
+      glide()
+      time.sleep(0.2)
+      b.press('left')
+      time.sleep(0.6)
+      b.release('left')
+      if should_pause(): return
+      erda_fountain()
+      if should_pause(): return
+      jump_down_attack(delayAfter=0.35)
+      jump_down_attack(delayAfter=0.7)
+      b.press('right')
+      b.release('right')
+      jump_attack()
+      if should_pause(): return
+      jump_attack()
+      if should_pause(): return
+      jump_attack()
+      if should_pause(): return
+      jump_attack()
+      if should_pause(): return
+      jump_attack()
+      if calibrate:
+        jump_attack()
+        jump_attack()
+      time.sleep(0.1)
+      b.press_release('left')
+      jump_up(delayAfter=0.4)
+      if calibrate:
+        glide(delayAfter=0, delayInBetween=0)
+        glide(delayAfter=0, delayInBetween=0)
+        glide()
+        time.sleep(0.5)
+      else:
+        b.press_release('d', delay=0.5)
+      if should_pause(): return
+      flash_jump(delayAfter=0.03)
+      if should_pause(): return
+      glide(delayAfter=0, delayInBetween=0)
+      glide(delayAfter=0, delayInBetween=0)
+      glide()
+      if should_pause(): return
+      glide(delayAfter=0, delayInBetween=0)
+      glide(delayAfter=0, delayInBetween=0)
+      glide()
+      if should_pause(): return
+      glide(delayAfter=0, delayInBetween=0)
+      glide(delayAfter=0, delayInBetween=0)
+      glide()
+      time.sleep(0.2)
+      if should_pause(): return
+      jump_down_attack(delayAfter=0.5)
+      if should_pause(): return
+      jump_attack(delayAfter=0.7)
+      if calibrate:
+        b.press('left')
+        if should_pause(): return
+        time.sleep(0.3)
+        b.release('left')
+      b.press_release('right')
+      cycles += 1
 
-  
   def rotation():
-    # Find mob before continuing
-    # count = 0
-    # mob_loc = None
-    # while mob_loc == None:
-    #   if should_pause(): return
-    #   mob_loc = pag.locateOnScreen(Images.IRONSHOT1, confidence=0.8, grayscale=True, region=monster_outlaw4_region) or pag.locateOnScreen(Images.IRONSHOT2, confidence=0.8, grayscale=True, region=monster_outlaw4_region)
-    #   time.sleep(0.3)
-    #   count += 1
-    #   if count > 20: break
-    # if mob_loc == None:
-    #   print(f"Couldn't find mob after {count} tries, continuing rotation")
-    # else:
-    #   print(f"Found mob at {mob_loc}, continuing rotation")
-    # if should_pause(): return
-    # b.release('a')
-    # if should_pause(): return
-    pass
+    rng = random.random()
+    gale_barrier()
+    if should_pause(): return
+    if not sphere():
+      if should_pause(): return
+      if not monsoon():
+        if should_pause(): return
+        if not mistral_spring():
+          if should_pause(): return
+          howling_gale()
+    else:
+      merciless_winds()
+    if should_pause(): return
+    phalanx_charge(press_twice=True)
+    if should_pause(): return
+    web()
+    if rng > 0.5:
+      b.press_release('d', 0.6)
+    if should_pause(): return
+
+    if datetime.now() > data['next_erda_fountain']:
+      time.sleep(0.2)
+      loot()
+    else:
+      # b.press('a')
+      time.sleep(1)
+      if should_pause(): return
+      time.sleep(1)
+      if should_pause(): return
+      time.sleep(1)
+      if should_pause(): return
+      time.sleep(1)
+      if should_pause(): return
+
+      # Find mob before continuing
+      count = 0
+      mob_loc = None
+      while mob_loc == None:
+        if should_pause(): return
+        mob_loc = pag.locateOnScreen(Images.IRONSHOT1, confidence=0.9, grayscale=True, region=monster_outlaw4_region) or pag.locateOnScreen(Images.IRONSHOT2, confidence=0.9, grayscale=True, region=monster_outlaw4_region)
+        time.sleep(0.3)
+        count += 1
+        if count > 20: break
+      if mob_loc == None:
+        print(f"Couldn't find mob after {count} tries, continuing rotation")
+      else:
+        print(f"Found mob at {mob_loc}, continuing rotation")
+      if should_pause(): return
+      # b.release('a')
+      if should_pause(): return
   
+  print("Started Outlaw Infested Waste 4 macro")
   while not should_pause():
     check()
     rotation()
-    loot()
+  print("Paused Outlaw Infested Waste 4 macro")
   
 def end_1_5_macro():
   print("Started End of World 1-5 macro")
@@ -126,7 +235,7 @@ def end_1_5_rotation():
     mob_loc = None
     while mob_loc == None:
       if should_pause(): return
-      mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8, grayscale=True, region=monster_region)
+      mob_loc = pag.locateOnScreen(Images.ASCENDION, confidence=0.8, grayscale=True, region=monster_outlaw4_region)
       time.sleep(0.3)
       count += 1
       if count > 20: break
@@ -182,17 +291,24 @@ def erda_fountain():
     return True
   return False
 
-def glide(delayAfter=0.05):
-  b.press_release('s', delay=delayAfter)
-                  
+def glide(delayAfter=0.52, delayInBetween=0.05):
+  b.press_release('s', delay=delayAfter, delayInBetween=delayInBetween)
+
+def mistral_spring(delayAfter=4):
+  if datetime.now() > data['next_mistral_spring']:
+    b.press_release('4', delay=delayAfter)
+    data['next_mistral_spring'] = datetime.now() + timedelta(seconds=360)
+    return True
+  return False      
+
 def gale_barrier(delayAfter=0.8):
   if datetime.now() > data['next_gale_barrier']:
-    b.press_release('e', delay=delayAfter)
+    b.press_release('q', delay=delayAfter)
     data['next_gale_barrier'] = datetime.now() + timedelta(seconds=90)
     return True
   return False  
 
-def monsoon(delayAfter=1.1):
+def monsoon(delayAfter=1.2):
   if datetime.now() > data['next_monsoon']:
     b.press_release('r', delay=delayAfter)
     data['next_monsoon'] = datetime.now() + timedelta(seconds=29.7)
@@ -220,9 +336,13 @@ def howling_gale(delayAfter=0.9):
     return True
   return False
 
-def phalanx_charge(delayAfter=0.8):
+def phalanx_charge(delayAfter=0.8, press_twice=False):
   if datetime.now() > data['next_phalanx_charge']:
-    b.press_release('g', delay=delayAfter)
+    b.press_release('g', 0.2)
+    if press_twice:
+      b.press_release('g', 0.05)
+    else:
+      time.sleep(delayAfter)
     data['next_phalanx_charge'] = datetime.now() + timedelta(seconds=30)
     return True
   return False
@@ -236,8 +356,8 @@ def web(delayAfter=0.6):
   
 def should_pause():
   # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  # if not data['is_changed_map'] and pause_if_change_map(Images.LIMINIA_ICON):
-  #   data['is_changed_map'] = True
+  if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(getMap()):
+    data['is_changed_map'] = True
   return data['is_paused']
 
 def pause_if_change_map(map):

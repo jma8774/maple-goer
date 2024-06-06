@@ -12,6 +12,10 @@ import pyautogui as pag
 import pygame
 import sys
 from state import state
+import pyscreeze
+import common
+
+pyscreeze.USE_IMAGE_NOT_FOUND_EXCEPTION = False
 
 def clear():
   os.system('cls' if os.name == 'nt' else 'clear')
@@ -23,7 +27,7 @@ WAP_KEY = 'f3'
 FAM_FUEL_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
-RESET_LOOT_TIMER_KEY = 'f9'
+NEXT_SCRIPT_KEY = 'f9'
 minimap_rune_region = (0, 0, 500, 300)
 buffs_region = (250, 0, 1366-250, 80)
 
@@ -38,7 +42,11 @@ def shutdown_computer():
         print('Unsupported operating system.')
         
 class BotBase:
-  def __init__(self, data, config):
+  def __init__(self, data, config, args=None, scripts=None):
+    self.args = args
+    self.scripts = scripts if scripts else {}
+    self.setup_args()
+
     self.data = data
     self.config = config
     self.thread = None
@@ -47,7 +55,7 @@ class BotBase:
     self.setup_audio()
 
     # Interception Setup for main loop
-    interception.set_maplestory_delay()
+    interception.set_maplestory()
     kdevice = interception.listen_to_keyboard()
     mdevice = interception.listen_to_mouse()
     interception.inputs.keyboard = kdevice
@@ -63,10 +71,30 @@ class BotBase:
       kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
     kl.add(START_KEY, self.start)
     kl.add(PAUSE_KEY, self.pause)
-    kl.add(RESET_LOOT_TIMER_KEY, self.reset_loot_timer)
+    kl.add(NEXT_SCRIPT_KEY, self.next_script)
     kl.run()
 
     self.commands()
+
+  def setup_args(self):
+    if not self.args:
+      return
+    for arg in self.args:
+      if arg == 'nomap':
+        state['checkmap'] = False
+      elif arg == 'nomobscan':
+        state['scanmob'] = False
+      elif arg == 'nostatus':
+        state['sendstatus'] = False
+      elif arg == 'norune':
+        state['checkrune'] = False
+      elif arg == 'dev':
+        state['checkmap'] = False
+        state['scanmob'] = False
+        state['sendstatus'] = False
+      elif arg in self.scripts:
+        state['script'] = arg
+      state['localserver'] = True
 
   def setup_data(self):
     self.data['use_inventory_region'] = None
@@ -92,7 +120,6 @@ class BotBase:
     self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
     self.data['key_pressed'] = {}
     self.data['is_changed_map'] = False
-    self.data['rune_playing'] = False
     self.data['next_rune_check'] = datetime.now()
     self.data['next_elite_box_check'] = datetime.now()
     self.data['someone_on_map_cooldown'] = datetime.now()
@@ -103,10 +130,10 @@ class BotBase:
     if "script" not in self.config:
       raise Exception("Config must have script functions")
     setup = self.config['setup'] if 'setup' in self.config else None
-    script = self.config['script']
     
     try:
       while True:
+        script = self.scripts[state['script']] if self.scripts and self.scripts[state['script']] else self.config['script']
         if self.data['is_paused'] == True:
           time.sleep(1)
           continue
@@ -398,12 +425,11 @@ class BotBase:
   def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check'] and state['checkrune']:
       if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
-        if play_sound and not self.data['rune_playing']:
+        if play_sound:
           self.play_audio(Audio.PING, loops=2)
-          self.data['rune_playing'] = True
         if post_request:
           post_status("rune", { "user": self.config['user'] })
-      self.data['next_rune_check'] = datetime.now() + timedelta(seconds=45)
+      self.data['next_rune_check'] = datetime.now() + timedelta(seconds=60)
 
   def check_person_entered_map(self, only_guild=False):
     normal = None if only_guild else pag.locateOnScreen(Images.PERSON, region=minimap_rune_region)
@@ -443,7 +469,6 @@ class BotBase:
   def pause(self):
     print('Pausing')
     self.data['is_paused'] = True
-    self.data['rune_playing'] = False
     self.data['x_and_down_x'] = True
     if 'pause_cb' in self.data:
       self.data['pause_cb']()
@@ -454,9 +479,14 @@ class BotBase:
     self.data['is_paused'] = False
     self.data['is_changed_map'] = False
 
-  def reset_loot_timer(self):
-    print('\nResetting loot timer')
-    self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
+  def next_script(self):
+    keys = list(self.scripts.keys())
+    current = state['script']
+    index = keys.index(current)
+    state['script'] = keys[(index + 1) % len(keys)]
+    self.commands(True)
+    print()
+    print(f"Script changed from {current} -> {state['script']}")
 
   def handle_tof(self):
     if self.data['tof_state'] == None:
@@ -504,16 +534,17 @@ class BotBase:
   def press(self, key, delay=0.05):
     interception.key_down(key)
     self.data['key_pressed'][key] = True
-    time.sleep(delay)
+    if delay > 0:
+      time.sleep(delay)
     
   def release(self, key, delay=0.05):
     interception.key_up(key)
     self.data['key_pressed'][key] = False
-    time.sleep(delay)
+    if delay > 0:
+      time.sleep(delay)
 
-  def press_release(self, key, delay=0.05):
-    print(key)
-    self.press(key)
+  def press_release(self, key, delay=0.05, delayInBetween=0.05):
+    self.press(key, delayInBetween)
     self.release(key, delay)
 
   def handle_next_config(self):
@@ -521,11 +552,13 @@ class BotBase:
       self.data['stop_flag'] = True
       self.config["next_config"]()
       self.commands(True)
-
+  
   def commands(self, clearBefore=False):
     if clearBefore:
       clear()
-    print(f"Using images for resolution of 1366 fullscreen maplestory")
+    print(f"Make sure Maplestory is in 1366x768 resolution full screen mode")
+    print()
+
     print("Commands:")
     if self.config['disable_extras'] != True:
       print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
@@ -535,8 +568,20 @@ class BotBase:
       print()
     print(f"  {START_KEY} - start")
     print(f"  {PAUSE_KEY} - pause")
-    print(f"  {RESET_LOOT_TIMER_KEY} - reset loot timer")
-    print(f"state: {state}")
+    print(f"  {NEXT_SCRIPT_KEY} - next script")
+    print()
+
+    common.print_state(state)
+    print()
+
+    common.print_args(self.args)
+    print()
+    
+    common.print_scripts(self.scripts)
+    print()
+
+    print("If you want to run the script and not use any image detection (allowing you to run the script in ANY resolution) add 'dev' as an argument when running the script.")
+    print("  For example, `python <name of pyton file> dev` or `python steven.py dev`") 
 #endregion BOT
 
 #region ASSESTS
@@ -559,27 +604,37 @@ class Images:
   ENHANCE_ENHANCE   = openImage("enhance.png")
   ENHANCE_OK        = openImage("e_ok.png")
 
+  PINEDEER1         = openImage("pinedeer1.png")
+  PINEDEER2         = openImage("pinedeer2.png")
+  BEFUDDLE1         = openImage("befuddle1.png")
+  BEFUDDLE2         = openImage("befuddle2.png")
   MONTO             = openImage("monto.png")
   MONTO2            = openImage("monto2.png")
   DRONE_A           = openImage("drone_a.png")
   DRONE_B           = openImage("drone_b.png")
   FOREBERION        = openImage("foreberion.png")
   ASCENDION         = openImage("mob.png")
+  IRONSHOT1         = openImage("ironshot1.png")
+  IRONSHOT2         = openImage("ironshot2.png")
   FIRE_SPIRIT       = openImage("fire_spirit.png")
   FIRE_SPIRIT2      = openImage("fire_spirit2.png")
   DIAMOND_GUARDIAN1 = openImage("diamond_guardian1.png")
   DIAMOND_GUARDIAN2 = openImage("diamond_guardian2.png")
   ALLEY3_MOB        = openImage("alley3_mob.png")
   ALLEY3_MOB2       = openImage("alley3_mob2.png")
+  SUMMER5_MOB       = openImage("crane_left.png")
+  SUMMER5_MOB2      = openImage("crane_right.png")
   EBON_MAGE1        = openImage("ebon_mage1.png")
   EBON_MAGE2        = openImage("ebon_mage2.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")
   CERNIUM_ICON      = openImage("cernium_icon.png")
   BURNIUM_ICON      = openImage("burnium.png")
+  ARCUS_ICON        = openImage("arcus.png")
   ODIUM_ICON        = openImage("odium_icon.png")
   SHANGRILA_ICON    = openImage("shangrila_icon.png")
   VANISHING_ICON    = openImage("vanishing_icon.png")
   CHUCHU_ICON       = openImage("chuchu_icon.png")
+  ARCANA_ICON       = openImage("arcana_icon.png")
   LACH_ICON         = openImage("lach_icon.png")
   REVERSE_ICON      = openImage("reverse_icon.png")
   RUNE_MINIMAP      = openImage("rune_minimap.png")

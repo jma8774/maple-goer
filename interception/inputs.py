@@ -5,7 +5,7 @@ from typing import Literal, Optional
 
 from . import _utils
 from ._consts import *
-from ._keycodes import KEYBOARD_MAPPING
+from ._keycodes import KEYBOARD_MAPPING, reset, apply
 from . import exceptions
 from .interception import Interception
 from .strokes import KeyStroke, MouseStroke
@@ -305,10 +305,12 @@ def capture_mouse() -> int:
         context._destroy_context()
 
 @requires_driver
-def set_maplestory_delay():
+def set_maplestory():
     global KEY_PRESS_DELAY
     print("Setting Maplestory key press delay to 0.025")
-    KEY_PRESS_DELAY = 0.025
+    # KEY_PRESS_DELAY = 0.025
+    print("Setting keycodes for Maplestory")
+    apply()
 
 @requires_driver
 def listen_to_keyboard() -> int:
