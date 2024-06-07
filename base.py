@@ -532,18 +532,24 @@ class BotBase:
         self.release(key)
 
   def press(self, key, delay=0.05):
+    if 'should_pause_cb' in self.config and self.config['should_pause_cb']():
+      print("press paused")
     interception.key_down(key)
     self.data['key_pressed'][key] = True
     if delay > 0:
       time.sleep(delay)
     
   def release(self, key, delay=0.05):
+    if 'should_pause_cb' in self.config and self.config['should_pause_cb']():
+      print("release paused")
     interception.key_up(key)
     self.data['key_pressed'][key] = False
     if delay > 0:
       time.sleep(delay)
 
   def press_release(self, key, delay=0.05, delayInBetween=0.05):
+    if 'should_pause_cb' in self.config and self.config['should_pause_cb']():
+      print("press_release paused")
     self.press(key, delayInBetween)
     self.release(key, delay)
 

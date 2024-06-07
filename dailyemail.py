@@ -69,6 +69,7 @@ def main():
     "user": "jeemong",
     "script": scripts[state['script']],
     "setup": setup,
+    "should_pause_cb": should_pause,
     "pause_cb": pause_cb
   }
   b = BotBase(data, config, args=sys.argv, scripts=scripts)
@@ -829,7 +830,7 @@ def buff_setup():
   #   b.press_release('5', 0.7)
   #   data['next_bird'] = cur + timedelta(seconds=uniform(116, 125))
 
-def shoot(delayAfter=0.5):
+def shoot(delayAfter=0.51):
   b.press_release('q', delay=delayAfter)
 
 def covering_fire(delayAfter=0.7):
