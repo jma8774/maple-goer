@@ -1,5 +1,4 @@
 import time
-import random
 import threading
 import pygame
 import pyautogui as pag
@@ -8,6 +7,7 @@ import os
 from base import BotBase, Images, Audio, KeyListener, post_status
 from state import state
 import sys
+from common import uniform
 
 monster_pinedeer_region = (17, 428, 524-17, 559-428)
 monster_befuddle_region = (0, 450, 771-0, 581-450)
@@ -54,6 +54,19 @@ def main():
 def setup():
   data['next_loot'] = datetime.now() - timedelta(seconds=10)
 
+def should_exit(func=None): # Use as a decorator or as a function by calling should_exit()
+  def wrapper(*args, **kwargs):
+    # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
+    if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(getMap()):
+      data['is_changed_map'] = True
+    if data['is_paused']:
+      raise Exception("Stopping thread")
+    if callable(func):
+        func(*args, **kwargs)
+  if callable(func):
+    return wrapper
+  return wrapper()
+
 def check():
     now = datetime.now()
     b.check_rune()
@@ -76,51 +89,30 @@ def check():
 def arcana_macro():
   def loot():
     if datetime.now() > data['next_loot']:
-      if should_pause(): return
       resistance()
-      if should_pause(): return
       jump_attack()
-      if should_pause(): return
       jump_attack()
-      if should_pause(): return
       b.press_release('right')
-      if should_pause(): return
       time.sleep(0.3)
       jump_down(delayAfter=1)
       turret()
-      if should_pause(): return
       mech_dash()
-      if should_pause(): return
       lightning_bot()
-      if should_pause(): return
       mech_jump("right")
-      if should_pause(): return
       lightning_bot()
-      if should_pause(): return
       mech_jump("right")
-      if should_pause(): return
       lightning_bot()
       b.press('right', 0.3)
-      if should_pause(): return
-      b.release('right')
-      if should_pause(): return
+      b.release('right', 0.1)
       jump_down_attack(delayAfter=0.9)
       mech_dash(delayAfter=0.7)
-      if should_pause(): return
-      if should_pause(): return
       erda_fountain()
-      if should_pause(): return
       b.press_release('left')
       mech_jump("left")
-      if should_pause(): return
       bots()
-      if should_pause(): return
-      b.press_release('left', 0.2)
-      mech_jump("left")
-      if should_pause(): return
-      b.press('left', 0.3)
-      if should_pause(): return
+      b.press('left', 0.4)
       b.release('left')
+      mech_jump("left")
       data['next_loot'] = datetime.now() + timedelta(seconds=42)
 
   def rotation():
@@ -129,7 +121,6 @@ def arcana_macro():
       count = 0
       mob_loc = None
       while mob_loc == None:
-        if should_pause(): return
         mob_loc = pag.locateOnScreen(Images.BEFUDDLE1, confidence=0.9, grayscale=True, region=monster_befuddle_region) or pag.locateOnScreen(Images.BEFUDDLE2, confidence=0.9, grayscale=True, region=monster_befuddle_region)
         time.sleep(0.3)
         count += 1
@@ -140,22 +131,16 @@ def arcana_macro():
         print(f"Found mob at {mob_loc}, continuing rotation")
 
     battery()
-    if should_pause(): return
-    b.press_release('v', 0.7)
-    if should_pause(): return
+    shoot()
     b.press_release('right')
-    if should_pause(): return
     missles()
-    if should_pause(): return
-    b.press_release('v', 0.7)
-    if should_pause(): return
+    shoot()
     b.press_release('left')
-    if should_pause(): return
     missles()
     
     
   print("Started Arcana macro")
-  while not should_pause():
+  while not should_exit():
     check()
     rotation()
     loot()
@@ -168,53 +153,33 @@ def chuchu_macro():
       resistance()
       b.press_release("right")
       jump_attack()
-      if should_pause(): return
       jump_attack()
-      if should_pause(): return
       bots()
-      if should_pause(): return
       mech_jump("right")
-      if should_pause(): return
       erda_fountain()
-      if should_pause(): return
       jump_attack()
       b.press_release('x', 1)
-      if should_pause(): return
       b.press('left', 0.3)
-      if should_pause(): return
       jump_attack()
-      if should_pause(): return
       jump_attack()
       b.release('left')
-      if should_pause(): return
       turret()
       mech_jump("left")
-      if should_pause(): return
       lightning_bot()
       missles()
-      if should_pause(): return
       mech_dash()
-      if should_pause(): return
       mech_dash()
-      if should_pause(): return
       lightning_bot()
       missles()
-      if should_pause(): return
       mech_jump("left")
-      if should_pause(): return
       lightning_bot()
       missles()
-      if should_pause(): return
       jump_attack()
-      if should_pause(): return
       b.press_release('right')
       jump_down(delayAfter=0.1)
       jump_down(delayAfter=1.4)
-      if should_pause(): return
       jump_attack()
-      if should_pause(): return
       jump_attack()
-      if should_pause(): return
       mech_jump("right", dashDelay=0.2)
       data['next_loot'] = datetime.now() + timedelta(seconds=40)
 
@@ -227,7 +192,6 @@ def chuchu_macro():
       count = 0
       mob_loc = None
       while mob_loc == None:
-        if should_pause(): return
         mob_loc = pag.locateOnScreen(Images.PINEDEER1, confidence=0.9, grayscale=True, region=monster_pinedeer_region) or pag.locateOnScreen(Images.PINEDEER2, confidence=0.9, grayscale=True, region=monster_pinedeer_region)
         time.sleep(0.3)
         count += 1
@@ -238,30 +202,26 @@ def chuchu_macro():
         print(f"Found mob at {mob_loc}, continuing rotation")
 
     battery()
-    b.press_release('v', 0.7)
-    if should_pause(): return
+    shoot()
     b.press_release('left')
-    if should_pause(): return
     missles()
-    if should_pause(): return
-    b.press_release('v', 0.7)
-    if should_pause(): return
+    shoot()
     b.press_release('right')
-    if should_pause(): return
     missles()
     data['last_wipe'] = datetime.now()
   
   print("Started ChuChu macro")
-  while not should_pause():
+  while not should_exit():
     check()
     rotation()
     loot()
-    # data['is_paused'] = True
   print("Paused ChuChu macro")
   
+@should_exit
 def missles():
     b.press_release('c')
-  
+
+@should_exit
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
     b.press_release('y', delay=1)
@@ -269,62 +229,121 @@ def erda_fountain():
     return True
   return False
 
+@should_exit
 def doomsday():
   if datetime.now() > data['next_doomsday']:
-    b.press_release('w', 0.7)
+    b.press_release('w', 0.8)
     data['next_doomsday'] = datetime.now() + timedelta(seconds=181)
     return True
   return False
 
+@should_exit
 def battery():
   if datetime.now() > data['next_battery']:
-    b.press_release('s', 0.7)
+    b.press_release('s', 0.8)
     data['next_battery'] = datetime.now() + timedelta(seconds=25)
     return True
   return False
 
+@should_exit
 def healbot():
   if datetime.now() > data['next_heal']:
-    b.press_release('q', 0.7)
+    b.press_release('q', 0.8)
     data['next_heal'] = datetime.now() + timedelta(seconds=80)
     return True
   return False
 
+@should_exit
 def dice():
   if datetime.now() > data['next_dice']:
-    b.press_release('1', 0.7)
-    data['next_dice'] = datetime.now() + timedelta(seconds=200)
+    b.press_release('1', 0.8)
+    data['next_dice'] = datetime.now() + timedelta(seconds=202)
     return True
   return False
   
+@should_exit
 def resistance():
   if datetime.now() > data['next_resistance']:
-    b.press_release('d', 0.7)
+    b.press_release('d', 0.8)
     data['next_resistance'] = datetime.now() + timedelta(seconds=25)
     return True
   return False
 
+@should_exit
 def carrier():
   if datetime.now() > data['next_carrier']:
-    b.press_release('e', 0.7)
+    b.press_release('e', 0.8)
     data['next_carrier'] = datetime.now() + timedelta(seconds=181)
     return True
   return False
  
+@should_exit
 def bots():
   b.press_release('f', 0.7)
 
+@should_exit
 def turret():
   b.press_release('g', 0.7)
 
+@should_exit
 def lightning_bot():
   b.press_release('h', 0.7)
 
-def should_pause():
-  # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(getMap()):
-    data['is_changed_map'] = True
-  return data['is_paused']
+@should_exit
+def flash_jump(jumpDelay=0.2, delayAfter=0.7):
+  b.press_release('space', jumpDelay)
+  b.press_release('space', delayAfter)
+
+@should_exit
+def mech_dash(delayAfter=0.5):
+  b.press_release('z', delayAfter)
+
+@should_exit
+def mech_jump(direction, jumpDelay=0.1, dashDelay=0.3, delayAfter=1.1):
+  b.press_release('space', jumpDelay)
+  b.press_release('space', dashDelay)
+  b.press(direction, 0.02)
+  b.press_release('z', 0.02)
+  b.release(direction, delayAfter)
+
+@should_exit
+def jump_attack(attackDelay=0.05, jumpDelay=0.03, delayAfter=0.58):
+  b.press_release('space', jumpDelay)
+  b.press_release('space', attackDelay)
+  b.press_release('v', delayAfter)
+
+@should_exit
+def jump_up(jumpDelay=0.2, delayAfter=1):
+  b.press('up')
+  b.press_release('space', jumpDelay)
+  b.press_release('space')
+  b.release('up', delayAfter)
+  
+@should_exit
+def jump_down(delayAfter=1):
+  b.press('down', 0.15)
+  b.press('space', 0.15)
+  b.release('space')
+  b.release('down', delayAfter)
+
+@should_exit
+def jump_down_attack(attackDelay=0.05, delayAfter=1):
+  b.press('down')
+  b.press('space', attackDelay)
+  b.press_release('v', delayAfter)
+  b.release('space')
+  b.release('down')
+
+@should_exit
+def jump_down_and_fj(delayAfter=1):
+  jump_down(delayAfter=uniform(0.3, 0.5))
+  b.press_release('space')
+  b.press_release('space', delayAfter)
+
+@should_exit
+def shoot(delayAfter=0.7):
+  b.press_release('v', delayAfter)
+
 
 def pause_if_change_map(map):
   isSeeMap = pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True)
@@ -336,52 +355,5 @@ def pause_if_change_map(map):
     data['is_paused'] = True
     return True
   return False
-
-def flash_jump(jumpDelay=0.2, delayAfter=0.7):
-  b.press_release('space', jumpDelay)
-  b.press_release('space', delayAfter)
-
-def mech_dash(delayAfter=0.5):
-  b.press_release('z', delayAfter)
-
-def mech_jump(direction, jumpDelay=0.1, dashDelay=0.3, delayAfter=1.1):
-  b.press_release('space', jumpDelay)
-  b.press_release('space', dashDelay)
-  b.press(direction, 0.02)
-  b.press_release('z', 0.02)
-  b.release(direction, delayAfter)
-
-def jump_attack(attackDelay=0.05, jumpDelay=0.03, delayAfter=0.58):
-  b.press_release('space', jumpDelay)
-  b.press_release('space', attackDelay)
-  b.press_release('v', delayAfter)
-
-def jump_up(jumpDelay=0.2, delayAfter=1):
-  b.press('up')
-  b.press_release('space', jumpDelay)
-  b.press_release('space')
-  b.release('up', delayAfter)
-  
-def jump_down(delayAfter=1):
-  b.press('down', 0.15)
-  b.press('space', 0.15)
-  b.release('space')
-  b.release('down', delayAfter)
-
-def jump_down_attack(attackDelay=0.05, delayAfter=1):
-  b.press('down')
-  b.press('space', attackDelay)
-  b.press_release('v', delayAfter)
-  b.release('space')
-  b.release('down')
-
-def jump_down_and_fj(delayAfter=1):
-  jump_down(delayAfter=uniform(0.3, 0.5))
-  b.press_release('space')
-  b.press_release('space', delayAfter)
-
-def uniform(a, b):
-  rng = random.random()
-  return a + rng*(b-a)
 
 main()

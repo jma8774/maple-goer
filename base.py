@@ -133,7 +133,14 @@ class BotBase:
     
     try:
       while True:
-        script = self.scripts[state['script']] if self.scripts and self.scripts[state['script']] else self.config['script']
+        def scriptwrapper():
+          script = self.scripts[state['script']] if self.scripts and self.scripts[state['script']] else self.config['script']
+          try:
+            script()
+          except Exception as e:
+            if str(e) != "Stopping thread":
+              print(e)
+
         if self.data['is_paused'] == True:
           time.sleep(1)
           continue
@@ -145,7 +152,7 @@ class BotBase:
         # Setup for each new run
         if setup:
           setup()
-        self.thread = threading.Thread(target=script)
+        self.thread = threading.Thread(target=scriptwrapper)
         self.thread.start()
         self.thread.join()
         self.release_all()
@@ -467,15 +474,19 @@ class BotBase:
       self.data['time_started'] = None
     
   def pause(self):
-    print('Pausing')
+    print('Pausing...')
     self.data['is_paused'] = True
     self.data['x_and_down_x'] = True
     if 'pause_cb' in self.data:
       self.data['pause_cb']()
     self.pause_audio()
+    if self.thread:
+      self.thread.join()
+    print('Paused')
 
   def start(self):
-    print('\nStarting')
+    self.commands(True)
+    print('\nStarting...')
     self.data['is_paused'] = False
     self.data['is_changed_map'] = False
 
@@ -532,24 +543,18 @@ class BotBase:
         self.release(key)
 
   def press(self, key, delay=0.05):
-    if 'should_pause_cb' in self.config and self.config['should_pause_cb']():
-      print("press paused")
     interception.key_down(key)
     self.data['key_pressed'][key] = True
     if delay > 0:
       time.sleep(delay)
     
   def release(self, key, delay=0.05):
-    if 'should_pause_cb' in self.config and self.config['should_pause_cb']():
-      print("release paused")
     interception.key_up(key)
     self.data['key_pressed'][key] = False
     if delay > 0:
       time.sleep(delay)
 
   def press_release(self, key, delay=0.05, delayInBetween=0.05):
-    if 'should_pause_cb' in self.config and self.config['should_pause_cb']():
-      print("press_release paused")
     self.press(key, delayInBetween)
     self.release(key, delay)
 
