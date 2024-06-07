@@ -119,7 +119,7 @@ class BotBase:
 
     self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
     self.data['key_pressed'] = {}
-    self.data['is_changed_map'] = False
+    self.data['whiteroomed'] = False
     self.data['next_rune_check'] = datetime.now()
     self.data['next_elite_box_check'] = datetime.now()
     self.data['someone_on_map_cooldown'] = datetime.now()
@@ -158,7 +158,7 @@ class BotBase:
         self.release_all()
 
         # Play sound if whiteroomed
-        if self.data['is_changed_map']:
+        if self.data['whiteroomed']:
           print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
           post_status("whiteroom", { "user": self.config['user'] })
           self.play_audio(Audio.TYLER1_AUTISM)
@@ -476,9 +476,6 @@ class BotBase:
   def pause(self):
     print('Pausing...')
     self.data['is_paused'] = True
-    self.data['x_and_down_x'] = True
-    if 'pause_cb' in self.data:
-      self.data['pause_cb']()
     self.pause_audio()
     if self.thread:
       self.thread.join()
@@ -488,7 +485,7 @@ class BotBase:
     self.commands(True)
     print('\nStarting...')
     self.data['is_paused'] = False
-    self.data['is_changed_map'] = False
+    self.data['whiteroomed'] = False
 
   def next_script(self):
     keys = list(self.scripts.keys())

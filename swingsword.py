@@ -22,7 +22,7 @@ thread = None
 data = {
   'stop_flag': False,
   'is_paused': True,
-  'is_changed_map': False,
+  'whiteroomed': False,
 
   'next_erda_fountain': datetime.now(),
   'next_burning_sword': datetime.now(),
@@ -74,7 +74,7 @@ def main():
       release_all()
 
       # Play sound if whiteroomed
-      if data['is_changed_map']:
+      if data['whiteroomed']:
         print(f"Map change detected, script paused, playing audio: Press {PAUSE_KEY} to stop")
         play_audio(Audio.TYLER1_AUTISM)
   except KeyboardInterrupt:
@@ -82,7 +82,7 @@ def main():
     data['stop_flag'] = True
     
 def setup():
-  data['is_changed_map'] = False
+  data['whiteroomed'] = False
   
 def hidden_macro():
   print("Started Hidden Research Train macro")
@@ -314,8 +314,8 @@ def pause_audio():
 
 def should_pause():
   # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  if not data['is_changed_map'] and pause_if_change_map(Images.REVERSE_ICON):
-    data['is_changed_map'] = True
+  if not data['whiteroomed'] and pause_if_change_map(Images.REVERSE_ICON):
+    data['whiteroomed'] = True
   return data['is_paused']
 
 def pause_if_change_map(map):

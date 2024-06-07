@@ -9,6 +9,7 @@ from base import BotBase, Images, Audio, KeyListener, post_status
 import interception
 import sys
 from state import state
+import common
 from common import uniform
 
 def getMap():
@@ -23,7 +24,6 @@ def getMap():
 
 monster_outlaw4_region = (850, 180, 1360-850, 315-180)
 monster_1_5_region = (800, 0, 600, 300)
-minimap_map_icon_region = (5, 15, 40, 40)
 
 b = None
 data = {
@@ -58,8 +58,8 @@ def main():
 def should_exit(func=None): # Use as a decorator or as a function by calling should_exit()
   def wrapper(*args, **kwargs):
     # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-    if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(getMap()):
-      data['is_changed_map'] = True
+    if state['checkmap'] and not data['whiteroomed'] and common.pause_if_whiteroom(pag, data, getMap()):
+      data['whiteroomed'] = True
     if data['is_paused']:
       raise Exception("Stopping thread")
     if callable(func):
@@ -373,16 +373,5 @@ def jump_down_and_fj(delayAfter=1):
   jump_down(delayAfter=uniform(0.3, 0.5))
   b.press_release('space')
   b.press_release('space', delayAfter)
-
-def pause_if_change_map(map):
-  isSeeMap = pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True)
-  if not isSeeMap:
-    # Double check
-    print("Double checking minimap region")
-    if pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):
-      return False
-    data['is_paused'] = True
-    return True
-  return False
 
 main()

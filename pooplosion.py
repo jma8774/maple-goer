@@ -277,8 +277,8 @@ def q(delay=0.05):
 
 def should_pause():
   # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(getMap()):
-    data['is_changed_map'] = True
+  if state['checkmap'] and not data['whiteroomed'] and pause_if_change_map(getMap()):
+    data['whiteroomed'] = True
   return data['is_paused']
 
 def pause_if_change_map(map):

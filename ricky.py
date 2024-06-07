@@ -238,8 +238,8 @@ def jump_down(delayAfter=1):
 
 def should_pause():
   # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-  if not data['is_changed_map'] and pause_if_change_map(Images.LIMINIA_ICON):
-    data['is_changed_map'] = True
+  if not data['whiteroomed'] and pause_if_change_map(Images.LIMINIA_ICON):
+    data['whiteroomed'] = True
   return data['is_paused']
 
 def pause_if_change_map(map):

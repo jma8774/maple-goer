@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from base import BotBase, Images
 import pyautogui as pag
 from state import state
+import common
 from common import uniform
 
 ascendion_region = (0, 200, 450, 500)
@@ -13,7 +14,7 @@ ebon_region = (750, 230, 1365-750, 415-230)
 gate1_region = (5, 300, 365-5, 545-300)
 alley3_region = (0, 310, 670, 725-310)
 summer5_region = (2, 408, 772-2, 652-408)
-minimap_map_icon_region = (0, 0, 55, 55)
+
 def getMap():
   maps = {
     "cernium": Images.CERNIUM_ICON,
@@ -63,25 +64,21 @@ def main():
     "user": "jeemong",
     "script": scripts[state['script']],
     "setup": setup,
-    "pause_cb": pause_cb
   }
   b = BotBase(data, config, args=sys.argv, scripts=scripts)
   b.run()
     
 def setup():
+  data['x_and_down_x'] = True
   data['next_blink_setup'] = None
   data['next_split'] = datetime.now()
   data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(180, 220))
   data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
 
-def pause_cb():
-  data['x_and_down_x'] = True
-
 def should_exit(func=None): # Use as a decorator or as a function by calling should_exit()
   def wrapper(*args, **kwargs):
-    # If we confirmed that we are not in the same map but we are not paused yet, skip this so we don't check for images again
-    if state['checkmap'] and not data['is_changed_map'] and pause_if_change_map(getMap()):
-      data['is_changed_map'] = True
+    if state['checkmap'] and not data['whiteroomed'] and common.pause_if_whiteroom(pag, data, getMap()):
+      data['whiteroomed'] = True
     if data['is_paused']:
       raise Exception("Stopping thread")
     if callable(func):
@@ -611,17 +608,6 @@ def q_and_surgebolt(afterDelay=0.7):
 def teleport_reset(delayAfter=0.65):
   b.press_release('x')
   b.press_release('x', delayAfter)
-
-def pause_if_change_map(map):
-  isSeeMap = pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True)
-  if not isSeeMap:
-    # Double check
-    print("Double checking minimap region")
-    if pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):
-      return False
-    data['is_paused'] = True
-    return True
-  return False
 
 if __name__=="__main__":
   main()
