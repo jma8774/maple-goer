@@ -125,7 +125,7 @@ def summer5_macro():
 
     jump_down_attack(attackDelay=0.3, delayAfter=0.40)
     b.press_release('right')
-    shoot()
+    shoot(delayAfter=0.53)
     jump_down_attack_turn(attackDelay=0.3, delayAfter=0.5, turn='left')
     b.press_release('right')
     if data['next_erda_fountain'] - timedelta(seconds=1) < datetime.now():
@@ -140,12 +140,13 @@ def summer5_macro():
       b.press('right', delay=0.3)
       b.release('right')
       erda_fountain()
+      if not web():
+        bolt_burst()
       b.press_release('left')
       teleport_reset()
     else:
       jump_attack(attackDelay=0.05, delayAfter=0.5)
-      if rng > 0.7:
-        jump_attack(attackDelay=0.05, delayAfter=0.5)
+      jump_attack(attackDelay=0.05, delayAfter=0.5)
       b.press_release('left')
       teleport_reset()
   

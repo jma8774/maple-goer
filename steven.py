@@ -95,7 +95,7 @@ def arcana_macro():
       jump_attack()
       b.press_release('right')
       time.sleep(0.3)
-      jump_down(delayAfter=1)
+      jump_attack(delayAfter=1)
       turret()
       mech_dash()
       lightning_bot()
@@ -103,10 +103,8 @@ def arcana_macro():
       lightning_bot()
       mech_jump("right")
       lightning_bot()
-      b.press('right', 0.3)
-      b.release('right', 0.1)
-      jump_down_attack(delayAfter=0.9)
-      mech_dash(delayAfter=0.7)
+      mech_dash(delayAfter=0.8)
+      jump_down_attack(jumpDelay=0.1, delayAfter=0.9)
       erda_fountain()
       b.press_release('left')
       mech_jump("left")
@@ -328,8 +326,8 @@ def jump_down(delayAfter=1):
   b.release('down', delayAfter)
 
 @should_exit
-def jump_down_attack(attackDelay=0.05, delayAfter=1):
-  b.press('down')
+def jump_down_attack(jumpDelay=0.05, attackDelay=0.05, delayAfter=1):
+  b.press('down', jumpDelay)
   b.press('space', attackDelay)
   b.press_release('v', delayAfter)
   b.release('space')
