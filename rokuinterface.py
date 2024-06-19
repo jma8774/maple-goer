@@ -63,7 +63,7 @@ def should_exit(func=None): # Use as a decorator or as a function by calling sho
     if data['is_paused']:
       raise Exception("Stopping thread")
     if callable(func):
-        func(*args, **kwargs)
+        return func(*args, **kwargs)
   if callable(func):
     return wrapper
   return wrapper()

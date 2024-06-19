@@ -23,6 +23,7 @@ def getMap():
     "arcus": Images.ARCUS_ICON,
     "odium": Images.ODIUM_ICON,
     "shangrila": Images.SHANGRILA_ICON,
+    "arteria": Images.ARTERIA_ICON,
     "default": Images.SHANGRILA_ICON
   }
   return maps[state['script']] if state['script'] in maps else maps['default']
@@ -54,6 +55,7 @@ def main():
     "arcus": outlaw2_macro,
     "odium": alley3_macro,
     "shangrila": summer5_macro,
+    "arteria": western_outskirt_macro,
     "default": summer5_macro,
 
     # "gate1": gate1_macro,
@@ -86,6 +88,25 @@ def should_exit(func=None): # Use as a decorator or as a function by calling sho
   if callable(func):
     return wrapper
   return wrapper()
+
+def western_outskirt_macro():
+  def rotation():
+    jump_attack_still(attackDelay=0.1)
+    b.press_release('right', 0.1)
+    jump_attack_still()
+    jump_down_attack(attackDelay=0.9, delayAfter=0.5)
+    b.press_release('left')
+    jump_attack(withSurge=True)
+    jump_attack()
+    if datetime.now() > data['next_erda_fountain']:
+      jump_attack()
+      erda_fountain()
+    teleport_reset()
+  
+  print("Started Western Outskirt macro")
+  while not should_exit():
+    buff_setup()
+    rotation()
 
 def summer5_macro():
   erda_seq = 0
@@ -544,8 +565,16 @@ def flash_jump(jumpDelay=0.2, delayAfter=0.7):
   b.press_release('e', delayAfter)
 
 @should_exit
-def jump_attack(attackDelay=0.2, jumpDelay=0.05, delayAfter=0.7):
+def jump_attack(attackDelay=0.2, jumpDelay=0.05, delayAfter=0.52, withSurge=False):
   b.press_release('e', jumpDelay)
+  b.press_release('e', attackDelay)
+  b.press_release('q')
+  if withSurge:
+    surgebolt()
+  time.sleep(delayAfter)
+
+@should_exit
+def jump_attack_still(attackDelay=0.05, delayAfter=0.65):
   b.press_release('e', attackDelay)
   b.press_release('q')
   time.sleep(delayAfter)
@@ -594,6 +623,14 @@ def jump_down_and_fj(delayAfter=1):
   b.release('e')
   b.press('e')
   b.release('e', delayAfter)
+
+def surgebolt(delayAfter=0.05):
+  if datetime.now() > data['next_surgebolt']:
+    b.press_release('r')
+    data['next_surgebolt'] = datetime.now() + timedelta(seconds=10)
+    time.sleep(delayAfter)
+    return True
+  return False
 
 @should_exit
 def q_and_surgebolt(afterDelay=0.7):

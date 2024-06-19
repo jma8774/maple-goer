@@ -17,7 +17,8 @@ def getMap():
   maps = {
     "chuchu": Images.CHUCHU_ICON,
     "arcana": Images.ARCANA_ICON,
-    "default": Images.ARCANA_ICON
+    "default": Images.ARCANA_ICON,
+    "moonbridge": Images.MOONBRIDGE_ICON,
   }
   return maps[state['script']] if state['script'] in maps else maps['default']
 
@@ -40,7 +41,8 @@ def main():
   scripts = {
     "chuchu": chuchu_macro,
     "arcana": arcana_macro,
-    "default": arcana_macro,
+    "moonbridge": moonbridge_macro,
+    "default": moonbridge_macro,
   }
 
   config = {
@@ -87,15 +89,70 @@ def check():
     carrier()
     doomsday()
 
+def moonbridge_macro():
+  def loot():
+    if datetime.now() > data['next_loot']:
+      b.press_release('right')
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      jump_attack(delayAfter=1)
+      b.press_release('left')
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      erda_fountain()
+      jump_attack()
+      rope(delayAfter=1.9)
+      bots()
+      booster(delayAfter=2)
+      b.press_release('right')
+      mech_dash()
+      lightning_bot()
+      missles()
+      mech_dash()
+      jump_attack()
+      lightning_bot()
+      missles()
+      mech_dash()
+      jump_attack()
+      lightning_bot()
+      jump_down(delayAfter=1)
+      b.press('left', delay=0.9)
+      b.release('left')
+      turret()
+      jump_attack()
+      jump_down()
+      b.press_release('right')
+      jump_attack()
+      data['next_loot'] = datetime.now() + timedelta(seconds=42)
+  
+  def rotation():
+    battery()
+    shoot()
+    b.press_release('right')
+    missles()
+    shoot()
+    b.press_release('left')
+    missles()
+  
+  print("Started Moonbridge macro")
+  while not should_exit():
+    check()
+    rotation()
+    loot()
+  print("Paused Moonbridge macro")
+
 def arcana_macro():
   def loot():
     if datetime.now() > data['next_loot']:
       resistance()
       jump_attack()
       jump_attack()
-      b.press_release('right')
-      time.sleep(0.3)
       jump_attack(delayAfter=1)
+      b.press_release('right')
       turret()
       mech_dash()
       lightning_bot()
@@ -103,8 +160,10 @@ def arcana_macro():
       lightning_bot()
       mech_jump("right")
       lightning_bot()
+      b.press('right', delay=0.2)
+      b.release('right')
       mech_dash(delayAfter=0.8)
-      jump_down_attack(jumpDelay=0.1, delayAfter=0.9)
+      jump_down_attack(jumpDelay=0.1, delayAfter=0.95)
       erda_fountain()
       b.press_release('left')
       mech_jump("left")
@@ -342,5 +401,12 @@ def jump_down_and_fj(delayAfter=1):
 @should_exit
 def shoot(delayAfter=0.7):
   b.press_release('v', delayAfter)
+
+@should_exit
+def rope(delayAfter=2):
+  b.press_release('x', delayAfter)
+
+def booster(delayAfter=2):
+  b.press_release('home', delayAfter)
 
 main()

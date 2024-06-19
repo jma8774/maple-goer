@@ -589,7 +589,7 @@ class BotBase:
     print()
 
     print("If you want to run the script and not use any image detection (allowing you to run the script in ANY resolution) add 'dev' as an argument when running the script.")
-    print("  For example, `python <name of pyton file> dev` or `python steven.py dev`") 
+    print("  For example, `python <name of python file> dev` or `python steven.py dev`") 
 #endregion BOT
 
 #region ASSESTS
@@ -640,9 +640,11 @@ class Images:
   ARCUS_ICON        = openImage("arcus.png")
   ODIUM_ICON        = openImage("odium_icon.png")
   SHANGRILA_ICON    = openImage("shangrila_icon.png")
+  ARTERIA_ICON      = openImage("arteria_icon.png")
   VANISHING_ICON    = openImage("vanishing_icon.png")
   CHUCHU_ICON       = openImage("chuchu_icon.png")
   ARCANA_ICON       = openImage("arcana_icon.png")
+  MOONBRIDGE_ICON   = openImage("moonbridge_icon.png")
   LACH_ICON         = openImage("lach_icon.png")
   REVERSE_ICON      = openImage("reverse_icon.png")
   RUNE_MINIMAP      = openImage("rune_minimap.png")

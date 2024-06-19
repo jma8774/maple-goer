@@ -25,6 +25,7 @@ data = {
 }
 
 def main():
+  interception.set_maplestory()
   # Interception Setup for main loop
   kdevice = interception.listen_to_keyboard()
   mdevice = interception.listen_to_mouse()
