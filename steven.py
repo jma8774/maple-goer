@@ -92,6 +92,7 @@ def check():
 def moonbridge_macro():
   def loot():
     if datetime.now() > data['next_loot']:
+      resistance()
       b.press_release('right')
       jump_attack()
       jump_attack()
@@ -127,7 +128,7 @@ def moonbridge_macro():
       jump_down()
       b.press_release('right')
       jump_attack()
-      data['next_loot'] = datetime.now() + timedelta(seconds=42)
+      data['next_loot'] = datetime.now() + timedelta(seconds=31)
   
   def rotation():
     battery()
@@ -282,6 +283,7 @@ def missles():
 @should_exit
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
+    b.press_release('y', delay=0.05)
     b.press_release('y', delay=1)
     data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
     return True
@@ -365,9 +367,10 @@ def mech_jump(direction, jumpDelay=0.1, dashDelay=0.3, delayAfter=1.1):
   b.release(direction, delayAfter)
 
 @should_exit
-def jump_attack(attackDelay=0.05, jumpDelay=0.03, delayAfter=0.58):
+def jump_attack(attackDelay=0.05, jumpDelay=0.03, delayAfter=0.61):
   b.press_release('space', jumpDelay)
   b.press_release('space', attackDelay)
+  b.press_release('space', 0.02)
   b.press_release('v', delayAfter)
 
 @should_exit

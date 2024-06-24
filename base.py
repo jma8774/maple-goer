@@ -22,8 +22,8 @@ def clear():
 
 #region BOTBASE
 TOF_KEY = 'f1'
-AUTO_LEVEL_FAM_KEY = 'f2'
-WAP_KEY = 'f3'
+WAP_KEY = 'f2'
+AUTO_LEVEL_FAM_KEY = 'f3'
 FAM_FUEL_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
@@ -66,9 +66,9 @@ class BotBase:
     kl = KeyListener(data)
     if self.config['disable_extras'] != True:
       kl.add(TOF_KEY, self.handle_tof)
-      kl.add(AUTO_LEVEL_FAM_KEY, self.handle_auto_level_fam)
       kl.add(WAP_KEY, self.handle_wap)
-      kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
+      # kl.add(AUTO_LEVEL_FAM_KEY, self.handle_auto_level_fam)
+      # kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
     kl.add(START_KEY, self.start)
     kl.add(PAUSE_KEY, self.pause)
     kl.add(NEXT_SCRIPT_KEY, self.next_script)
