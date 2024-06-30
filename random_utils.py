@@ -69,7 +69,7 @@ def refreshboss(scripts):
     if refresh_loc:
       interception.click(refresh_loc)
       time.sleep(0.5)
-      interception.move_to((25, 25))
+      interception.move_to(refresh_loc.x, refresh_loc.y + 50)
     time.sleep(3)
     
 def loginChars1Hour(scripts):

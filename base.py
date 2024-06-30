@@ -536,8 +536,7 @@ class BotBase:
 
   def release_all(self):
     for key in self.data['key_pressed']:
-      if self.data['key_pressed'][key]:
-        self.release(key)
+      self.release(key)
 
   def press(self, key, delay=0.05):
     interception.key_down(key)
@@ -570,9 +569,9 @@ class BotBase:
     print("Commands:")
     if self.config['disable_extras'] != True:
       print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
-      print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
       print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
-      print(f"  {FAM_FUEL_KEY} - auto familiar fuel: [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
+      # print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
+      # print(f"  {FAM_FUEL_KEY} - auto familiar fuel: [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
       print()
     print(f"  {START_KEY} - start")
     print(f"  {PAUSE_KEY} - pause")

@@ -123,6 +123,7 @@ def summer5_macro():
     bolt_burst()
     shoot()
     b.press_release('left')
+    b.press_release('left')
     teleport_reset()
     data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1.6, 1.8))   
 
@@ -144,10 +145,12 @@ def summer5_macro():
       else:
         print(f"Found mob at {mob_loc}, continuing rotation")
 
-    jump_down_attack(attackDelay=0.3, delayAfter=0.40)
+    jump_down_attack(attackDelay=0.3, delayAfter=0.35)
+    b.press_release('right')
     b.press_release('right')
     shoot(delayAfter=0.53)
-    jump_down_attack_turn(attackDelay=0.3, delayAfter=0.5, turn='left')
+    jump_down_attack_turn(attackDelay=0.3, delayAfter=0.45, turn='left')
+    b.press_release('right')
     b.press_release('right')
     if data['next_erda_fountain'] - timedelta(seconds=1) < datetime.now():
       jump_down(delayAfter=0.7)
@@ -164,10 +167,12 @@ def summer5_macro():
       if not web():
         bolt_burst()
       b.press_release('left')
+      b.press_release('left')
       teleport_reset()
     else:
       jump_attack(attackDelay=0.05, delayAfter=0.5)
-      jump_attack(attackDelay=0.05, delayAfter=0.5)
+      jump_attack(attackDelay=0.05, delayAfter=0.52)
+      b.press_release('left')
       b.press_release('left')
       teleport_reset()
   

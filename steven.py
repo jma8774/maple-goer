@@ -19,6 +19,7 @@ def getMap():
     "arcana": Images.ARCANA_ICON,
     "default": Images.ARCANA_ICON,
     "moonbridge": Images.MOONBRIDGE_ICON,
+    "liminia": Images.LIMINIA_ICON
   }
   return maps[state['script']] if state['script'] in maps else maps['default']
 
@@ -42,7 +43,8 @@ def main():
     "chuchu": chuchu_macro,
     "arcana": arcana_macro,
     "moonbridge": moonbridge_macro,
-    "default": moonbridge_macro,
+    "liminia": liminia_macro,
+    "default": liminia_macro,
   }
 
   config = {
@@ -88,6 +90,52 @@ def check():
     dice()
     carrier()
     doomsday()
+
+def liminia_macro():
+  def loot():
+    if datetime.now() > data['next_loot']:
+      resistance()
+      jump_attack(delayAfter=0.9)
+      b.press_release('right')
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      booster(delayAfter=1.8)
+      erda_fountain()
+      jump_attack()
+      b.press_release('left')
+      jump_down_attack()
+      jump_attack()
+      lightning_bot(instant=True)
+      jump_attack()
+      jump_attack()
+      b.press('left', 0.3)
+      b.release('left')
+      rope(delayAfter=1.9)
+      turret()
+      bots()
+      jump_down_attack()
+      b.press('left', delay=0.4)
+      b.release('left')
+      data['next_loot'] = datetime.now() + timedelta(seconds=40)
+  
+  def rotation():
+    battery()
+    shoot()
+    b.press_release('right')
+    missles()
+    shoot()
+    b.press_release('left')
+    missles()
+  
+  print("Started Liminia macro")
+  while not should_exit():
+    # check()
+    rotation()
+    loot()
+  print("Paused Liminia macro")
+
 
 def moonbridge_macro():
   def loot():
@@ -346,8 +394,12 @@ def turret():
   b.press_release('g', 0.7)
 
 @should_exit
-def lightning_bot():
+def lightning_bot(instant=False):
+  if instant:
+    b.press('down')
   b.press_release('h', 0.7)
+  if instant:
+    b.release('down')
 
 @should_exit
 def flash_jump(jumpDelay=0.2, delayAfter=0.7):
