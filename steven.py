@@ -15,8 +15,8 @@ monster_befuddle_region = (0, 450, 771-0, 581-450)
 
 def getMap():
   maps = {
-    "chuchu": Images.CHUCHU_ICON,
-    "arcana": Images.ARCANA_ICON,
+    # "chuchu": Images.CHUCHU_ICON,
+    # "arcana": Images.ARCANA_ICON,
     "default": Images.ARCANA_ICON,
     "moonbridge": Images.MOONBRIDGE_ICON,
     "liminia": Images.LIMINIA_ICON
@@ -40,8 +40,8 @@ def main():
   global b
 
   scripts = {
-    "chuchu": chuchu_macro,
-    "arcana": arcana_macro,
+    # "chuchu": chuchu_macro,
+    # "arcana": arcana_macro,
     "moonbridge": moonbridge_macro,
     "liminia": liminia_macro,
     "default": liminia_macro,
@@ -131,7 +131,7 @@ def liminia_macro():
   
   print("Started Liminia macro")
   while not should_exit():
-    # check()
+    check()
     rotation()
     loot()
   print("Paused Liminia macro")
