@@ -631,6 +631,8 @@ class Images:
   ALLEY3_MOB2       = openImage("alley3_mob2.png")
   SUMMER5_MOB       = openImage("crane_left.png")
   SUMMER5_MOB2      = openImage("crane_right.png")
+  FLORA_SWORD1      = openImage("flora_swordsman1.png")
+  FLORA_SWORD2      = openImage("flora_swordsman2.png")
   EBON_MAGE1        = openImage("ebon_mage1.png")
   EBON_MAGE2        = openImage("ebon_mage2.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")

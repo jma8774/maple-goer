@@ -14,6 +14,7 @@ ebon_region = (750, 230, 1365-750, 415-230)
 gate1_region = (5, 300, 365-5, 545-300)
 alley3_region = (0, 310, 670, 725-310)
 summer5_region = (2, 408, 772-2, 652-408)
+bottompassage6_region = (10, 165, 608-10, 513-165)
 
 def getMap():
   maps = {
@@ -24,7 +25,7 @@ def getMap():
     "odium": Images.ODIUM_ICON,
     "shangrila": Images.SHANGRILA_ICON,
     "arteria": Images.ARTERIA_ICON,
-    "default": Images.SHANGRILA_ICON
+    "default": Images.ARTERIA_ICON
   }
   return maps[state['script']] if state['script'] in maps else maps['default']
 
@@ -43,6 +44,7 @@ data = {
   'next_high_speed': datetime.now(),
   'next_bolt_burst': datetime.now(),
   'next_erda_fountain': datetime.now(),
+  'next_janus': datetime.now(),
 
   'next_loot_2': datetime.now() + timedelta(minutes=1.5),
 }
@@ -55,8 +57,8 @@ def main():
     "arcus": outlaw2_macro,
     "odium": alley3_macro,
     "shangrila": summer5_macro,
-    "arteria": western_outskirt_macro,
-    "default": summer5_macro,
+    "arteria": bottomdeck6_macro,
+    "default": bottomdeck6_macro,
 
     # "gate1": gate1_macro,
     # "burnium": ebonmage_macro,
@@ -76,6 +78,7 @@ def setup():
   data['next_split'] = datetime.now()
   data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(180, 220))
   data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
+  data['next_petfood'] = datetime.now() + timedelta(seconds=90)
 
 def should_exit(func=None): # Use as a decorator or as a function by calling should_exit()
   def wrapper(*args, **kwargs):
@@ -89,24 +92,73 @@ def should_exit(func=None): # Use as a decorator or as a function by calling sho
     return wrapper
   return wrapper()
 
-def western_outskirt_macro():
+def bottomdeck6_macro():
   def rotation():
-    jump_attack_still(attackDelay=0.1)
-    b.press_release('right', 0.1)
-    jump_attack_still()
-    jump_down_attack(attackDelay=0.9, delayAfter=0.5)
+    # Find mob before starting rotation
+    if state['scanmob']:
+      mob_loc = None
+      count = 0
+      interval = 0.1
+      while mob_loc == None:
+        mob_loc = pag.locateOnScreen(Images.FLORA_SWORD1, confidence=0.95, grayscale=True, region=bottompassage6_region) or pag.locateOnScreen(Images.FLORA_SWORD2, confidence=0.95, grayscale=True, region=bottompassage6_region)
+        time.sleep(interval)
+        count += 1
+        if count > (6/interval): break # 6 seconds
+      if mob_loc == None:
+        print(f"Couldn't find mob after {count} tries, continuing rotation")
+      else:
+        print(f"Found mob at {mob_loc}, continuing rotation")
+
+    jump_attack_still(attackDelay=0.1, delayAfter=0.45)
+    jump_down_attack_turn(delayAfter=0.45, turn='right')
+    jump_down_attack(attackDelay=0.4, delayAfter=0.4)
     b.press_release('left')
-    jump_attack(withSurge=True)
-    jump_attack()
-    if datetime.now() > data['next_erda_fountain']:
-      jump_attack()
-      erda_fountain()
+    b.press_release('left')
+    shoot()
+    teleport_reset()
+
+  def fountain():
+    if datetime.now() < data['next_erda_fountain']:
+      return
+    jump_attack_still(attackDelay=0.1, delayAfter=0.45)
+    jump_down_attack_turn(delayAfter=0.45, turn='right')
+    jump_down_attack(attackDelay=0.4, delayAfter=0.4)
+    b.press_release('left')
+    b.press_release('left')
+    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    b.press('left', delay=0.07)
+    b.release('left')
+    erda_fountain(custom_cd=56)
+    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    rope(delayAfter=1.5)
+    janus()
+    b.press_release('right')
+    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    b.press_release('left')
+    time.sleep(0.5)
     teleport_reset()
   
-  print("Started Western Outskirt macro")
+  def loot():
+    if datetime.now() < data['next_loot']:
+      return
+    shoot()
+    b.press_release('right')
+    jump_attack(attackDelay=0.05, delayAfter=0.50)
+    jump_attack(attackDelay=0.05, delayAfter=1.2)
+    b.press_release('left')
+    jump_attack(attackDelay=0.05, delayAfter=0.50)
+    jump_attack(attackDelay=0.05, delayAfter=0.50)
+    teleport_reset()
+    data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1, 1.2))
+  
+  print("Started Bottom Deck Passage 6 macro")
   while not should_exit():
     buff_setup()
+    fountain()
     rotation()
+    loot()
 
 def summer5_macro():
   erda_seq = 0
@@ -461,6 +513,10 @@ def buff_setup():
 
   b.check_rune()
 
+  if cur > data['next_petfood']:
+    b.press_release('f10')
+    data['next_petfood'] = cur + timedelta(seconds=90)
+
   if cur > data['next_boss_buff'] and pag.locateOnScreen(Images.ELITE_BOSS_HP, region=(200, 0, 1150-200, 30)):
     b.press_release('t', 0.5)
     b.press_release('pageup', 0.45)
@@ -515,11 +571,21 @@ def covering_fire(delayAfter=0.7):
   b.press_release('shift', delay=delayAfter)
 
 @should_exit
-def erda_fountain(delayAfter=0.5):
+def erda_fountain(delayAfter=0.5, custom_cd=59):
   if datetime.now() > data['next_erda_fountain']:
     b.press_release('b')
     b.press_release('b')
-    data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
+    data['next_erda_fountain'] = datetime.now() + timedelta(seconds=custom_cd)
+    time.sleep(delayAfter)
+    return True
+  return False
+
+@should_exit
+def janus(delayAfter=0.5):
+  if datetime.now() > data['next_janus']:
+    b.press_release('n')
+    b.press_release('n')
+    data['next_janus'] = datetime.now() + timedelta(seconds=59)
     time.sleep(delayAfter)
     return True
   return False
@@ -646,6 +712,10 @@ def q_and_surgebolt(afterDelay=0.7):
     data['next_surgebolt'] = datetime.now() + timedelta(seconds=uniform(10, 13))
   else:
     b.press_release('q', afterDelay)
+
+@should_exit
+def rope(delayAfter=2):
+  b.press_release('c', delayAfter)
 
 @should_exit
 def teleport_reset(delayAfter=0.65):
