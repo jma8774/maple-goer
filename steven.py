@@ -129,7 +129,7 @@ def cernium_macro():
       b.press_release('left')
       jump_attack()
       jump_attack()
-      bots()
+      # bots()
       data['next_loot'] = datetime.now() + timedelta(seconds=35)
   
   def rotation():
