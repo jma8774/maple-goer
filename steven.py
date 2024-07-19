@@ -12,20 +12,23 @@ from common import uniform
 
 monster_pinedeer_region = (17, 428, 524-17, 559-428)
 monster_befuddle_region = (0, 450, 771-0, 581-450)
+monster_cernium_scholar_region = (1, 154, 407-1, 572-154)
 
 def getMap():
   maps = {
     # "chuchu": Images.CHUCHU_ICON,
     # "arcana": Images.ARCANA_ICON,
-    "default": Images.ARCANA_ICON,
+    "default": Images.CERNIUM_ICON,
     "moonbridge": Images.MOONBRIDGE_ICON,
-    "liminia": Images.LIMINIA_ICON
+    "liminia": Images.LIMINIA_ICON,
+    "cernium": Images.CERNIUM_ICON
   }
   return maps[state['script']] if state['script'] in maps else maps['default']
 
 b = None
 data = {
   'next_erda_fountain': datetime.now(),
+  'next_janus': datetime.now(),
   'next_doomsday': datetime.now(),
   'next_carrier': datetime.now(),
   'next_petfood': datetime.now() + timedelta(seconds=60),
@@ -44,7 +47,8 @@ def main():
     # "arcana": arcana_macro,
     "moonbridge": moonbridge_macro,
     "liminia": liminia_macro,
-    "default": liminia_macro,
+    "cernium": cernium_macro,
+    "default": cernium_macro,
   }
 
   config = {
@@ -90,6 +94,73 @@ def check():
     dice()
     carrier()
     doomsday()
+
+def cernium_macro():
+  def loot():
+    if datetime.now() > data['next_loot']:
+      resistance()
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      jump_attack()
+      turret()
+      rope(delayAfter=1.9)
+      b.press('left', 0.3)
+      b.release('left')
+      janus()
+      b.press_release('right')
+      jump_attack()
+      jump_attack()
+      erda_fountain()
+      jump_attack()
+      jump_up()
+      lightning_bot()
+      mech_dash()
+      b.press('right', delay=0.2)
+      b.release('right')
+      jump_down_attack(delayAfter=0.5)
+      b.press('right', delay=0.75)
+      b.release('right')
+      lightning_bot()
+      jump_attack()
+      mech_dash()
+      lightning_bot()
+      jump_attack(delayAfter=1.5)
+      b.press_release('left')
+      jump_attack()
+      jump_attack()
+      bots()
+      data['next_loot'] = datetime.now() + timedelta(seconds=35)
+  
+  def rotation():
+    # Find mob before continuing
+    if state['scanmob']:
+      count = 0
+      mob_loc = None
+      while mob_loc == None:
+        mob_loc = pag.locateOnScreen(Images.SCHOLARGHOST1, confidence=0.9, grayscale=True, region=monster_cernium_scholar_region) or pag.locateOnScreen(Images.SCHOLARGHOST2, confidence=0.9, grayscale=True, region=monster_cernium_scholar_region)
+        time.sleep(0.3)
+        count += 1
+        if count > 20: break
+      if mob_loc == None:
+        print(f"Couldn't find mob after {count} tries, continuing rotation")
+      else:
+        print(f"Found mob at {mob_loc}, continuing rotation")
+    battery()
+    shoot()
+    missles()
+    shoot()
+    missles()
+    jump_attack_still()
+    missles()
+    missles()
+  
+  print("Started Cernium macro")
+  while not should_exit():
+    check()
+    rotation()
+    loot()
+  print("Paused Cernium macro")
 
 def liminia_macro():
   def loot():
@@ -426,6 +497,12 @@ def jump_attack(attackDelay=0.05, jumpDelay=0.03, delayAfter=0.61):
   b.press_release('v', delayAfter)
 
 @should_exit
+def jump_attack_still(attackDelay=0.05, delayAfter=0.65):
+  b.press_release('space', attackDelay)
+  b.press_release('v')
+  time.sleep(delayAfter)
+  
+@should_exit
 def jump_up(jumpDelay=0.2, delayAfter=1):
   b.press('up')
   b.press_release('space', jumpDelay)
@@ -460,6 +537,16 @@ def shoot(delayAfter=0.7):
 @should_exit
 def rope(delayAfter=2):
   b.press_release('x', delayAfter)
+
+@should_exit
+def janus(delayAfter=0.7):
+  if datetime.now() > data['next_janus']:
+    b.press_release('u')
+    b.press_release('u')
+    data['next_janus'] = datetime.now() + timedelta(seconds=59)
+    time.sleep(delayAfter)
+    return True
+  return False
 
 def booster(delayAfter=2):
   b.press_release('home', delayAfter)

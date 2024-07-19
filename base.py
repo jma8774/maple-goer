@@ -615,6 +615,8 @@ class Images:
   PINEDEER2         = openImage("pinedeer2.png")
   BEFUDDLE1         = openImage("befuddle1.png")
   BEFUDDLE2         = openImage("befuddle2.png")
+  SCHOLARGHOST1     = openImage("scholarghost1.png")
+  SCHOLARGHOST2     = openImage("scholarghost2.png")
   MONTO             = openImage("monto.png")
   MONTO2            = openImage("monto2.png")
   DRONE_A           = openImage("drone_a.png")

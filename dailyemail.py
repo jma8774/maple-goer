@@ -93,51 +93,58 @@ def should_exit(func=None): # Use as a decorator or as a function by calling sho
   return wrapper()
 
 def bottomdeck6_macro():
-  def rotation():
-    # Find mob before starting rotation
-    if state['scanmob']:
-      mob_loc = None
-      count = 0
-      interval = 0.1
-      while mob_loc == None:
-        mob_loc = pag.locateOnScreen(Images.FLORA_SWORD1, confidence=0.95, grayscale=True, region=bottompassage6_region) or pag.locateOnScreen(Images.FLORA_SWORD2, confidence=0.95, grayscale=True, region=bottompassage6_region)
-        time.sleep(interval)
-        count += 1
-        if count > (6/interval): break # 6 seconds
-      if mob_loc == None:
-        print(f"Couldn't find mob after {count} tries, continuing rotation")
-      else:
-        print(f"Found mob at {mob_loc}, continuing rotation")
+  just_erda = False
 
-    jump_attack_still(attackDelay=0.1, delayAfter=0.45)
-    jump_down_attack_turn(delayAfter=0.45, turn='right')
+  def rotation():
+    nonlocal just_erda
+    if not just_erda:
+      # Find mob before starting rotation
+      if state['scanmob']:
+        mob_loc = None
+        count = 0
+        interval = 0.1
+        while mob_loc == None:
+          mob_loc = pag.locateOnScreen(Images.FLORA_SWORD1, confidence=0.95, grayscale=True, region=bottompassage6_region) or pag.locateOnScreen(Images.FLORA_SWORD2, confidence=0.95, grayscale=True, region=bottompassage6_region)
+          time.sleep(interval)
+          count += 1
+          if count > (6/interval): break # 6 seconds
+        if mob_loc == None:
+          print(f"Couldn't find mob after {count} tries, continuing rotation")
+        else:
+          print(f"Found mob at {mob_loc}, continuing rotation")
+      jump_attack_still(attackDelay=0.1, delayAfter=0.48)
+    jump_down_attack_turn(delayAfter=0.48, turn='right')
     jump_down_attack(attackDelay=0.4, delayAfter=0.4)
     b.press_release('left')
     b.press_release('left')
-    shoot()
-    teleport_reset()
+
+    if datetime.now() < data['next_erda_fountain']:
+      just_erda = False
+      shoot()
+      teleport_reset()
+    else:
+      just_erda = True
+      fountain()
+      rotation()
 
   def fountain():
+    nonlocal just_erda
     if datetime.now() < data['next_erda_fountain']:
       return
-    jump_attack_still(attackDelay=0.1, delayAfter=0.45)
-    jump_down_attack_turn(delayAfter=0.45, turn='right')
-    jump_down_attack(attackDelay=0.4, delayAfter=0.4)
-    b.press_release('left')
-    b.press_release('left')
-    jump_attack(attackDelay=0.05, delayAfter=0.49)
-    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    jump_attack(attackDelay=0.05, delayAfter=0.52)
+    jump_attack(attackDelay=0.05, delayAfter=0.52)
     b.press('left', delay=0.07)
     b.release('left')
     erda_fountain(custom_cd=56)
-    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    jump_attack(attackDelay=0.05, delayAfter=0.51)
     rope(delayAfter=1.5)
     janus()
     b.press_release('right')
-    jump_attack(attackDelay=0.05, delayAfter=0.49)
-    jump_attack(attackDelay=0.05, delayAfter=0.49)
+    b.press_release('right')
+    jump_attack(attackDelay=0.05, delayAfter=0.51)
+    jump_attack(attackDelay=0.05, delayAfter=0.56)
     b.press_release('left')
-    time.sleep(0.5)
+    time.sleep(0.2)
     teleport_reset()
   
   def loot():
@@ -145,7 +152,7 @@ def bottomdeck6_macro():
       return
     shoot()
     b.press_release('right')
-    jump_attack(attackDelay=0.05, delayAfter=0.50)
+    jump_attack(attackDelay=0.05, delayAfter=0.53)
     jump_attack(attackDelay=0.05, delayAfter=1.2)
     b.press_release('left')
     jump_attack(attackDelay=0.05, delayAfter=0.50)
@@ -156,9 +163,8 @@ def bottomdeck6_macro():
   print("Started Bottom Deck Passage 6 macro")
   while not should_exit():
     buff_setup()
-    fountain()
-    rotation()
     loot()
+    rotation()
 
 def summer5_macro():
   erda_seq = 0
@@ -581,7 +587,7 @@ def erda_fountain(delayAfter=0.5, custom_cd=59):
   return False
 
 @should_exit
-def janus(delayAfter=0.5):
+def janus(delayAfter=0.65):
   if datetime.now() > data['next_janus']:
     b.press_release('n')
     b.press_release('n')
