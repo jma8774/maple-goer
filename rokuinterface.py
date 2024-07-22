@@ -18,10 +18,12 @@ def getMap():
     # "odium": Images.ODIUM_ICON,
     "liminia": Images.LIMINIA_ICON,
     "arcus": Images.ARCUS_ICON,
-    "default": Images.ARCUS_ICON
+    "odium": Images.ODIUM_ICON,
+    "default": Images.ODIUM_ICON
   }
   return maps[state['script']] if state['script'] in maps else maps['default']
 
+monster_locked3_region = (261, 34, 1147-261, 204-34)
 monster_outlaw4_region = (850, 180, 1360-850, 315-180)
 monster_1_5_region = (800, 0, 600, 300)
 
@@ -37,6 +39,7 @@ data = {
   'next_phalanx_charge': datetime.now(),
   'next_web': datetime.now(),
   'next_cast': datetime.now(),
+  'next_janus': datetime.now(),
 }
 
 def main():
@@ -44,7 +47,8 @@ def main():
   scripts = {
     "liminia": end_1_5_macro,
     "arcus": outlaw4_macro,
-    "default": outlaw4_macro
+    "odium": odium_macro,
+    "default": odium_macro
   }
   
   config = {
@@ -63,7 +67,7 @@ def should_exit(func=None): # Use as a decorator or as a function by calling sho
     if data['is_paused']:
       raise Exception("Stopping thread")
     if callable(func):
-        return func(*args, **kwargs)
+      return func(*args, **kwargs)
   if callable(func):
     return wrapper
   return wrapper()
@@ -75,6 +79,112 @@ def check():
     b.check_wap()
     # b.check_elite_box()
     b.check_fam_fuel()
+
+def odium_macro():
+  def loot():
+    jump_up(jumpDelay=0.07)
+    jump_up(jumpDelay=0.425)
+    erda_fountain()
+    b.press_release('up')
+    b.press_release('up')
+    b.press_release('up')
+    time.sleep(0.5)
+    b.press_release('up')
+    b.press_release('up')
+    b.press_release('up')
+    jump_down_attack(delayAfter=0.5)
+    janus()
+    jump_down_attack(delayAfter=0.5)
+    jump_down_attack(delayAfter=0.5)
+    b.press_release('left')
+    jump_attack()
+    jump_attack()
+    jump_attack()
+    rope()
+    jump_attack()
+    jump_attack()
+    jump_attack(delayAfter=1.5)
+    b.press_release('right')
+    glide(delayAfter=0.7)
+    glide(delayAfter=0.7)
+    b.press('right', 0.7)
+    b.release('right')
+    rope(delayAfter=1.7)
+    jump_down_attack(delayAfter=0.5)
+    data['next_loot'] = datetime.now() + timedelta(minutes=1.3)
+
+  def setup():
+    jump_up(jumpDelay=0.07)
+    jump_up(jumpDelay=0.425)
+    erda_fountain()
+    b.press_release('up')
+    b.press_release('up')
+    b.press_release('up')
+    time.sleep(0.5)
+    b.press_release('up')
+    b.press_release('up')
+    b.press_release('up')
+    jump_down_attack(delayAfter=0.5)
+    janus()
+    jump_down_attack(delayAfter=0.5)
+    jump_down_attack(delayAfter=0.5)
+    b.press('right', 0.2)
+    b.release('right')
+    b.press_release('up')
+    b.press_release('up')
+    b.press_release('up')
+    jump_down_attack(delayAfter=0.5)
+    jump_down_attack(delayAfter=0.5)
+
+  def rotation():
+    rng = random.random()
+    gale_barrier()
+    if not sphere():
+      if not mistral_spring():
+        # Use wind and charge before tornado
+        if not merciless_winds(delayAfter=1.1):
+          if not monsoon(delayAfter=1.4):
+            if not phalanx_charge(press_twice=True, delayAfter=1.2):
+              web()
+        howling_gale()
+    if rng > 0.5:
+      cape()
+
+    now = datetime.now()
+    if now > data['next_erda_fountain'] and now > data['next_loot']:
+      loot()
+    if now > data['next_erda_fountain']:
+      setup()
+    else:
+      b.press('a')
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      # Find mob before continuing
+      count = 0
+      mob_loc = None
+      while mob_loc == None:
+        mob_loc = pag.locateOnScreen(Images.LOCKED3_MOB1, confidence=0.9, grayscale=True, region=monster_locked3_region) or pag.locateOnScreen(Images.LOCKED3_MOB2, confidence=0.9, grayscale=True, region=monster_locked3_region)
+        time.sleep(0.3)
+        count += 1
+        if count > 20: break
+      if mob_loc == None:
+        print(f"Couldn't find mob after {count} tries, continuing rotation")
+      else:
+        print(f"Found mob at {mob_loc}, continuing rotation")
+      b.release('a')
+  
+  print("Started Behind Locked Door 3 macro")
+  while not should_exit():
+    check()
+    rotation()
+    # loot()
+  print("Paused Behind Locked Door 3 macro")
 
 def outlaw4_macro():
   cycles = 1
@@ -252,9 +362,7 @@ def end_1_5_looting():
 @should_exit
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
-    b.press('down')
-    b.press_release('9')
-    b.release('down', delay=0.6)
+    b.press_release('9', delay=0.6)
     data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
     return True
   return False
@@ -351,8 +459,19 @@ def jump_up(jumpDelay=0.2, delayAfter=1):
   b.press('up')
   b.press_release('space', jumpDelay)
   b.press_release('space')
+  b.press_release('space', delay=0)
   b.release('up', delayAfter)
   
+@should_exit
+def janus(delayAfter=0.65):
+  if datetime.now() > data['next_janus']:
+    b.press_release('8')
+    b.press_release('8')
+    data['next_janus'] = datetime.now() + timedelta(seconds=59)
+    time.sleep(delayAfter)
+    return True
+  return False
+
 @should_exit
 def jump_down(delayAfter=1):
   b.press('down', 0.15)
@@ -373,5 +492,9 @@ def jump_down_and_fj(delayAfter=1):
   jump_down(delayAfter=uniform(0.3, 0.5))
   b.press_release('space')
   b.press_release('space', delayAfter)
+
+@should_exit
+def rope(delayAfter=2):
+  b.press_release('end', delayAfter)
 
 main()

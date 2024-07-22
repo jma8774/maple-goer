@@ -625,6 +625,8 @@ class Images:
   ASCENDION         = openImage("mob.png")
   IRONSHOT1         = openImage("ironshot1.png")
   IRONSHOT2         = openImage("ironshot2.png")
+  LOCKED3_MOB1      = openImage("locked3_mob1.png")
+  LOCKED3_MOB2      = openImage("locked3_mob2.png")
   FIRE_SPIRIT       = openImage("fire_spirit.png")
   FIRE_SPIRIT2      = openImage("fire_spirit2.png")
   DIAMOND_GUARDIAN1 = openImage("diamond_guardian1.png")
