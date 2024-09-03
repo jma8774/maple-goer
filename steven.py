@@ -29,6 +29,7 @@ b = None
 data = {
   'next_erda_fountain': datetime.now(),
   'next_janus': datetime.now(),
+  'next_janus2': datetime.now(),
   'next_doomsday': datetime.now(),
   'next_carrier': datetime.now(),
   'next_petfood': datetime.now() + timedelta(seconds=60),
@@ -113,24 +114,16 @@ def cernium_macro():
       jump_attack()
       erda_fountain()
       jump_attack()
-      jump_up()
-      lightning_bot()
-      mech_dash()
-      b.press('right', delay=0.2)
-      b.release('right')
-      jump_down_attack(delayAfter=0.5)
-      b.press('right', delay=0.75)
-      b.release('right')
-      lightning_bot()
       jump_attack()
-      mech_dash()
-      lightning_bot()
+      janus2()
+      jump_attack()
+      jump_attack()
       jump_attack(delayAfter=1.5)
       b.press_release('left')
       jump_attack()
       jump_attack()
       # bots()
-      data['next_loot'] = datetime.now() + timedelta(seconds=35)
+      data['next_loot'] = datetime.now() + timedelta(seconds=43)
   
   def rotation():
     # Find mob before continuing
@@ -544,6 +537,16 @@ def janus(delayAfter=0.7):
     b.press_release('u')
     b.press_release('u')
     data['next_janus'] = datetime.now() + timedelta(seconds=59)
+    time.sleep(delayAfter)
+    return True
+  return False
+
+@should_exit
+def janus2(delayAfter=0.65):
+  if datetime.now() > data['next_janus2']:
+    b.press_release('u')
+    b.press_release('u')
+    data['next_janus2'] = datetime.now() + timedelta(seconds=59)
     time.sleep(delayAfter)
     return True
   return False

@@ -18,7 +18,7 @@ bottompassage6_region = (10, 165, 608-10, 513-165)
 
 def getMap():
   maps = {
-    "cernium": Images.CERNIUM_ICON,
+    # "cernium": Images.CERNIUM_ICON,
     # "burnium": Images.BURNIUM_ICON,
     # "gate1": Images.ODIUM_ICON,
     "arcus": Images.ARCUS_ICON,
@@ -45,6 +45,7 @@ data = {
   'next_bolt_burst': datetime.now(),
   'next_erda_fountain': datetime.now(),
   'next_janus': datetime.now(),
+  'next_janus2': datetime.now(),
 
   'next_loot_2': datetime.now() + timedelta(minutes=1.5),
 }
@@ -53,7 +54,7 @@ def main():
   global b
 
   scripts = {
-    "cernium": firespirit3_macro,
+    # "cernium": firespirit3_macro,
     "arcus": outlaw2_macro,
     "odium": alley3_macro,
     "shangrila": summer5_macro,
@@ -142,7 +143,9 @@ def bottomdeck6_macro():
     b.press_release('right')
     b.press_release('right')
     jump_attack(attackDelay=0.05, delayAfter=0.51)
-    jump_attack(attackDelay=0.05, delayAfter=0.56)
+    b.press('right',delay=1)
+    b.release('right')
+    janus2()
     b.press_release('left')
     time.sleep(0.2)
     teleport_reset()
@@ -519,9 +522,9 @@ def buff_setup():
 
   b.check_rune()
 
-  if cur > data['next_petfood']:
-    b.press_release('f10')
-    data['next_petfood'] = cur + timedelta(seconds=90)
+  # if cur > data['next_petfood']:
+  #   b.press_release('f10')
+  #   data['next_petfood'] = cur + timedelta(seconds=90)
 
   if cur > data['next_boss_buff'] and pag.locateOnScreen(Images.ELITE_BOSS_HP, region=(200, 0, 1150-200, 30)):
     b.press_release('t', 0.5)
@@ -592,6 +595,16 @@ def janus(delayAfter=0.65):
     b.press_release('n')
     b.press_release('n')
     data['next_janus'] = datetime.now() + timedelta(seconds=59)
+    time.sleep(delayAfter)
+    return True
+  return False
+
+@should_exit
+def janus2(delayAfter=0.65):
+  if datetime.now() > data['next_janus2']:
+    b.press_release('n')
+    b.press_release('n')
+    data['next_janus2'] = datetime.now() + timedelta(seconds=59)
     time.sleep(delayAfter)
     return True
   return False
