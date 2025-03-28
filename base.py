@@ -21,10 +21,10 @@ def clear():
   os.system('cls' if os.name == 'nt' else 'clear')
 
 #region BOTBASE
-TOF_KEY = 'f1'
-WAP_KEY = 'f2'
-AUTO_LEVEL_FAM_KEY = 'f3'
-FAM_FUEL_KEY = 'f4'
+TOF_KEY = 'f3'
+WAP_KEY = 'f4'
+# AUTO_LEVEL_FAM_KEY = 'f3'
+# FAM_FUEL_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 NEXT_SCRIPT_KEY = 'f9'
@@ -61,6 +61,7 @@ class BotBase:
     interception.inputs.keyboard = kdevice
     interception.inputs.mouse = mdevice
     clear()
+    self.interception = interception
 
     # Interception Key Listener Setup (seperate thread)
     kl = KeyListener(data)
@@ -488,6 +489,7 @@ class BotBase:
     self.data['whiteroomed'] = False
 
   def next_script(self):
+    self.pause()
     keys = list(self.scripts.keys())
     current = state['script']
     index = keys.index(current)
