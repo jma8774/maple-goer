@@ -1,7 +1,12 @@
 import random
+from state import state
+
+minimap_rune_region = (0, 0, 500, 300)
 
 def pause_if_whiteroom(pag, data, map):
   minimap_map_icon_region = (0, 0, 55, 55)
+  if state['fakefullscreen']:
+    minimap_map_icon_region = (0, 0, 60, 100)
   if not pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):
     print("Double checking minimap region")
     if pag.locateOnScreen(map, confidence=0.5, region=minimap_map_icon_region, grayscale=True):

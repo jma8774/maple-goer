@@ -15,6 +15,10 @@ from state import state
 import pyscreeze
 import common
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from rune.rune import RuneWalker
+
 pyscreeze.USE_IMAGE_NOT_FOUND_EXCEPTION = False
 
 def clear():
@@ -28,7 +32,6 @@ WAP_KEY = 'f4'
 START_KEY = 'f7'
 PAUSE_KEY = 'f8'
 NEXT_SCRIPT_KEY = 'f9'
-minimap_rune_region = (0, 0, 500, 300)
 buffs_region = (250, 0, 1366-250, 80)
 
 def shutdown_computer():
@@ -42,13 +45,14 @@ def shutdown_computer():
         print('Unsupported operating system.')
         
 class BotBase:
-  def __init__(self, data, config, args=None, scripts=None):
+  def __init__(self, data, config, args=None, scripts=None, runewalker: 'RuneWalker' = None):
     self.args = args
     self.scripts = scripts if scripts else {}
     self.setup_args()
 
     self.data = data
     self.config = config
+    self.runewalker = runewalker
     self.thread = None
 
     self.setup_data()
@@ -93,6 +97,8 @@ class BotBase:
         state['checkmap'] = False
         state['scanmob'] = False
         state['sendstatus'] = False
+      elif arg == 'fakefullscreen':
+        state['fakefullscreen'] = True
       elif arg in self.scripts:
         state['script'] = arg
       state['localserver'] = True
@@ -120,6 +126,7 @@ class BotBase:
 
     self.data['next_loot'] = datetime.now() + timedelta(minutes=1.7)
     self.data['key_pressed'] = {}
+    self.data['all_used_keys'] = set()  # Track all keys that have ever been pressed
     self.data['whiteroomed'] = False
     self.data['next_rune_check'] = datetime.now()
     self.data['next_elite_box_check'] = datetime.now()
@@ -135,12 +142,19 @@ class BotBase:
     try:
       while True:
         def scriptwrapper():
+          # Make sure all keys are released before starting
+          self.release_all()
+          
           script = self.scripts[state['script']] if self.scripts and self.scripts[state['script']] else self.config['script']
           try:
             script()
           except Exception as e:
+            # Make sure to release keys if there's an exception
+            self.release_all()
             if str(e) != "Stopping thread":
               print(e)
+          # Release keys after script completes
+          self.release_all()
 
         if self.data['is_paused'] == True:
           time.sleep(1)
@@ -156,7 +170,7 @@ class BotBase:
         self.thread = threading.Thread(target=scriptwrapper)
         self.thread.start()
         self.thread.join()
-        self.release_all()
+        self.release_all()  # Ensure keys are released after the thread completes
 
         # Play sound if whiteroomed
         if self.data['whiteroomed']:
@@ -165,6 +179,7 @@ class BotBase:
           self.play_audio(Audio.TYLER1_AUTISM)
     except KeyboardInterrupt:
       self.data['stop_flag'] = True
+      self.release_all()  # Ensure keys are released on keyboard interrupt
       self.post_summary_helper()
       print("Exiting... (Try spamming CTRL + C)")
   
@@ -432,16 +447,25 @@ class BotBase:
 
   def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check'] and state['checkrune']:
-      if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=minimap_rune_region):
+      if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=common.minimap_rune_region):
         if play_sound:
           self.play_audio(Audio.PING, loops=2)
         if post_request:
           post_status("rune", { "user": self.config['user'] })
       self.data['next_rune_check'] = datetime.now() + timedelta(seconds=60)
 
+  def check_rune_and_walk(self, play_sound=True, post_request=True):
+    if datetime.now() > self.data['next_rune_check'] and state['checkrune']:
+      if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=common.minimap_rune_region):
+        self.runewalker.go(play_sound)
+        self.pause()
+        self.data['next_rune_check'] = datetime.now() + timedelta(seconds=60)
+        return True
+    return False
+
   def check_person_entered_map(self, only_guild=False):
-    normal = None if only_guild else pag.locateOnScreen(Images.PERSON, region=minimap_rune_region)
-    guild = pag.locateOnScreen(Images.GUILD_PERSON, region=minimap_rune_region)
+    normal = None if only_guild else pag.locateOnScreen(Images.PERSON, region=common.minimap_rune_region)
+    guild = pag.locateOnScreen(Images.GUILD_PERSON, region=common.minimap_rune_region)
     if normal or guild:
       cur = datetime.now()
       if cur >= self.data['someone_on_map_cooldown']:
@@ -537,20 +561,52 @@ class BotBase:
     pygame.mixer.music.pause()
 
   def release_all(self):
-    for key in self.data['key_pressed']:
-      self.release(key)
+    # First try to release all keys we know are pressed
+    for key in list(self.data['key_pressed'].keys()):
+      try:
+        if self.data['key_pressed'].get(key, False):
+          interception.key_up(key)
+          self.data['key_pressed'][key] = False
+      except Exception as e:
+        print(f"Error releasing key {key}: {e}")
+    
+    # As a safety measure, release all keys that were ever used
+    for key in self.data['all_used_keys']:
+      try:
+        interception.key_up(key)
+      except Exception as e:
+        print(f"Error releasing backup key {key}: {e}")
+    
+    # As a final fallback, release common game keys that might be stuck
+    common_keys = ['up', 'down', 'left', 'right', 'shift', 'ctrl', 'alt', 'space']
+    for key in common_keys:
+      try:
+        interception.key_up(key)
+      except Exception:
+        pass
+    
+    # Clear the key tracking
+    self.data['key_pressed'] = {}
 
   def press(self, key, delay=0.05):
-    interception.key_down(key)
-    self.data['key_pressed'][key] = True
-    if delay > 0:
-      time.sleep(delay)
-    
+    try:
+      interception.key_down(key)
+      self.data['key_pressed'][key] = True
+      self.data['all_used_keys'].add(key)
+      if delay > 0:
+        time.sleep(delay)
+    except Exception as e:
+      print(f"Error pressing key {key}: {e}")
+      self.data['key_pressed'][key] = False
+
   def release(self, key, delay=0.05):
-    interception.key_up(key)
-    self.data['key_pressed'][key] = False
-    if delay > 0:
-      time.sleep(delay)
+    try:
+      interception.key_up(key)
+      self.data['key_pressed'][key] = False
+      if delay > 0:
+        time.sleep(delay)
+    except Exception as e:
+      print(f"Error releasing key {key}: {e}")
 
   def press_release(self, key, delay=0.05, delayInBetween=0.05):
     self.press(key, delayInBetween)
@@ -659,7 +715,8 @@ class Images:
   MINIMAP           = openImage("minimap.png")
   ELITE_BOX         = openImage("elite_box.png")
   PERSON            = openImage("person.png")
-  GUILD_PERSON      = openImage("guild_person.png")
+  ME_PERSON         = openImage("person_me.png")
+  GUILD_PERSON      = openImage("person_guild.png")
   CASH_TAB          = openImage("cash_tab.png")
   ELITE_BOSS_HP     = openImage("elite_boss_hp.png")
   REFRESH_BOSS      = openImage("refresh_boss.png")
@@ -858,7 +915,7 @@ class KeyListener:
     context = interception.Interception()
     context.set_filter(context.is_keyboard, interception.FilterKeyState.FILTER_KEY_DOWN)
     while True:
-      if self.data['stop_flag']:
+      if self.data['stop_flag'] or not state['running']:
         return
       
       device = context.wait()
@@ -873,7 +930,7 @@ class KeyListener:
     context = interception.Interception()
     context.set_filter(context.is_keyboard, interception.FilterKeyState.FILTER_KEY_DOWN)
     while True:
-      if self.data['stop_flag']:
+      if self.data['stop_flag'] or not state['running']:
         return
       
       device = context.wait()

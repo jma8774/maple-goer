@@ -13,8 +13,10 @@ from marksman_src.map_summer5 import summer5_macro
 from marksman_src.map_bottomdeck6 import bottomdeck6_macro
 from marksman_src.map_gate1 import gate1_macro
 from marksman_src.map_firespirit3 import firespirit3_macro
+from rune.rune_abstract import RuneWalkerPilot
+from rune.rune import RuneWalker
 
-class Marksman:
+class Marksman(RuneWalkerPilot):
     # Region definitions
     ascendion_region = (0, 200, 450, 500)
     firespirit_region = (0, 450, 700, 750-450)
@@ -75,9 +77,10 @@ class Marksman:
         config = {
             "user": "jeemong",
             "script": self.scripts[state['script']],
-            "setup": self.setup,
+            "setup": self.setup
         }
-        self.bot = BotBase(self.data, config, args=sys.argv, scripts=self.scripts)
+        self.rune_walker = RuneWalker(self)
+        self.bot = BotBase(self.data, config, args=sys.argv, scripts=self.scripts, runewalker=self.rune_walker)
         self.bot.run()
 
     def setup(self):
@@ -110,6 +113,8 @@ class Marksman:
  
     def buff_setup(self):
         if self.should_exit(): return
+        if self.bot.check_rune_and_walk():
+            return
         cur = datetime.now()
         
         self.bot.check_person_entered_map(only_guild=True)
@@ -118,7 +123,6 @@ class Marksman:
         self.bot.check_wap()
         self.bot.check_fam_fuel()
         self.bot.check_elite_box()
-        self.bot.check_rune()
 
         # if cur > self.data['next_petfood']:
         #   self.bot.press_release('f10')
@@ -322,8 +326,24 @@ class Marksman:
         self.bot.press_release('x')
         self.bot.press_release('x', delayAfter)
 
+    def rune_flash_jump(self):
+        self.flash_jump()
+
+    def rune_rope(self):
+        self.rope()
+    
+    def rune_jump_down(self):
+        self.jump_down()
+
+    def rune_jump(self):
+        self.bot.press_release('e')
+
 if __name__=="__main__":
-    marksman = Marksman()
-    marksman.main()
+    try:
+        marksman = Marksman()
+        marksman.main()
+    except KeyboardInterrupt:
+        state['running'] = False
+        exit()
 
   
