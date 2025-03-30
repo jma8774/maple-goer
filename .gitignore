@@ -3,3 +3,4 @@
 *.zip
 *.env
 /discord/*.mp3
+models/*

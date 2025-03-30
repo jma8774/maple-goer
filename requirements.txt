@@ -13,3 +13,7 @@ gTTS
 pillow
 pypiwin32
 PyScreeze
+vosk
+sounddevice
+fuzzywuzzy
+tinydb

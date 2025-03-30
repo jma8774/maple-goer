@@ -1,5 +1,6 @@
 import random
 from state import state
+from pyautogui import locateOnScreen, locateCenterOnScreen, locateAllOnScreen
 
 minimap_rune_region = (0, 0, 500, 300)
 
@@ -33,3 +34,20 @@ def print_scripts(scripts: dict):
 def uniform(a, b):
   rng = random.random()
   return a + rng*(b-a)
+
+def locate_on_screen(image, region=None, confidence=1, grayscale=False, **kwargs):
+  if region is None and state['fakefullscreen']:
+    region = (0, 0, 1366, 768)
+  return locateOnScreen(image, region=region, confidence=confidence, grayscale=grayscale, **kwargs)
+
+
+def locate_center_on_screen(image, region=None, confidence=1, grayscale=False, **kwargs):
+  if region is None and state['fakefullscreen']:
+    region = (0, 0, 1366, 768)
+  return locateCenterOnScreen(image, region=region, confidence=confidence, grayscale=grayscale, **kwargs)
+
+def locate_all_on_screen(image, region=None, confidence=1, grayscale=False, **kwargs):
+  if region is None and state['fakefullscreen']:
+    region = (0, 0, 1366, 768)
+  return locateAllOnScreen(image, region=region, confidence=confidence, grayscale=grayscale, **kwargs)
+

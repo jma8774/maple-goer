@@ -24,6 +24,7 @@ class RuneWalker:
 
     def go(self, play_sound=True):
         rune_loc = self.find_rune()
+        try_left = True
         print(f"Rune: {rune_loc}")
     
         # Keep moving until the rune is found
@@ -31,7 +32,19 @@ class RuneWalker:
             me_loc = self.find_me()
             rune_loc = self.find_rune()
 
-            if me_loc is None or rune_loc is None:
+            if me_loc is None:
+                if try_left:
+                    self.pilot.bot.press_release('left')
+                    self.flash_jump()
+                    try_left = False
+                else:
+                    self.pilot.bot.press_release('right')
+                    self.flash_jump()
+                    try_left = True
+                time.sleep(0.5)
+                continue
+                    
+            if rune_loc is None:
                 print("Failed to find me or rune, exiting")
                 break
             print(f"Me: {me_loc}, Rune: {rune_loc}")
@@ -41,17 +54,26 @@ class RuneWalker:
             self.make_a_move(vector)
 
         # Ping sound
-        if play_sound:
-            print("Pinging")
-            self.pilot.bot.play_audio(Audio.PING, loops=2)
-            time.sleep(2)
+        self.pilot.bot.rune_in_progress = True
+        self.pilot.bot.voice_command.start()
+        ping_seq = 0
+        ping_toggle = True
+        while play_sound and self.pilot.bot.rune_in_progress:
+            if ping_toggle:
+                self.pilot.bot.play_audio(Audio.PING, loops=1)
+            time.sleep(1)
+            ping_seq += 1
+            if ping_seq % 10 == 0:
+                ping_toggle = not ping_toggle
+                self.pilot.rune_attack()
+        self.pilot.bot.voice_command.stop()
     ''' 
     Find the player's position
     Return (x, y)
     '''
     def find_me(self):
         try:
-            return pag.locateOnScreen(Images.ME_PERSON, confidence=0.8, region=common.minimap_rune_region)
+            return common.locate_on_screen(Images.ME_PERSON, confidence=0.8, region=common.minimap_rune_region)
         except Exception as e:
             print(e)
             return None
@@ -62,7 +84,7 @@ class RuneWalker:
     '''
     def find_rune(self):
         try:
-            return pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.8, region=common.minimap_rune_region)
+            return common.locate_on_screen(Images.RUNE_MINIMAP, confidence=0.8, region=common.minimap_rune_region)
         except Exception as e:
             print(e)
             return None

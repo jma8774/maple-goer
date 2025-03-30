@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 import pyautogui as pag
 from base import Images
 from state import state
-from common import uniform
+import common
+from common import uniform, locate_on_screen
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -25,7 +26,7 @@ def bottomdeck6_macro(marksman: 'Marksman'):
                 count = 0
                 interval = 0.1
                 while mob_loc == None:
-                    mob_loc = pag.locateOnScreen(Images.FLORA_SWORD1, confidence=0.95, grayscale=True, region=marksman.bottompassage6_region) or pag.locateOnScreen(Images.FLORA_SWORD2, confidence=0.95, grayscale=True, region=marksman.bottompassage6_region)
+                    mob_loc = common.locate_on_screen(Images.FLORA_SWORD1, confidence=0.95, grayscale=True, region=marksman.bottompassage6_region) or common.locate_on_screen(Images.FLORA_SWORD2, confidence=0.95, grayscale=True, region=marksman.bottompassage6_region)
                     time.sleep(interval)
                     count += 1
                     if count > (6/interval): break # 6 seconds
@@ -89,6 +90,7 @@ def bottomdeck6_macro(marksman: 'Marksman'):
     print("Started Bottom Deck Passage 6 macro")
     while not marksman.should_exit():
         marksman.buff_setup()
+        marksman.consumables_check()
         loot()
         rotation()
     print("Paused Bottom Deck Passage 6 macro")

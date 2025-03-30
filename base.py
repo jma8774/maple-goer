@@ -14,6 +14,8 @@ import sys
 from state import state
 import pyscreeze
 import common
+from voice.voice_commands import VoiceCommand
+from voice.bot_voice_config import BotVoiceConfig
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -53,6 +55,8 @@ class BotBase:
     self.data = data
     self.config = config
     self.runewalker = runewalker
+    self.voice_command = VoiceCommand(BotVoiceConfig(self).get_voice_commands())
+    self.rune_in_progress = False
     self.thread = None
 
     self.setup_data()
@@ -70,8 +74,9 @@ class BotBase:
     # Interception Key Listener Setup (seperate thread)
     kl = KeyListener(data)
     if self.config['disable_extras'] != True:
-      kl.add(TOF_KEY, self.handle_tof)
-      kl.add(WAP_KEY, self.handle_wap)
+      # kl.add(TOF_KEY, self.handle_tof)
+      # kl.add(WAP_KEY, self.handle_wap)
+      kl.add('f4', self.toggle_consumables)
       # kl.add(AUTO_LEVEL_FAM_KEY, self.handle_auto_level_fam)
       # kl.add(FAM_FUEL_KEY, self.handle_fam_fuel)
     kl.add(START_KEY, self.start)
@@ -97,7 +102,7 @@ class BotBase:
         state['checkmap'] = False
         state['scanmob'] = False
         state['sendstatus'] = False
-      elif arg == 'fakefullscreen':
+      elif arg == 'fakefs':
         state['fakefullscreen'] = True
       elif arg in self.scripts:
         state['script'] = arg
@@ -116,6 +121,8 @@ class BotBase:
 
     self.data['wap_state'] = False
     self.data['next_wap_check'] = datetime.now()
+
+    self.data['consumable_enabled'] = False
 
     self.data['fam_fuel_state'] = False
     self.data['next_fam_fuel_check'] = datetime.now()
@@ -193,12 +200,12 @@ class BotBase:
     if self.data['is_paused']: return
     self.press_release(fam_menu_key)
     time.sleep(0.5)
-    setuploc = pag.locateCenterOnScreen(Images.SETUP, confidence=0.8, grayscale=True)
+    setuploc = common.locate_center_on_screen(Images.SETUP, confidence=0.8, grayscale=True)
     interception.click(setuploc)
     time.sleep(0.5)
     interception.move_to(setuploc.x, setuploc.y + 150)
     time.sleep(0.2)
-    if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
+    if not common.locate_on_screen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
       self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=10)
       post_fam_level({ "user": self.config['user'], "status": "NotLeveledYet"})
       self.press_release("escape")
@@ -220,16 +227,16 @@ class BotBase:
     time.sleep(0.1)
     fams = []
     if mob == 'ascendion':
-      fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True)))
+      fams.extend(list(common.locate_all_on_screen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True)))
     elif mob == 'ascendion/foreberion':
-      fams.extend(list(pag.locateAllOnScreen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True)))
-      fams.extend(list(pag.locateAllOnScreen(Images.FAM_FOREBERION, confidence=0.8, grayscale=True)))
+      fams.extend(list(common.locate_all_on_screen(Images.FAM_ASCENDION, confidence=0.8, grayscale=True)))
+      fams.extend(list(common.locate_all_on_screen(Images.FAM_FOREBERION, confidence=0.8, grayscale=True)))
     picked = 0
     for fam in fams:
       fam_pos = (fam.left + fam.width / 2, fam.top + fam.height / 2)
       interception.move_to(fam_pos)
       time.sleep(0.3)
-      if not pag.locateOnScreen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
+      if not common.locate_on_screen(Images.FAM_LEVEL5, confidence=0.9, grayscale=True):
         time.sleep(0.3)
         interception.click(fam_pos)
         interception.click(fam_pos)
@@ -245,7 +252,7 @@ class BotBase:
       self.data['next_level_fam_check'] = datetime.now() + timedelta(minutes=30.5)
       post_fam_level({ "user": self.config['user'], "status": "Success"})
     time.sleep(0.4)
-    ok_loc = pag.locateCenterOnScreen(Images.OK_START, confidence=0.8, grayscale=True) or pag.locateCenterOnScreen(Images.OK_END, confidence=0.8, grayscale=True)
+    ok_loc = common.locate_center_on_screen(Images.OK_START, confidence=0.8, grayscale=True) or common.locate_center_on_screen(Images.OK_END, confidence=0.8, grayscale=True)
     interception.click(ok_loc)
     time.sleep(0.8)
 
@@ -253,7 +260,7 @@ class BotBase:
     if self.data['is_paused']: return
     interception.move_to(setuploc)
     time.sleep(0.5)
-    saveloc = pag.locateCenterOnScreen(Images.SAVE1366, confidence=0.8, grayscale=True)
+    saveloc = common.locate_center_on_screen(Images.SAVE1366, confidence=0.8, grayscale=True)
     interception.click(saveloc)
     interception.click(saveloc)
     time.sleep(0.5)
@@ -262,7 +269,7 @@ class BotBase:
     self.press_release("escape")
 
     time.sleep(0.3)
-    while not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.9):
+    while not common.locate_on_screen(Images.FAM_BUFF, confidence=0.9):
       self.press_release(summon_fam_key)
       time.sleep(0.5)
   
@@ -273,7 +280,7 @@ class BotBase:
       "takeno": Images.TAKENO,
       "ibaraki": Images.IBARAKI
     }
-    bulb_loc = pag.locateCenterOnScreen(Images.WHITE_QUEST_BULB)
+    bulb_loc = common.locate_center_on_screen(Images.WHITE_QUEST_BULB)
     if not bulb_loc:
       print("Can't find white quest lightbulb")
       post_tof({ "user": self.config['user'], "status": "NoBulb"})
@@ -284,11 +291,11 @@ class BotBase:
     if self.data['is_paused']: return
     
     # Complete quest
-    quest_to_complete = pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True)
+    quest_to_complete = common.locate_on_screen(Images.TOF_COMPLETE, confidence=0.9, grayscale=True)
     if quest_to_complete:
       interception.click(quest_to_complete)
       time.sleep(2)
-      while pag.locateOnScreen(Images.YES, confidence=0.6):
+      while common.locate_on_screen(Images.YES, confidence=0.6):
         self.press_release(npc_chat_key, delay=0.15)
         self.press_release(npc_chat_key, delay=0.15)
         self.press_release(npc_chat_key, delay=0.15)
@@ -300,7 +307,7 @@ class BotBase:
       # Check if it was completed
       interception.click(bulb_loc)
       time.sleep(0.5)
-      if pag.locateOnScreen(Images.TOF_COMPLETE, confidence=0.6, grayscale=True):
+      if common.locate_on_screen(Images.TOF_COMPLETE, confidence=0.6, grayscale=True):
         post_tof({ "user": self.config['user'], "status": "InProgress"})
         self.data['next_tof_check'] = datetime.now() + timedelta(minutes=5)
         self.press_release("escape")
@@ -308,17 +315,17 @@ class BotBase:
     
     # Open the board
     if self.data['is_paused']: return
-    my_level_range_loc = pag.locateCenterOnScreen(Images.MY_LEVEL_RANGE, confidence=0.9, grayscale=True)
+    my_level_range_loc = common.locate_center_on_screen(Images.MY_LEVEL_RANGE, confidence=0.9, grayscale=True)
     if my_level_range_loc:
       interception.click(my_level_range_loc)
     time.sleep(0.3)
-    board_quest = pag.locateCenterOnScreen(Images.TOF_BOARD, confidence=0.9, grayscale=True)
+    board_quest = common.locate_center_on_screen(Images.TOF_BOARD, confidence=0.9, grayscale=True)
     interception.click(board_quest)
     time.sleep(0.5)
 
     # Click on the person
     if self.data['is_paused']: return
-    person_loc = pag.locateOnScreen(d[self.data['tof_state']], confidence=0.9, grayscale=True)
+    person_loc = common.locate_on_screen(d[self.data['tof_state']], confidence=0.9, grayscale=True)
     if not person_loc:
       print("Can't find person")
       post_tof({ "user": self.config['user'], "status": "NoPerson"})
@@ -329,7 +336,7 @@ class BotBase:
 
     # Click on the ask button
     if self.data['is_paused']: return
-    askLoc = pag.locateCenterOnScreen(Images.ASK, confidence=0.9, grayscale=True)
+    askLoc = common.locate_center_on_screen(Images.ASK, confidence=0.9, grayscale=True)
     if not askLoc:
       print("Can't find ASK")
       post_tof({ "user": self.config['user'], "status": "NoAsk"})
@@ -343,7 +350,7 @@ class BotBase:
 
     # Check if next exist, if it exist, then we continue
     if self.data['is_paused']: return
-    if not pag.locateOnScreen(Images.NEXT, confidence=0.60):
+    if not common.locate_on_screen(Images.NEXT, confidence=0.60):
       print("Can't find NEXT, we are done?")
       post_tof({ "user": self.config['user'], "status": "Done"})
       self.data['tof_done'] = True
@@ -353,7 +360,7 @@ class BotBase:
     # Accept the quest
     if self.data['is_paused']: return
     time.sleep(0.5)
-    while pag.locateOnScreen(Images.NEXT, confidence=0.60):
+    while common.locate_on_screen(Images.NEXT, confidence=0.60):
       self.press_release(npc_chat_key, delay=0.15)
       self.press_release(npc_chat_key, delay=0.15)
       self.press_release(npc_chat_key, delay=0.15)
@@ -377,27 +384,26 @@ class BotBase:
       post_wap({ "user": self.config['user'], "status": "InventoryNotFound"})
       dirty = True
 
-    expired = not pag.locateOnScreen(Images.WAP_BUFF, confidence=0.95, region=buffs_region)
+    expired = not common.locate_on_screen(Images.WAP_BUFF, confidence=0.95, region=buffs_region)
     print("Wap expired: ", expired)
     if self.data['use_inventory_region'] and expired:
-      interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
-      wap_loc = pag.locateCenterOnScreen(Images.WAP, confidence=0.85, grayscale=True, region=self.data['use_inventory_region'])
+      interception.move_to(common.locate_center_on_screen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
+      wap_loc = common.locate_center_on_screen(Images.WAP, confidence=0.85, grayscale=True, region=self.data['use_inventory_region'])
       if self.data['is_paused']: return
       if wap_loc:
         time.sleep(0.2)
-        interception.click(wap_loc)
-        interception.click(wap_loc)
-        time.sleep(0.7)
-        cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+        interception.click(wap_loc, clicks=2)
+        time.sleep(0.5)
+        cancel_loc = common.locate_center_on_screen(Images.CANCEL, confidence=0.9, grayscale=True)
         wapAlreadyActive = cancel_loc is not None
         if wapAlreadyActive:
           while cancel_loc:
             interception.click(cancel_loc)
-            interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
-            cancel_loc = pag.locateCenterOnScreen(Images.CANCEL, confidence=0.9, grayscale=True)
+            interception.move_to(common.locate_center_on_screen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
+            cancel_loc = common.locate_center_on_screen(Images.CANCEL, confidence=0.9, grayscale=True)
           post_wap({ "user": self.config['user'], "status": "AlreadyWapped"})
         else:
-          success = pag.locateOnScreen(Images.WAP_BUFF, confidence=0.95, region=buffs_region)
+          success = common.locate_on_screen(Images.WAP_BUFF, confidence=0.95, region=buffs_region)
           post_wap({ "user": self.config['user'], "status": "Success" if success else "Failed"})
         time.sleep(0.2)
       else:
@@ -421,19 +427,19 @@ class BotBase:
       dirty = True
 
     if self.data['is_paused']: return
-    expired = not pag.locateOnScreen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
+    expired = not common.locate_on_screen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
     if not expired:
       print("Buff is not about to expire")
       # post_fam_fuel({ "user": self.config['user'], "status": "NotExpired"})
     if self.data['use_inventory_region'] and expired:
-      interception.move_to(pag.locateCenterOnScreen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
-      fuel_loc = pag.locateCenterOnScreen(Images.FAM_FUEL, confidence=0.80, grayscale=True, region=self.data['use_inventory_region'])
+      interception.move_to(common.locate_center_on_screen(Images.CASH_TAB, confidence=0.9, grayscale=True) or (0, 0))
+      fuel_loc = common.locate_center_on_screen(Images.FAM_FUEL, confidence=0.80, grayscale=True, region=self.data['use_inventory_region'])
       if fuel_loc:
         time.sleep(0.2)
         interception.click(fuel_loc)
         interception.click(fuel_loc)
         time.sleep(0.7)
-        success = pag.locateOnScreen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
+        success = common.locate_on_screen(Images.FAM_BUFF, confidence=0.95, region=buffs_region)
         post_fam_fuel({ "user": self.config['user'], "status": "Success" if success else "Failed"})
       else:
         post_fam_fuel({ "user": self.config['user'], "status": "CantFindFuel"})
@@ -447,7 +453,7 @@ class BotBase:
 
   def check_rune(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check'] and state['checkrune']:
-      if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=common.minimap_rune_region):
+      if common.locate_on_screen(Images.RUNE_MINIMAP, confidence=0.7, region=common.minimap_rune_region):
         if play_sound:
           self.play_audio(Audio.PING, loops=2)
         if post_request:
@@ -456,16 +462,15 @@ class BotBase:
 
   def check_rune_and_walk(self, play_sound=True, post_request=True):
     if datetime.now() > self.data['next_rune_check'] and state['checkrune']:
-      if pag.locateOnScreen(Images.RUNE_MINIMAP, confidence=0.7, region=common.minimap_rune_region):
+      if common.locate_on_screen(Images.RUNE_MINIMAP, confidence=0.7, region=common.minimap_rune_region):
         self.runewalker.go(play_sound)
-        self.pause()
         self.data['next_rune_check'] = datetime.now() + timedelta(seconds=60)
         return True
     return False
 
   def check_person_entered_map(self, only_guild=False):
-    normal = None if only_guild else pag.locateOnScreen(Images.PERSON, region=common.minimap_rune_region)
-    guild = pag.locateOnScreen(Images.GUILD_PERSON, region=common.minimap_rune_region)
+    normal = None if only_guild else common.locate_on_screen(Images.PERSON, region=common.minimap_rune_region)
+    guild = common.locate_on_screen(Images.GUILD_PERSON, region=common.minimap_rune_region)
     if normal or guild:
       cur = datetime.now()
       if cur >= self.data['someone_on_map_cooldown']:
@@ -478,17 +483,17 @@ class BotBase:
   def check_elite_box(self, boxkey='f6'):
     cur = datetime.now()
     if cur > self.data['next_elite_box_check']:
-      boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
+      boxloc = common.locate_center_on_screen(Images.ELITE_BOX, confidence=0.9)
       while boxloc != None:
         self.press_release(boxkey)
-        boxloc = pag.locateCenterOnScreen(Images.ELITE_BOX, confidence=0.9)
-      self.data['next_elite_box_check'] = cur + timedelta(seconds=45)
+        boxloc = common.locate_center_on_screen(Images.ELITE_BOX, confidence=0.9)
+      self.data['next_elite_box_check'] = cur + timedelta(seconds=60 * 5)
 
   def update_use_inventory_region(self, dirty=False):
     res = pag.size()
     if dirty or self.data['use_inventory_region'] is None:
       self.data['use_inventory_region'] = None
-      equip_tab = pag.locateOnScreen(Images.FAM_EQUIP, confidence=0.9, grayscale=True)
+      equip_tab = common.locate_on_screen(Images.FAM_EQUIP, confidence=0.9, grayscale=True)
       if equip_tab is not None:
         self.data['use_inventory_region'] = (equip_tab.left, equip_tab.top, min(675, res[0] - equip_tab.left), min(390, res[1] - equip_tab.top))
     return self.data['use_inventory_region'] is not None
@@ -499,6 +504,10 @@ class BotBase:
       self.data['time_started'] = None
     
   def pause(self):
+    if self.rune_in_progress:
+      self.rune_in_progress = False
+      self.voice_command.stop()
+
     print('Pausing...')
     self.data['is_paused'] = True
     self.pause_audio()
@@ -507,6 +516,10 @@ class BotBase:
     print('Paused')
 
   def start(self):
+    if self.rune_in_progress:
+      self.rune_in_progress = False
+      self.voice_command.stop()
+
     self.commands(True)
     print('\nStarting...')
     self.data['is_paused'] = False
@@ -542,6 +555,10 @@ class BotBase:
 
   def handle_wap(self):
     self.data['wap_state'] = not self.data['wap_state']
+    self.commands(True)
+
+  def toggle_consumables(self):
+    self.data['consumable_enabled'] = not self.data['consumable_enabled']
     self.commands(True)
 
   def handle_fam_fuel(self):
@@ -626,8 +643,9 @@ class BotBase:
 
     print("Commands:")
     if self.config['disable_extras'] != True:
-      print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
-      print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
+      print(f"  F4 - toggle consumables: [{'enabled' if self.data['consumable_enabled'] else 'disabled'}]")
+      # print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
+      # print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
       # print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
       # print(f"  {FAM_FUEL_KEY} - auto familiar fuel: [{'enabled' if self.data['fam_fuel_state'] else 'disabled'}]")
       print()
@@ -746,6 +764,16 @@ class Images:
   FAM_FUEL          = openImage("fam_fuel.png")
   FAM_BUFF          = openImage("fam_buff.png")
   MILK              = openImage("milk.png")
+  # EXP BUFFS
+  EXP_BONUS_CP      = openImage("exp_bonus.png")
+  EXP_REGULAR_MUGONG = openImage("exp_regular_mugong.png")
+  EXP_REGULAR_2x    = openImage("exp_regular_2x.png")
+  EXP_REGULAR_3x    = openImage("exp_regular_3x.png")
+  EXP_REGULAR_MVP   = openImage("exp_regular_mvp.png")
+
+  # Legion
+  LEGION_DROP       = openImage("legion_drop.png")
+  LEGION_EXP        = openImage("legion_exp.png")
 
   # Boss  
   LUCID             = openImage("lucid.png")

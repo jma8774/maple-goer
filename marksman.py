@@ -15,6 +15,9 @@ from marksman_src.map_gate1 import gate1_macro
 from marksman_src.map_firespirit3 import firespirit3_macro
 from rune.rune_abstract import RuneWalkerPilot
 from rune.rune import RuneWalker
+from database.database import Database
+import interception
+
 
 class Marksman(RuneWalkerPilot):
     # Region definitions
@@ -25,6 +28,8 @@ class Marksman(RuneWalkerPilot):
     alley3_region = (0, 310, 670, 725-310)
     summer5_region = (2, 408, 772-2, 652-408)
     bottompassage6_region = (10, 165, 608-10, 513-165)
+
+    confirmation_dialog_region = (550, 310, 815-550, 477-310)
 
     def __init__(self):
         self.bot = None
@@ -79,6 +84,8 @@ class Marksman(RuneWalkerPilot):
             "script": self.scripts[state['script']],
             "setup": self.setup
         }
+        self.database = Database(db_path="data/jeemong_marksman.json")
+        self.consumable_setup()
         self.rune_walker = RuneWalker(self)
         self.bot = BotBase(self.data, config, args=sys.argv, scripts=self.scripts, runewalker=self.rune_walker)
         self.bot.run()
@@ -90,6 +97,12 @@ class Marksman(RuneWalkerPilot):
         self.data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(180, 220))
         self.data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
         self.data['next_petfood'] = datetime.now() + timedelta(seconds=90)
+
+    def consumable_setup(self):
+        self.data['bonus_exp_cp'] = self.database.get('bonus_exp_cp', datetime.min)
+        self.data['regular_exp_cp'] = self.database.get('regular_exp_cp', datetime.min) # This include Legion
+        self.data['legion_drop'] = self.database.get('legion_drop', datetime.min)
+        self.data['wap'] = self.database.get('wap', datetime.min)
 
     def should_exit(self, func=None):
         # If used as a function call without arguments
@@ -114,21 +127,22 @@ class Marksman(RuneWalkerPilot):
     def buff_setup(self):
         if self.should_exit(): return
         if self.bot.check_rune_and_walk():
+            self.teleport_reset()
             return
         cur = datetime.now()
         
         self.bot.check_person_entered_map(only_guild=True)
-        self.bot.check_fam_leveling()
-        self.bot.check_tof("y")
-        self.bot.check_wap()
-        self.bot.check_fam_fuel()
+        # self.bot.check_fam_leveling()
+        # self.bot.check_tof("y")
+        # self.bot.check_wap()
+        # self.bot.check_fam_fuel()
         self.bot.check_elite_box()
 
         # if cur > self.data['next_petfood']:
         #   self.bot.press_release('f10')
         #   self.data['next_petfood'] = cur + timedelta(seconds=90)
 
-        if cur > self.data['next_boss_buff'] and pag.locateOnScreen(Images.ELITE_BOSS_HP, region=(200, 0, 1150-200, 30)):
+        if cur > self.data['next_boss_buff'] and common.locate_on_screen(Images.ELITE_BOSS_HP, region=(200, 0, 1150-200, 30)):
             self.bot.press_release('t', 0.5)
             self.bot.press_release('pageup', 0.45)
             self.bot.press_release('home', 0.45)
@@ -156,7 +170,92 @@ class Marksman(RuneWalkerPilot):
             self.bot.press_release('x')
             self.bot.press_release('x')
             self.bot.release('down', 0.6)
-                                                                            
+            self.data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
+
+    def consumables_check(self):
+        # if self.should_exit(): return
+        if not self.data['consumable_enabled']: return
+        print("Consumable setup")
+        # "bonus_exp_cp", "regular_exp_cp", "legion_drop", "wap"
+        # EXP_BONUS_CP      = openImage("exp_bonus.png")
+        # EXP_REGULAR_MUGONG = openImage("exp_regular_mugong.png")
+        # EXP_REGULAR_2x    = openImage("exp_regular_2x.png")
+        # EXP_REGULAR_3x    = openImage("exp_regular_3x.png")
+        # EXP_REGULAR_MVP   = openImage("exp_regular_mvp.png")
+
+        # # Legion
+        # LEGION_DROP       = openImage("legion_drop.png")
+        # LEGION_EXP        = openImage("legion_exp.png")
+        updated_already = False
+        def setup_once_if_needed():
+            nonlocal updated_already
+            if updated_already: return
+            # Update self.data['use_inventory_region']
+            if not self.bot.update_use_inventory_region(dirty=True):
+                print("Could not find inventory USE region")
+            updated_already = True
+            self.shoot()
+            self.shoot()
+            time.sleep(5.2)
+
+        def cancel_if_needed():
+            loc = common.locate_center_on_screen(Images.CANCEL, confidence=0.9, region=self.confirmation_dialog_region, grayscale=True)
+            if loc:
+                interception.click(loc)
+                time.sleep(0.1)
+
+        cur = datetime.now()
+        if cur > self.data['bonus_exp_cp']:
+            setup_once_if_needed()
+            loc = common.locate_center_on_screen(Images.EXP_BONUS_CP, confidence=0.9, region=self.data['use_inventory_region'], grayscale=True)
+            if loc:
+                print("Bonus Exp CP")
+                interception.click(loc, clicks=2)
+                self.data['bonus_exp_cp'] = cur + timedelta(seconds=60 * 30 + 10)
+                self.database.set('bonus_exp_cp', self.data['bonus_exp_cp'])
+                time.sleep(0.15)
+                cancel_if_needed()
+                interception.move_to((600, 100))
+
+        if cur > self.data['regular_exp_cp']:
+            setup_once_if_needed()
+            loc = common.locate_center_on_screen(Images.EXP_REGULAR_MUGONG, confidence=0.9, region=self.data['use_inventory_region']) or \
+                common.locate_center_on_screen(Images.EXP_REGULAR_2x, confidence=0.9, region=self.data['use_inventory_region']) or \
+                common.locate_center_on_screen(Images.EXP_REGULAR_3x, confidence=0.9, region=self.data['use_inventory_region']) or \
+                common.locate_center_on_screen(Images.EXP_REGULAR_MVP, confidence=0.9, region=self.data['use_inventory_region'])
+            if loc:
+                print("Regular Exp CP")
+                interception.click(loc, clicks=2)
+                self.data['regular_exp_cp'] = cur + timedelta(seconds=60 * 30 + 10)
+                self.database.set('regular_exp_cp', self.data['regular_exp_cp'])
+                time.sleep(0.15)
+                cancel_if_needed()
+                interception.move_to((600, 100))
+
+        if cur > self.data['legion_drop']:
+            setup_once_if_needed()
+            loc = common.locate_center_on_screen(Images.LEGION_DROP, confidence=0.9, region=self.data['use_inventory_region'])
+            if loc:
+                print("Legion Drop")
+                interception.click(loc, clicks=2)
+                self.data['legion_drop'] = cur + timedelta(seconds=60 * 30 + 10)
+                self.database.set('legion_drop', self.data['legion_drop'])
+                time.sleep(0.15)
+                cancel_if_needed()
+                interception.move_to((600, 100))
+
+        if cur > self.data['wap']:
+            setup_once_if_needed()
+            loc = common.locate_center_on_screen(Images.WAP, confidence=0.9, region=self.data['use_inventory_region'])
+            if loc:
+                print("WAP")
+                interception.click(loc, clicks=2)
+                self.data['wap'] = cur + timedelta(seconds=60 * 60 * 2+ 10)
+                self.database.set('wap', self.data['wap'])
+                time.sleep(0.15)
+                cancel_if_needed()
+                interception.move_to((600, 100))
+
     def shoot(self, delayAfter=0.51):
         if self.should_exit(): return
         self.bot.press_release('q', delay=delayAfter)
@@ -337,6 +436,9 @@ class Marksman(RuneWalkerPilot):
 
     def rune_jump(self):
         self.bot.press_release('e')
+
+    def rune_attack(self):
+        self.shoot()
 
 if __name__=="__main__":
     try:

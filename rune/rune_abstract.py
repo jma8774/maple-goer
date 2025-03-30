@@ -20,4 +20,8 @@ class RuneWalkerPilot:
     @abstractmethod
     def rune_jump_down(self):
         pass
+
+    @abstractmethod
+    def rune_attack(self):
+        pass
     

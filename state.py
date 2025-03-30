@@ -6,4 +6,5 @@ state = {
   "script": "default",
   "localserver": False,
   "running": True,
+  'fakefullscreen': False
 }
