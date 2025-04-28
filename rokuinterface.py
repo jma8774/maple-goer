@@ -19,10 +19,12 @@ def getMap():
     "liminia": Images.LIMINIA_ICON,
     "arcus": Images.ARCUS_ICON,
     "odium": Images.ODIUM_ICON,
+    "arteria": Images.ARTERIA_ICON,
     "default": Images.ODIUM_ICON
   }
   return maps[state['script']] if state['script'] in maps else maps['default']
 
+monster_bottom_deck_3_region = (277, 180, 766-277, 318-180)
 monster_locked3_region = (261, 34, 1147-261, 204-34)
 monster_outlaw4_region = (850, 180, 1360-850, 315-180)
 monster_1_5_region = (800, 0, 600, 300)
@@ -38,6 +40,7 @@ data = {
   'next_erda_fountain': datetime.now(),
   'next_phalanx_charge': datetime.now(),
   'next_web': datetime.now(),
+  'next_seren': datetime.now(),
   'next_cast': datetime.now(),
   'next_janus': datetime.now(),
 }
@@ -48,7 +51,8 @@ def main():
     "liminia": end_1_5_macro,
     "arcus": outlaw4_macro,
     "odium": odium_macro,
-    "default": odium_macro
+    "arteria": arteria_macro,
+    "default": arteria_macro
   }
   
   config = {
@@ -79,6 +83,102 @@ def check():
     b.check_wap()
     # b.check_elite_box()
     b.check_fam_fuel()
+
+def arteria_macro():
+  def loot():
+    rope(delayAfter=1.7)
+    b.press_release('right')
+    jump_down(delayAfter=0.7)
+    jump()
+    glide()
+    glide(delayAfter=1)
+    erda_fountain()
+    jump_down(delayAfter=0.65)
+    jump_down(delayAfter=0.65)
+    b.press_release('left')
+    howling_gale(big=True)
+    glide()
+    glide()
+    glide()
+    glide()
+    glide()
+    glide()
+    rope(delayAfter=2.2)
+    jump_down(delayAfter=0.65)
+    jump_down(delayAfter=0.65)
+    b.press_release('right')
+    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.6)
+    jump_attack(delayAfter=0.6)
+    b.press_release('left')
+    
+  def rotation():
+    rng = random.random()
+    gale_barrier()
+    if not sphere():
+      if not mistral_spring():
+        # Use wind and charge before tornado
+        if not merciless_winds(delayAfter=1.1):
+          if not monsoon(delayAfter=1.4):
+              if not seren():
+                web()
+        phalanx_charge(press_twice=False, delayAfter=1.2)
+    if rng > 0.5:
+      cape()
+    # b.press('a')
+    # time.sleep(1)
+    # should_exit()
+    # time.sleep(1)
+    # should_exit()
+    # time.sleep(1)
+    # should_exit()
+    # time.sleep(1)
+    # should_exit()
+    # Find mob before continuing
+    if datetime.now() > data['next_erda_fountain'] - timedelta(seconds=5):
+      loot()
+    elif state['scanmob']:
+      b.press('a')
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      count = 0
+      mob_loc = None
+      while mob_loc == None:
+        mob_loc = pag.locateOnScreen(Images.FLORA_ARMORED_SOLDIER_1, confidence=0.9, grayscale=True, region=monster_bottom_deck_3_region) or pag.locateOnScreen(Images.FLORA_ARMORED_SOLDIER_2, confidence=0.9, grayscale=True, region=monster_bottom_deck_3_region)
+        time.sleep(0.3)
+        count += 1
+        if count > 20: break
+      if mob_loc == None:
+        print(f"Couldn't find mob after {count} tries, continuing rotation")
+      else:
+        print(f"Found mob at {mob_loc}, continuing rotation")
+      b.release('a')
+      should_exit()
+    else:
+      b.press('a')
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      time.sleep(1)
+      should_exit()
+      b.release('a')
+  
+  print("Started Bottom Deck Passage 3 macro")
+  while not should_exit():
+    check()
+    rotation()
+  print("Paused Bottom Deck Passage 3 macro")
 
 def odium_macro():
   def loot():
@@ -363,7 +463,7 @@ def end_1_5_looting():
 def erda_fountain():
   if datetime.now() > data['next_erda_fountain']:
     b.press_release('9', delay=0.6)
-    data['next_erda_fountain'] = datetime.now() + timedelta(seconds=59)
+    data['next_erda_fountain'] = datetime.now() + timedelta(seconds=53)
     return True
   return False
 
@@ -372,7 +472,7 @@ def cape(delayAfter=0.6):
   b.press_release('d', delayAfter)
 
 @should_exit
-def glide(delayAfter=0.52, delayInBetween=0.05):
+def glide(delayAfter=0.56, delayInBetween=0.05):
   b.press_release('s', delay=delayAfter, delayInBetween=delayInBetween)
 
 @should_exit
@@ -395,7 +495,7 @@ def gale_barrier(delayAfter=0.8):
 def monsoon(delayAfter=1.2):
   if datetime.now() > data['next_monsoon']:
     b.press_release('r', delay=delayAfter)
-    data['next_monsoon'] = datetime.now() + timedelta(seconds=29.7)
+    data['next_monsoon'] = datetime.now() + timedelta(seconds=25.5)
     return True
   return False  
 
@@ -403,7 +503,7 @@ def monsoon(delayAfter=1.2):
 def sphere(delayAfter=0.9):
   if datetime.now() > data['next_sphere']:
     b.press_release('y', delay=delayAfter)
-    data['next_sphere'] = datetime.now() + timedelta(seconds=29.7)
+    data['next_sphere'] = datetime.now() + timedelta(seconds=25.5)
     return True
   return False
 
@@ -411,14 +511,18 @@ def sphere(delayAfter=0.9):
 def merciless_winds(delayAfter=0.7):
   if datetime.now() > data['next_merciless_wind']:
     b.press_release('f', delay=delayAfter)
-    data['next_merciless_wind'] = datetime.now() + timedelta(seconds=10)
+    data['next_merciless_wind'] = datetime.now() + timedelta(seconds=7.5)
     return True
   return False
 
 @should_exit
-def howling_gale(delayAfter=0.9):
+def howling_gale(delayAfter=0.9, big=False):
   if datetime.now() > data['next_howling']:
+    if big:
+      b.press('down')
     b.press_release('t', delay=delayAfter)
+    if big:
+      b.release('down')
     data['next_howling'] = datetime.now() + timedelta(seconds=5)
     return True
   return False
@@ -431,7 +535,7 @@ def phalanx_charge(delayAfter=0.8, press_twice=False):
       b.press_release('g', 0.05)
     else:
       time.sleep(delayAfter)
-    data['next_phalanx_charge'] = datetime.now() + timedelta(seconds=30)
+    data['next_phalanx_charge'] = datetime.now() + timedelta(seconds=25.5)
     return True
   return False
 
@@ -440,6 +544,14 @@ def web(delayAfter=0.6):
   if datetime.now() > data['next_web']:
     b.press_release('shift', delay=delayAfter)
     data['next_web'] = datetime.now() + timedelta(seconds=250)
+    return True
+  return False
+
+@should_exit
+def seren(delayAfter=0.6):
+  if datetime.now() > data['next_seren']:
+    b.press_release('f3', delay=delayAfter)
+    data['next_seren'] = datetime.now() + timedelta(seconds=250)
     return True
   return False
 
@@ -471,6 +583,10 @@ def janus(delayAfter=0.65):
     time.sleep(delayAfter)
     return True
   return False
+
+@should_exit
+def jump(delayAfter=0.15):
+  b.press_release('space', delayAfter)
 
 @should_exit
 def jump_down(delayAfter=1):

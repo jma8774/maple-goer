@@ -22,6 +22,11 @@ class RuneWalkerPilot:
         pass
 
     @abstractmethod
-    def rune_attack(self):
+    def rune_protect(self):
         pass
+    
+    @abstractmethod
+    def rune_interact(self):
+        pass
+    
     

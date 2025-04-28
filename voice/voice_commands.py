@@ -5,9 +5,9 @@ from vosk import Model, KaldiRecognizer
 import os
 import threading
 from fuzzywuzzy import process
-
+import time
 class VoiceCommand:
-    def __init__(self, keyword_callbacks, model_path="models/vosk-model-small-en-us-0.15", min_similarity=40):
+    def __init__(self, keyword_callbacks, model_path="models/vosk-model-small-en-us-0.15", min_similarity=40, delayBetweenWords=0.1):
     # def __init__(self, keyword_callbacks, model_path="models/vosk-model-en-us-0.22", min_similarity=75):
         """
         Initialize voice command listener
@@ -15,12 +15,14 @@ class VoiceCommand:
         :param model_path: Path to vosk model
         :param min_similarity: Minimum similarity score (0-100) to accept a command match
         """
+        self.delayBetweenWords = delayBetweenWords
         self.keyword_callbacks = keyword_callbacks
         self.model_path = model_path
         self.min_similarity = min_similarity
         self.q = queue.Queue()
         self.is_running = False
         self.thread = None
+        self.enabled = True
         
         # Load model
         print(f"Loading model from: {model_path}")
@@ -54,6 +56,7 @@ class VoiceCommand:
                     if word in self.keyword_callbacks:
                         # print(f">>> {word.upper()} detected — triggering callback")
                         self.keyword_callbacks[word]()
+                        time.sleep(self.delayBetweenWords)
                         continue
                     
                     # Try fuzzy matching
@@ -63,13 +66,21 @@ class VoiceCommand:
                     if score >= self.min_similarity:
                         # print(f">>> {match.upper()} detected via fuzzy match — triggering callback")
                         self.keyword_callbacks[match]()
+                        time.sleep(self.delayBetweenWords)
             else:
                 # Just ignore partial results - only use complete phrases
                 pass
 
+    def clear_queue(self):
+        if not self.enabled:
+            return
+        if self.q is not None:
+            with self.q.mutex:
+                self.q.queue.clear()
+
     def start(self):
         """Start listening for voice commands in a separate thread"""
-        if self.is_running:
+        if self.is_running or not self.enabled:
             return
             
         self.is_running = True
@@ -79,6 +90,8 @@ class VoiceCommand:
 
     def stop(self):
         """Stop listening for voice commands"""
+        if not self.enabled:
+            return
         self.is_running = False
         try:
             if self.thread:

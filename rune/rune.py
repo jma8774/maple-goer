@@ -5,10 +5,17 @@ import common
 from state import state
 import time
 import math
+
+def get_rune_buff_region():
+    if state['fakefullscreen']:
+        return (1060, 70, 1367-1060, 106-70)
+    return (1060, 35, 1367-1060, 75-35)
+
 class RuneWalker:
     def __init__(self, pilot: RuneWalkerPilot):
         self.pilot = pilot
         self.move_seq = 0
+
 
     def flash_jump(self):
         self.pilot.rune_flash_jump()
@@ -55,17 +62,19 @@ class RuneWalker:
 
         # Ping sound
         self.pilot.bot.rune_in_progress = True
-        self.pilot.bot.voice_command.start()
         ping_seq = 0
-        ping_toggle = True
+        self.pilot.rune_protect()
         while play_sound and self.pilot.bot.rune_in_progress:
-            if ping_toggle:
+            if ping_seq % 5 == 0:
                 self.pilot.bot.play_audio(Audio.PING, loops=1)
-            time.sleep(1)
+                if ping_seq == 0:
+                    self.pilot.bot.voice_command.clear_queue()
+                    self.pilot.bot.voice_command.start()
+                    self.pilot.rune_interact()
             ping_seq += 1
-            if ping_seq % 10 == 0:
-                ping_toggle = not ping_toggle
-                self.pilot.rune_attack()
+            time.sleep(1)
+            if common.locate_center_on_screen(Images.RUNE_BUFF, confidence=0.7, region=get_rune_buff_region()):
+                self.pilot.bot.rune_in_progress = False
         self.pilot.bot.voice_command.stop()
     ''' 
     Find the player's position

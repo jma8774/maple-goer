@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from marksman import Marksman
+    from mail import Marksman
 
 def outlaw2_macro(marksman: 'Marksman'):
   print("Started Outlaw Infested Wastes 2 macro")

@@ -10,6 +10,7 @@ import interception
 EDIT_COMBINATIONS_KEY = 'f1'
 START_CUBING_KEY = 'f2'
 CUBE_TO_EPIC = 'f3'
+FORCE_FIRST_CUBE = 'f4'
 
 thread = None
 combinations = []
@@ -36,6 +37,7 @@ def main():
   kl.add(EDIT_COMBINATIONS_KEY, lambda: script(edit_combinations.__name__, edit_combinations))
   kl.add(START_CUBING_KEY, lambda: script(cube.__name__, cube))
   kl.add(CUBE_TO_EPIC, lambda: script(cube.__name__, cube_to_epic))
+  kl.add(FORCE_FIRST_CUBE, lambda: script(cube.__name__, lambda: cube(force_first=True)))
   kl.run()
 
   # Bot loop
@@ -154,13 +156,13 @@ def edit_combinations():
           error = e;
 
 def refresh_mouse_position():
-  data['corner_pos'] = pag.locateOnScreen(Images.CUBE_RESULT, confidence=0.8, grayscale=True)
+  data['corner_pos'] = pag.locateOnScreen(Images.CUBE_RESULT, confidence=0.7, grayscale=True) or pag.locateOnScreen(Images.CUBE_AFTER, confidence=0.7, grayscale=True)
   print(f"Top left corner of the inner cube ui box is at: {data['corner_pos']}")
 
 def cube_to_epic():
   cube(tier_to=Images.EPIC_POT)
 
-def cube(tier_to=None):
+def cube(tier_to=None, force_first=False):
   refresh_mouse_position()
   if not data['corner_pos']:
     raise Exception("Can't find cubing ui box, exiting...")
@@ -169,6 +171,7 @@ def cube(tier_to=None):
   def try_again():
     nonlocal try_again_loc
     if not try_again_loc:
+      interception.move_to((200,200))
       try_again_loc = pag.locateOnScreen(Images.ONEMORETRY, confidence=0.8, grayscale=True)
     if not try_again_loc:
       raise Exception("One more try not found, exiting...")
@@ -184,10 +187,16 @@ def cube(tier_to=None):
       lines_found[stat] = 0
 
   def check_for_lines():
+    nonlocal force_first
+    if force_first:
+      print("Forcing first cube...")
+      force_first = False
+      return False
     # TODO: maybe make this part multi-threaded so it's faster
     for stat in lines_found:
       locs = pag.locateAllOnScreen(STATS[stat]["image"], confidence=0.95, region=box_region)
       lines_found[stat] = len(list(locs)) if locs else 0
+      print(f"{stat}: {lines_found[stat]}")
 
     for combination in combinations:
       good = True
@@ -268,6 +277,7 @@ def commands():
   print(f"  {EDIT_COMBINATIONS_KEY} - edit stat combinations to stop at")
   print(f"  {START_CUBING_KEY} - start/stop cubing")
   print(f"  {CUBE_TO_EPIC} - start/stop cubing to epic")
+  print(f"  {FORCE_FIRST_CUBE} - force first cube")
   print("")
   print("PLEASE MAKE SURE YOUR MAPLESTORY IS IN 1920x1080!")
   print("TO TEST IF THE CUBING WORKS ON YOUR MAPLESTORY, TRY AN EASY COMBINATION LIKE 1L OF ATTACK AND SEE IF IT STOPS!")

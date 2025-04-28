@@ -6,13 +6,15 @@ from base import BotBase, Images
 import pyautogui as pag
 from state import state
 import common
-from common import uniform
+from common import uniform, sleep
 from marksman_src.map_outlaw2 import outlaw2_macro
 from marksman_src.map_alley3 import alley3_macro
 from marksman_src.map_summer5 import summer5_macro
 from marksman_src.map_bottomdeck6 import bottomdeck6_macro
 from marksman_src.map_gate1 import gate1_macro
 from marksman_src.map_firespirit3 import firespirit3_macro
+from marksman_src.map_carcion import carcion_macro
+from marksman_src.map_calm_beach_3 import calm_beach_3_macro
 from rune.rune_abstract import RuneWalkerPilot
 from rune.rune import RuneWalker
 from database.database import Database
@@ -28,26 +30,24 @@ class Marksman(RuneWalkerPilot):
     alley3_region = (0, 310, 670, 725-310)
     summer5_region = (2, 408, 772-2, 652-408)
     bottompassage6_region = (10, 165, 608-10, 513-165)
+    calm_beach_3_region = (363, 381, 983-363, 501-381)
 
     confirmation_dialog_region = (550, 310, 815-550, 477-310)
 
     def __init__(self):
         self.bot = None
+        self.database = Database(db_path="data/jeemong_marksman.json")
         self.data = {
-            'x_and_down_x': False,
-            'next_sharpeye': datetime.now(),
-            'next_split': datetime.now(),
-            'next_blink_setup': None,
-            'next_bird': datetime.now(),
-            'next_pot': datetime.now() + timedelta(minutes=0.5),
+            'next_blink_setup': self.database.get('next_blink_setup', datetime.now()),
             'next_boss_buff': datetime.now() + timedelta(minutes=0.5),
             'next_surgebolt': datetime.now(),
             'next_web': datetime.now(),
+            'next_solar_crest': datetime.now(),
             'next_high_speed': datetime.now(),
             'next_bolt_burst': datetime.now(),
-            'next_erda_fountain': datetime.now(),
-            'next_janus': datetime.now(),
-            'next_janus2': datetime.now(),
+            'next_erda_fountain': self.database.get('next_erda_fountain', datetime.now()),
+            'next_janus': self.database.get('next_janus', datetime.now()),
+            'next_janus2': self.database.get('next_janus2', datetime.now()),
             'next_loot_2': datetime.now() + timedelta(minutes=1.5),
             'whiteroomed': False,
             'is_paused': False
@@ -58,7 +58,8 @@ class Marksman(RuneWalkerPilot):
             "odium": lambda: alley3_macro(self),
             "shangrila": lambda: summer5_macro(self),
             "arteria": lambda: bottomdeck6_macro(self),
-            "default": lambda: bottomdeck6_macro(self)
+            "carcion": lambda: calm_beach_3_macro(self),
+            "default": lambda: calm_beach_3_macro(self)
             # Commented out scripts
             # "cernium": lambda: firespirit3_macro(self),
             # "gate1": lambda: gate1_macro(self),
@@ -74,7 +75,8 @@ class Marksman(RuneWalkerPilot):
             "odium": Images.ODIUM_ICON,
             "shangrila": Images.SHANGRILA_ICON,
             "arteria": Images.ARTERIA_ICON,
-            "default": Images.ARTERIA_ICON
+            "carcion": Images.CARCION_ICON,
+            "default": Images.CARCION_ICON
         }
         return maps[state['script']] if state['script'] in maps else maps['default']
 
@@ -84,18 +86,12 @@ class Marksman(RuneWalkerPilot):
             "script": self.scripts[state['script']],
             "setup": self.setup
         }
-        self.database = Database(db_path="data/jeemong_marksman.json")
         self.consumable_setup()
         self.rune_walker = RuneWalker(self)
         self.bot = BotBase(self.data, config, args=sys.argv, scripts=self.scripts, runewalker=self.rune_walker)
         self.bot.run()
 
     def setup(self):
-        self.data['x_and_down_x'] = True
-        self.data['next_blink_setup'] = None
-        self.data['next_split'] = datetime.now()
-        self.data['next_sharpeye'] = datetime.now() + timedelta(seconds=uniform(180, 220))
-        self.data['next_bird'] = datetime.now() + timedelta(seconds=uniform(116, 140))
         self.data['next_petfood'] = datetime.now() + timedelta(seconds=90)
 
     def consumable_setup(self):
@@ -103,6 +99,7 @@ class Marksman(RuneWalkerPilot):
         self.data['regular_exp_cp'] = self.database.get('regular_exp_cp', datetime.min) # This include Legion
         self.data['legion_drop'] = self.database.get('legion_drop', datetime.min)
         self.data['wap'] = self.database.get('wap', datetime.min)
+        self.data['eap'] = self.database.get('eap', datetime.min)
 
     def should_exit(self, func=None):
         # If used as a function call without arguments
@@ -127,6 +124,7 @@ class Marksman(RuneWalkerPilot):
     def buff_setup(self):
         if self.should_exit(): return
         if self.bot.check_rune_and_walk():
+            self.teleport_reset(delayAfter=0.05)
             self.teleport_reset()
             return
         cur = datetime.now()
@@ -148,34 +146,28 @@ class Marksman(RuneWalkerPilot):
             self.bot.press_release('home', 0.45)
             self.bot.press_release('insert', 0.9)
             self.bot.press_release('delete', 0.6)
-            self.web(delayAfter=0.4)
             self.data['next_boss_buff'] = cur + timedelta(minutes=uniform(1.5, 1.7))
 
-        if self.data['x_and_down_x']:
-            self.teleport_reset()
+        if cur > self.data['next_blink_setup']:
             self.bot.press('down')
             self.bot.press_release('x')
             self.bot.press_release('x')
             self.bot.release('down', 0.6)
-            self.data['x_and_down_x'] = False
-            self.data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
-            return
-
-        if self.data['next_blink_setup'] == None:
-            self.teleport_reset()
-            self.data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
-            return
-        elif cur > self.data['next_blink_setup']:
-            self.bot.press('down')
-            self.bot.press_release('x')
-            self.bot.press_release('x')
-            self.bot.release('down', 0.6)
-            self.data['next_blink_setup'] = cur + timedelta(seconds=uniform(54, 58))
+            self.data['next_blink_setup'] = cur + timedelta(seconds=uniform(35, 40))
+            self.database.set('next_blink_setup', self.data['next_blink_setup'])
 
     def consumables_check(self):
         # if self.should_exit(): return
-        if not self.data['consumable_enabled']: return
-        print("Consumable setup")
+        if self.data['consumable_enabled'] == "disabled": return
+        print(f"Consumable setup: {self.data['consumable_enabled']}")
+        if self.data['consumable_enabled'] == "reset all":
+            print("Resetting all consumables")
+            self.data['bonus_exp_cp'] = datetime.min
+            self.data['regular_exp_cp'] = datetime.min
+            self.data['legion_drop'] = datetime.min
+            self.data['wap'] = datetime.min
+            self.data['eap'] = datetime.min
+            self.data['consumable_enabled'] = "enabled"
         # "bonus_exp_cp", "regular_exp_cp", "legion_drop", "wap"
         # EXP_BONUS_CP      = openImage("exp_bonus.png")
         # EXP_REGULAR_MUGONG = openImage("exp_regular_mugong.png")
@@ -189,73 +181,104 @@ class Marksman(RuneWalkerPilot):
         updated_already = False
         def setup_once_if_needed():
             nonlocal updated_already
-            if updated_already: return
+            if updated_already: return False
             # Update self.data['use_inventory_region']
             if not self.bot.update_use_inventory_region(dirty=True):
                 print("Could not find inventory USE region")
             updated_already = True
-            self.shoot()
-            self.shoot()
-            time.sleep(5.2)
+            return True
 
         def cancel_if_needed():
             loc = common.locate_center_on_screen(Images.CANCEL, confidence=0.9, region=self.confirmation_dialog_region, grayscale=True)
             if loc:
                 interception.click(loc)
                 time.sleep(0.1)
+                return True
+            return False
+
+        def randomize_loc_a_little(loc, range=5):
+            return (loc[0] + random.randint(-range, range), loc[1] + random.randint(-range, range))
 
         cur = datetime.now()
         if cur > self.data['bonus_exp_cp']:
-            setup_once_if_needed()
+            if setup_once_if_needed():
+                self.web(delayAfter=0.4)
             loc = common.locate_center_on_screen(Images.EXP_BONUS_CP, confidence=0.9, region=self.data['use_inventory_region'], grayscale=True)
             if loc:
                 print("Bonus Exp CP")
-                interception.click(loc, clicks=2)
+                interception.move_to(randomize_loc_a_little(loc))
+                interception.click(loc, clicks=2, delay=uniform(0.1, 0.15))
                 self.data['bonus_exp_cp'] = cur + timedelta(seconds=60 * 30 + 10)
                 self.database.set('bonus_exp_cp', self.data['bonus_exp_cp'])
-                time.sleep(0.15)
+                sleep(0.15)
                 cancel_if_needed()
-                interception.move_to((600, 100))
+                interception.move_to((uniform(600, 800), uniform(100, 200)))
+                sleep(0.2)
 
         if cur > self.data['regular_exp_cp']:
             setup_once_if_needed()
-            loc = common.locate_center_on_screen(Images.EXP_REGULAR_MUGONG, confidence=0.9, region=self.data['use_inventory_region']) or \
+            loc = common.locate_center_on_screen(Images.LEGION_EXP, confidence=0.9, region=self.data['use_inventory_region']) or \
                 common.locate_center_on_screen(Images.EXP_REGULAR_2x, confidence=0.9, region=self.data['use_inventory_region']) or \
                 common.locate_center_on_screen(Images.EXP_REGULAR_3x, confidence=0.9, region=self.data['use_inventory_region']) or \
-                common.locate_center_on_screen(Images.EXP_REGULAR_MVP, confidence=0.9, region=self.data['use_inventory_region'])
+                common.locate_center_on_screen(Images.EXP_REGULAR_MVP, confidence=0.9, region=self.data['use_inventory_region']) or \
+                common.locate_center_on_screen(Images.EXP_REGULAR_MUGONG, confidence=0.9, region=self.data['use_inventory_region'])
             if loc:
+                self.web(delayAfter=0.4)
                 print("Regular Exp CP")
-                interception.click(loc, clicks=2)
+                interception.move_to(randomize_loc_a_little(loc))
+                interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
                 self.data['regular_exp_cp'] = cur + timedelta(seconds=60 * 30 + 10)
                 self.database.set('regular_exp_cp', self.data['regular_exp_cp'])
-                time.sleep(0.15)
+                sleep(0.15)
                 cancel_if_needed()
-                interception.move_to((600, 100))
+                interception.move_to((uniform(600, 800), uniform(100, 200)))
+                sleep(0.2)
 
         if cur > self.data['legion_drop']:
             setup_once_if_needed()
             loc = common.locate_center_on_screen(Images.LEGION_DROP, confidence=0.9, region=self.data['use_inventory_region'])
             if loc:
+                self.web(delayAfter=0.4)
                 print("Legion Drop")
-                interception.click(loc, clicks=2)
+                interception.move_to(randomize_loc_a_little(loc))
+                interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
                 self.data['legion_drop'] = cur + timedelta(seconds=60 * 30 + 10)
                 self.database.set('legion_drop', self.data['legion_drop'])
-                time.sleep(0.15)
+                sleep(0.15)
                 cancel_if_needed()
-                interception.move_to((600, 100))
+                interception.move_to((uniform(600, 800), uniform(100, 200)))
+                sleep(0.2)
 
         if cur > self.data['wap']:
             setup_once_if_needed()
             loc = common.locate_center_on_screen(Images.WAP, confidence=0.9, region=self.data['use_inventory_region'])
             if loc:
+                self.web(delayAfter=0.4)
                 print("WAP")
-                interception.click(loc, clicks=2)
-                self.data['wap'] = cur + timedelta(seconds=60 * 60 * 2+ 10)
+                interception.move_to(randomize_loc_a_little(loc))
+                interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
+                self.data['wap'] = cur + timedelta(seconds=60 * 30 + 3)
                 self.database.set('wap', self.data['wap'])
-                time.sleep(0.15)
+                sleep(0.15)
                 cancel_if_needed()
-                interception.move_to((600, 100))
+                interception.move_to((uniform(600, 800), uniform(100, 200)))
+                sleep(0.2)
 
+        if cur > self.data['eap']:
+            setup_once_if_needed()
+            loc = common.locate_center_on_screen(Images.EAP, confidence=0.95, region=self.data['use_inventory_region'])
+            if loc:
+                self.web(delayAfter=0.4)
+                print("EAP")
+                interception.move_to(randomize_loc_a_little(loc))
+                interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
+                self.data['eap'] = cur + timedelta(seconds=60 * 30 + 3)
+                self.database.set('eap', self.data['eap'])
+                sleep(0.15)
+                cancel_if_needed()
+                interception.move_to((uniform(600, 800), uniform(100, 200)))
+                sleep(0.2)
+                
     def shoot(self, delayAfter=0.51):
         if self.should_exit(): return
         self.bot.press_release('q', delay=delayAfter)
@@ -264,33 +287,36 @@ class Marksman(RuneWalkerPilot):
         if self.should_exit(): return
         self.bot.press_release('shift', delay=delayAfter)
 
-    def erda_fountain(self, delayAfter=0.5, custom_cd=59):
+    def erda_fountain(self, delayAfter=0.55, custom_cd=59):
         if self.should_exit(): return
         if datetime.now() > self.data['next_erda_fountain']:
             self.bot.press_release('b')
             self.bot.press_release('b')
             self.data['next_erda_fountain'] = datetime.now() + timedelta(seconds=custom_cd)
-            time.sleep(delayAfter)
+            self.database.set('next_erda_fountain', self.data['next_erda_fountain'])
+            sleep(delayAfter)
             return True
         return False
 
-    def janus(self, delayAfter=0.65):
+    def janus(self, delayAfter=0.68):
         if self.should_exit(): return
         if datetime.now() > self.data['next_janus']:
             self.bot.press_release('n')
             self.bot.press_release('n')
             self.data['next_janus'] = datetime.now() + timedelta(seconds=59)
-            time.sleep(delayAfter)
+            self.database.set('next_janus', self.data['next_janus'])
+            sleep(delayAfter)
             return True
         return False
 
-    def janus2(self, delayAfter=0.65):
+    def janus2(self, delayAfter=0.68):
         if self.should_exit(): return
         if datetime.now() > self.data['next_janus2']:
             self.bot.press_release('n')
             self.bot.press_release('n')
             self.data['next_janus2'] = datetime.now() + timedelta(seconds=59)
-            time.sleep(delayAfter)
+            self.database.set('next_janus2', self.data['next_janus2'])
+            sleep(delayAfter)
             return True
         return False
 
@@ -298,7 +324,7 @@ class Marksman(RuneWalkerPilot):
         if self.should_exit(): return
         if isGo and datetime.now() > self.data['next_bolt_burst']:
             self.bot.press_release('d', delay=delayAfter)
-            self.data['next_bolt_burst'] = datetime.now() + timedelta(seconds=7)
+            self.data['next_bolt_burst'] = datetime.now() + timedelta(seconds=7-delayAfter)
             return True
         return False
 
@@ -317,6 +343,14 @@ class Marksman(RuneWalkerPilot):
             self.data['next_web'] = datetime.now() + timedelta(seconds=251)
             return True
         return False
+    
+    def solar_crest(self, delayAfter=0.4):
+        if self.should_exit(): return
+        if datetime.now() > self.data['next_solar_crest']:
+            self.bot.press_release('5', delay=delayAfter)
+            self.data['next_solar_crest'] = datetime.now() + timedelta(seconds=251)
+            return True
+        return False
 
     def jump_high_speed_shot(self, jumpDelay=0.2, delayAfter=0.3, isGo=True):
         if self.should_exit(): return
@@ -329,7 +363,7 @@ class Marksman(RuneWalkerPilot):
     def high_speed_shot(self, delayAfter=0.3, isGo=True):
         if self.should_exit(): return
         if isGo and datetime.now() > self.data['next_high_speed']:
-            self.bot.press_release('a', delay=delayAfter)
+            self.bot.press_release('f2', delay=delayAfter)
             self.data['next_high_speed'] = datetime.now() + timedelta(seconds=15)
             return True
         return False
@@ -339,20 +373,20 @@ class Marksman(RuneWalkerPilot):
         self.bot.press_release('e', jumpDelay)
         self.bot.press_release('e', delayAfter)
 
-    def jump_attack(self, attackDelay=0.2, jumpDelay=0.05, delayAfter=0.52, withSurge=False):
+    def jump_attack(self, attackDelay=0.2, jumpDelay=0.05, delayAfter=0.54, withSurge=False):
         if self.should_exit(): return
         self.bot.press_release('e', jumpDelay)
         self.bot.press_release('e', attackDelay)
         self.bot.press_release('q')
         if withSurge:
             self.surgebolt()
-        time.sleep(delayAfter)
+        sleep(delayAfter)
 
-    def jump_attack_still(self, attackDelay=0.05, delayAfter=0.65):
+    def jump_attack_still(self, attackDelay=0.05, delayAfter=0.67):
         if self.should_exit(): return
         self.bot.press_release('e', attackDelay)
         self.bot.press_release('q')
-        time.sleep(delayAfter)
+        sleep(delayAfter)
 
     def jump_up(self, delayBetween=0.2, delayAfter=1):
         if self.should_exit(): return
@@ -377,7 +411,7 @@ class Marksman(RuneWalkerPilot):
         self.bot.release('e')
         self.bot.release('down', delayAfter)
 
-    def jump_down_attack_turn(self, attackDelay=0.05, delayAfter=1, turn='left'):
+    def jump_down_attack_turn(self, attackDelay=0.06, delayAfter=1, turn='left'):
         if self.should_exit(): return
         self.bot.press('down', delay=0.04)
         self.bot.press('e', delay=0.04)
@@ -385,7 +419,7 @@ class Marksman(RuneWalkerPilot):
             self.bot.press_release('left', delay=0.02)
         else:
             self.bot.press_release('right', delay=0.02)
-        time.sleep(attackDelay)
+        sleep(attackDelay)
         self.bot.press_release('q', delay=0.02)
         self.bot.release('e', delay=0.02)
         self.bot.release('down', delayAfter)
@@ -398,11 +432,11 @@ class Marksman(RuneWalkerPilot):
         self.bot.press('e')
         self.bot.release('e', delayAfter)
 
-    def surgebolt(self, delayAfter=0.05):
+    def surgebolt(self, delayAfter=0.07):
         if datetime.now() > self.data['next_surgebolt']:
             self.bot.press_release('r')
             self.data['next_surgebolt'] = datetime.now() + timedelta(seconds=10)
-            time.sleep(delayAfter)
+            sleep(delayAfter)
             return True
         return False
 
@@ -425,6 +459,8 @@ class Marksman(RuneWalkerPilot):
         self.bot.press_release('x')
         self.bot.press_release('x', delayAfter)
 
+
+# OVERRIDES FOR RUNE BOT INTERFACE
     def rune_flash_jump(self):
         self.flash_jump()
 
@@ -437,8 +473,14 @@ class Marksman(RuneWalkerPilot):
     def rune_jump(self):
         self.bot.press_release('e')
 
-    def rune_attack(self):
-        self.shoot()
+    def rune_protect(self):
+        if not self.solar_crest():
+            self.web()
+        sleep(0.3)
+    
+    def rune_interact(self):
+        self.bot.press_release('y')
+# END OF OVERRIDES FOR RUNE BOT INTERFACE
 
 if __name__=="__main__":
     try:

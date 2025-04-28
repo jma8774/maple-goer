@@ -13,7 +13,7 @@ class BotVoiceConfig:
             "up": self.up,
             "down": self.down,
 
-            "reset": self.reset,
+            # "reset": self.reset,
             "go": self.go
         }
 

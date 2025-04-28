@@ -308,7 +308,7 @@ def capture_mouse() -> int:
 def set_maplestory():
     global KEY_PRESS_DELAY
     print("Setting Maplestory key press delay to 0.025")
-    # KEY_PRESS_DELAY = 0.025
+    KEY_PRESS_DELAY = 0.025
     print("Setting keycodes for Maplestory")
     apply()
 

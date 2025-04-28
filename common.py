@@ -1,6 +1,7 @@
 import random
 from state import state
 from pyautogui import locateOnScreen, locateCenterOnScreen, locateAllOnScreen
+import time
 
 minimap_rune_region = (0, 0, 500, 300)
 
@@ -51,3 +52,5 @@ def locate_all_on_screen(image, region=None, confidence=1, grayscale=False, **kw
     region = (0, 0, 1366, 768)
   return locateAllOnScreen(image, region=region, confidence=confidence, grayscale=grayscale, **kwargs)
 
+def sleep(seconds, randomize_percentage=0.03):
+  time.sleep(seconds + random.uniform(randomize_percentage * -seconds, randomize_percentage * seconds))

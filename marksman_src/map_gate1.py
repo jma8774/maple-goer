@@ -8,7 +8,7 @@ from common import uniform
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from marksman import Marksman
+    from mail import Marksman
 
 def gate1_macro(marksman: 'Marksman'):
     """

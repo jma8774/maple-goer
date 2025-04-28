@@ -14,8 +14,10 @@ import sys
 from state import state
 import pyscreeze
 import common
+from common import sleep
 from voice.voice_commands import VoiceCommand
 from voice.bot_voice_config import BotVoiceConfig
+from tts.tts import TTS
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -55,8 +57,10 @@ class BotBase:
     self.data = data
     self.config = config
     self.runewalker = runewalker
-    self.voice_command = VoiceCommand(BotVoiceConfig(self).get_voice_commands())
     self.rune_in_progress = False
+    self.voice_command = VoiceCommand(BotVoiceConfig(self).get_voice_commands(), delayBetweenWords=0.1)
+    self.voice_command.enabled = False
+    self.tts = TTS(self)
     self.thread = None
 
     self.setup_data()
@@ -122,7 +126,8 @@ class BotBase:
     self.data['wap_state'] = False
     self.data['next_wap_check'] = datetime.now()
 
-    self.data['consumable_enabled'] = False
+    # "disabled", "enabled", "reset all"
+    self.data['consumable_enabled'] = "disabled"
 
     self.data['fam_fuel_state'] = False
     self.data['next_fam_fuel_check'] = datetime.now()
@@ -164,7 +169,7 @@ class BotBase:
           self.release_all()
 
         if self.data['is_paused'] == True:
-          time.sleep(1)
+          sleep(1, randomize_percentage=0.02)
           continue
         
         if self.data['time_started'] == None:
@@ -531,6 +536,7 @@ class BotBase:
     current = state['script']
     index = keys.index(current)
     state['script'] = keys[(index + 1) % len(keys)]
+    self.tts.speak(f"{state['script']} script selected")
     self.commands(True)
     print()
     print(f"Script changed from {current} -> {state['script']}")
@@ -558,11 +564,18 @@ class BotBase:
     self.commands(True)
 
   def toggle_consumables(self):
-    self.data['consumable_enabled'] = not self.data['consumable_enabled']
+    if self.data['consumable_enabled'] == "disabled":
+      self.data['consumable_enabled'] = "enabled"
+    elif self.data['consumable_enabled'] == "enabled":
+      self.data['consumable_enabled'] = "reset all"
+    elif self.data['consumable_enabled'] == "reset all":
+      self.data['consumable_enabled'] = "disabled"
+    self.tts.speak(f"Consumables {self.data['consumable_enabled']}")
     self.commands(True)
 
   def handle_fam_fuel(self):
     self.data['fam_fuel_state'] = not self.data['fam_fuel_state']
+    self.tts.speak(f"Familiar fuel {'enabled' if self.data['fam_fuel_state'] else 'disabled'}")
     self.commands(True)
 
   def setup_audio(self, volume=1):
@@ -611,7 +624,7 @@ class BotBase:
       self.data['key_pressed'][key] = True
       self.data['all_used_keys'].add(key)
       if delay > 0:
-        time.sleep(delay)
+        sleep(delay, randomize_percentage=0.02)
     except Exception as e:
       print(f"Error pressing key {key}: {e}")
       self.data['key_pressed'][key] = False
@@ -621,7 +634,7 @@ class BotBase:
       interception.key_up(key)
       self.data['key_pressed'][key] = False
       if delay > 0:
-        time.sleep(delay)
+        sleep(delay, randomize_percentage=0.02)
     except Exception as e:
       print(f"Error releasing key {key}: {e}")
 
@@ -643,7 +656,7 @@ class BotBase:
 
     print("Commands:")
     if self.config['disable_extras'] != True:
-      print(f"  F4 - toggle consumables: [{'enabled' if self.data['consumable_enabled'] else 'disabled'}]")
+      print(f"  F4 - toggle consumables: {self.data['consumable_enabled']}")
       # print(f"  {TOF_KEY} - auto thread of fate: [{self.data['tof_state'] if self.data['tof_state'] else 'disabled'}]")
       # print(f"  {WAP_KEY} - auto wap: [{'enabled' if self.data['wap_state'] else 'disabled'}]")
       # print(f"  {AUTO_LEVEL_FAM_KEY} - auto level familiars: [{self.data['auto_level_fam_state'] if self.data['auto_level_fam_state'] else 'disabled'}]")
@@ -703,6 +716,8 @@ class Images:
   IRONSHOT2         = openImage("ironshot2.png")
   LOCKED3_MOB1      = openImage("locked3_mob1.png")
   LOCKED3_MOB2      = openImage("locked3_mob2.png")
+  FLORA_ARMORED_SOLDIER_1 = openImage("flora_armored_soldier_1.png")
+  FLORA_ARMORED_SOLDIER_2 = openImage("flora_armored_soldier_2.png")
   FIRE_SPIRIT       = openImage("fire_spirit.png")
   FIRE_SPIRIT2      = openImage("fire_spirit2.png")
   DIAMOND_GUARDIAN1 = openImage("diamond_guardian1.png")
@@ -713,6 +728,8 @@ class Images:
   SUMMER5_MOB2      = openImage("crane_right.png")
   FLORA_SWORD1      = openImage("flora_swordsman1.png")
   FLORA_SWORD2      = openImage("flora_swordsman2.png")
+  ABYSSAL_GUARD_1   = openImage("abyssal_guard_eye.png")
+  ABYSSAL_GUARD_2   = openImage("abyssal_guard_eye2.png")
   EBON_MAGE1        = openImage("ebon_mage1.png")
   EBON_MAGE2        = openImage("ebon_mage2.png")
   LIMINIA_ICON      = openImage("liminia_icon.png")
@@ -722,6 +739,7 @@ class Images:
   ODIUM_ICON        = openImage("odium_icon.png")
   SHANGRILA_ICON    = openImage("shangrila_icon.png")
   ARTERIA_ICON      = openImage("arteria_icon.png")
+  CARCION_ICON      = openImage("carcion_icon.png")
   VANISHING_ICON    = openImage("vanishing_icon.png")
   CHUCHU_ICON       = openImage("chuchu_icon.png")
   ARCANA_ICON       = openImage("arcana_icon.png")
@@ -759,6 +777,7 @@ class Images:
   MY_LEVEL_RANGE    = openImage("my_level_range.png")
   # WAP
   WAP               = openImage("wap.png")
+  EAP               = openImage("eap.png")
   WAP_BUFF          = openImage("wap_buff.png")
   # FAM FUEL
   FAM_FUEL          = openImage("fam_fuel.png")
@@ -775,12 +794,16 @@ class Images:
   LEGION_DROP       = openImage("legion_drop.png")
   LEGION_EXP        = openImage("legion_exp.png")
 
+  # Rune
+  RUNE_BUFF         = openImage("rune_buff.png")
+
   # Boss  
   LUCID             = openImage("lucid.png")
   WILL              = openImage("will.png")
 
   # Cubing  
   CUBE_RESULT       = openImage("cube_result.png")
+  CUBE_AFTER        = openImage("cube_after.png")
   ONEMORETRY        = openImage("one_more_try.png")
   ATT_INCREASE      = openImage("att_increase.png")
   EPIC_POT          = openImage("epic_pot.png")

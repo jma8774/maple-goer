@@ -7,8 +7,10 @@ from tinydb import Query, TinyDB
 
 class Database:
     def __init__(self, db_path="data/db.json"):
-        # Create data directory if it doesn't exist
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        # Check if data directory exists
+        data_dir = os.path.dirname(db_path)
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir, exist_ok=True)
 
         # Initialize database
         self.db = TinyDB(db_path)

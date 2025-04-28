@@ -17,3 +17,4 @@ vosk
 sounddevice
 fuzzywuzzy
 tinydb
+pyttsx3 
