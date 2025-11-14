@@ -51,16 +51,14 @@ def calm_beach_3_macro(marksman: 'Marksman'):
         marksman.janus()
         marksman.bot.press('left', 0.5)
         marksman.bot.release('left')
-        marksman.jump_down_attack(delayAfter=0.64)
-        marksman.jump_attack(delayAfter=0.64)
+        marksman.jump_down_attack(delayAfter=0.68)
+        marksman.jump_attack(delayAfter=0.68)
         marksman.janus2()
-        marksman.jump_attack(delayAfter=0.64)
-        marksman.bot.press('left', delay=0.7)
-        marksman.bot.release('left')
+        marksman.jump_attack(delayAfter=0.67)
+        marksman.janus3()
+        marksman.flash_jump(jumpDelay=0.05, delayAfter=1.2, extraPress=True)
         marksman.erda_fountain(custom_cd=56)
-        if uniform(0, 1) < 0.5:
-            marksman.flash_jump(delayAfter=0.65)
-        time.sleep(0.4) # To loot
+        time.sleep(0.3) # To loot
         marksman.teleport_reset()
     
     def loot():

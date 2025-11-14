@@ -58,8 +58,8 @@ class BotBase:
     self.config = config
     self.runewalker = runewalker
     self.rune_in_progress = False
-    self.voice_command = VoiceCommand(BotVoiceConfig(self).get_voice_commands(), delayBetweenWords=0.1)
-    self.voice_command.enabled = False
+    # self.voice_command = VoiceCommand(BotVoiceConfig(self).get_voice_commands(), delayBetweenWords=0.1)
+    # self.voice_command.enabled = False
     self.tts = TTS(self)
     self.thread = None
 
@@ -498,7 +498,7 @@ class BotBase:
     res = pag.size()
     if dirty or self.data['use_inventory_region'] is None:
       self.data['use_inventory_region'] = None
-      equip_tab = common.locate_on_screen(Images.FAM_EQUIP, confidence=0.9, grayscale=True)
+      equip_tab = common.locate_on_screen(Images.INVENTORY_SORT_BUTTON, confidence=0.9, grayscale=True)
       if equip_tab is not None:
         self.data['use_inventory_region'] = (equip_tab.left, equip_tab.top, min(675, res[0] - equip_tab.left), min(390, res[1] - equip_tab.top))
     return self.data['use_inventory_region'] is not None
@@ -511,7 +511,7 @@ class BotBase:
   def pause(self):
     if self.rune_in_progress:
       self.rune_in_progress = False
-      self.voice_command.stop()
+      # self.voice_command.stop()
 
     print('Pausing...')
     self.data['is_paused'] = True
@@ -523,7 +523,7 @@ class BotBase:
   def start(self):
     if self.rune_in_progress:
       self.rune_in_progress = False
-      self.voice_command.stop()
+      # self.voice_command.stop()
 
     self.commands(True)
     print('\nStarting...')
@@ -694,6 +694,7 @@ class Images:
   ALCHEMY_TAB       = openImage("alchemy_tab.png")
   EXTRACT_UP        = openImage("extract_up.png")
   CONFIRM           = openImage("confirm.png")
+  CONFIRM_CONSUMABLE_USED = openImage("confirm_consumable_used.png")
   BAG               = openImage("bag.png")
   SORT              = openImage("sort.png")
   ENHANCE_STAR      = openImage("star.png")
@@ -789,10 +790,13 @@ class Images:
   EXP_REGULAR_2x    = openImage("exp_regular_2x.png")
   EXP_REGULAR_3x    = openImage("exp_regular_3x.png")
   EXP_REGULAR_MVP   = openImage("exp_regular_mvp.png")
+  # INVENTORY
+  INVENTORY_SORT_BUTTON = openImage("inventory_sort_button.png")
 
   # Legion
   LEGION_DROP       = openImage("legion_drop.png")
   LEGION_EXP        = openImage("legion_exp.png")
+  LEGION_MESO       = openImage("legion_meso.png")
 
   # Rune
   RUNE_BUFF         = openImage("rune_buff.png")
@@ -833,6 +837,16 @@ class Images:
   FAM_25_STACK_RARE = openImage("fam_25_stack_rare.png")
   FAM_50_STACK_RARE = openImage("fam_50_stack_rare.png")
   FAM_100_STACK_RARE = openImage("fam_100_stack_rare.png")
+
+  # FAM_25_CARCION_STACK = openImage("fam_25_carcion_stack.png")
+  # FAM_50_CARCION_STACK = openImage("fam_50_carcion_stack.png")
+  # FAM_75_CARCION_STACK = openImage("fam_75_carcion_stack.png")
+  # FAM_100_CARCION_STACK = openImage("fam_100_carcion_stack.png")
+  FAM_25_CARCION_STACK_RARE = openImage("fam_25_carcion_stack_rare.png")
+  FAM_50_CARCION_STACK_RARE = openImage("fam_50_carcion_stack_rare.png")
+  FAM_100_CARCION_STACK_RARE = openImage("fam_100_carcion_stack_rare.png")
+  FAM_EXTRACT = openImage("fam_extract.png")
+
     # Specific Famliars - Foreberion
   FAM_FOREBERION    = openImage("fam_foreberion.png")
 
@@ -932,6 +946,17 @@ class Images:
     return getattr(Images, f"{key}{suffix}")
   
   
+  class POE2_Images:
+    withered_wand_focused = openImage("withered_wand_focused.png")
+    obliterator_bow_focused = openImage("obliterator_bow_focused.png")
+    gemini_bow_focused = openImage("gemini_bow_focused.png")
+    dueling_wand_focused = openImage("dueling_wand_focused.png")
+    galvanic_wand_focused = openImage("galvanic_wand_focused.png")
+    overseer_focused = openImage("overseer_focused.png")
+    poe2_merchant = openImage("poe2_merchant.png")
+
+  POE2 = POE2_Images
+
 class Audio:
   TYLER1_AUTISM     = "images/tyler1autism.mp3"
   PING              = "images/ping.mp3"

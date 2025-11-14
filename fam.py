@@ -9,6 +9,7 @@ import interception
 
 
 START_STOP_KEY = 'f1'
+START_STOP_EXTRACT_ALL_KEY = 'f2'
 
 thread = None
 data = {
@@ -32,6 +33,7 @@ def main():
   # Interception Key Listener Setup (seperate thread)
   kl = KeyListener(data)
   kl.add(START_STOP_KEY, lambda: script(fuse_familiars.__name__, fuse_familiars))
+  kl.add(START_STOP_EXTRACT_ALL_KEY, lambda: script(extract_all.__name__, extract_all))
   kl.run()
 
   # Bot loop
@@ -49,6 +51,46 @@ def main():
   except KeyboardInterrupt:
     print("Exiting... (Try spamming CTRL + C)")
     data['stop_flag'] = True
+
+def extract_all():
+  def can_continue():
+    return data['script'] and data['script'][0] == extract_all.__name__
+
+  def extract():
+    # Open familiars from inventory first
+    familiar_stack_locs = pag.locateCenterOnScreen(Images.FAM_50_CARCION_STACK_RARE, confidence=0.9) or \
+                          pag.locateCenterOnScreen(Images.FAM_100_CARCION_STACK_RARE, confidence=0.9)
+    # if not familiar_stack_locs:
+    #   raise Exception("Could not find familiar stack")
+    def open_50(loc):
+      interception.click(loc, clicks=2)
+      time.sleep(0.25)
+      write("50")
+      press_release("enter")
+      press_release("enter")
+      press_release("enter")
+      
+    open_50(familiar_stack_locs)
+
+    # Click select all button
+    familiar_select_all_loc = pag.locateCenterOnScreen(Images.FAM_SELECT_ALL, confidence=0.9, grayscale=True)
+    # if not familiar_select_all_loc:
+    #   raise Exception("Could not find select all button")
+    interception.click(familiar_select_all_loc)
+    time.sleep(0.25)
+
+    # Click extract button
+    extract_loc = pag.locateCenterOnScreen(Images.FAM_EXTRACT, confidence=0.9, grayscale=True)
+    # if not extract_loc:
+    #   raise Exception("Could not find extract button")
+    interception.click(extract_loc)
+    time.sleep(0.15)
+    press_release("enter")
+    press_release("enter")
+    
+
+  while can_continue():
+    extract()
 
 def fuse_familiars():
   res = pag.size()
@@ -150,7 +192,7 @@ def fuse_familiars():
       cache = { }
       order = [150, 100, 75, 50, 25]
       steps = {
-        150:  [ ("100 rare", Images.FAM_100_STACK_RARE, "75") ],
+        150:  [ ("100 rare", Images.FAM_100_CARCION_STACK_RARE, "75") ],
         100:  [ ("50 rare", Images.FAM_50_STACK_RARE, "50"), ("100 rare", Images.FAM_100_STACK_RARE, "50") ],
         75:   [ ("75 common", Images.FAM_75_STACK, "75"), ("100 common", Images.FAM_100_STACK, "75") ],
         50:   [ ("50 common", Images.FAM_50_STACK, "50"), ("75 common", Images.FAM_75_STACK, "50"), ("100 common", Images.FAM_100_STACK, "50"), ("25 rare", Images.FAM_25_STACK_RARE, "25") ],
@@ -289,7 +331,7 @@ def reset_on_exception(fn):
 def commands():
   print("Commands:")
   print(f"  {START_STOP_KEY} - start/stop")
-  print("")
+  print(f"  {START_STOP_EXTRACT_ALL_KEY} - start/stop extract all")
   print("PLEASE MAKE SURE YOUR MAPLESTORY IS IN 1920x1080 (FULLSCREEN NOT NEEDED)!")
 
 if __name__=="__main__":

@@ -48,15 +48,17 @@ class Marksman(RuneWalkerPilot):
             'next_erda_fountain': self.database.get('next_erda_fountain', datetime.now()),
             'next_janus': self.database.get('next_janus', datetime.now()),
             'next_janus2': self.database.get('next_janus2', datetime.now()),
+            'next_janus3': self.database.get('next_janus3', datetime.now()),
             'next_loot_2': datetime.now() + timedelta(minutes=1.5),
+            'next_familiar_fuel': datetime.now() + timedelta(hours=1),
             'whiteroomed': False,
             'is_paused': False
         }
         # Initialize script mapping
         self.scripts = {
-            "arcus": lambda: outlaw2_macro(self),
-            "odium": lambda: alley3_macro(self),
-            "shangrila": lambda: summer5_macro(self),
+            # "arcus": lambda: outlaw2_macro(self),
+            # "odium": lambda: alley3_macro(self),
+            # "shangrila": lambda: summer5_macro(self),
             "arteria": lambda: bottomdeck6_macro(self),
             "carcion": lambda: calm_beach_3_macro(self),
             "default": lambda: calm_beach_3_macro(self)
@@ -98,6 +100,7 @@ class Marksman(RuneWalkerPilot):
         self.data['bonus_exp_cp'] = self.database.get('bonus_exp_cp', datetime.min)
         self.data['regular_exp_cp'] = self.database.get('regular_exp_cp', datetime.min) # This include Legion
         self.data['legion_drop'] = self.database.get('legion_drop', datetime.min)
+        self.data['legion_meso'] = self.database.get('legion_meso', datetime.min)
         self.data['wap'] = self.database.get('wap', datetime.min)
         self.data['eap'] = self.database.get('eap', datetime.min)
 
@@ -165,6 +168,7 @@ class Marksman(RuneWalkerPilot):
             self.data['bonus_exp_cp'] = datetime.min
             self.data['regular_exp_cp'] = datetime.min
             self.data['legion_drop'] = datetime.min
+            self.data['legion_meso'] = datetime.min
             self.data['wap'] = datetime.min
             self.data['eap'] = datetime.min
             self.data['consumable_enabled'] = "enabled"
@@ -194,6 +198,11 @@ class Marksman(RuneWalkerPilot):
                 interception.click(loc)
                 time.sleep(0.1)
                 return True
+            loc = common.locate_center_on_screen(Images.CONFIRM_CONSUMABLE_USED, confidence=0.9, grayscale=True)
+            if loc:
+                interception.click(loc)
+                time.sleep(0.1)
+                return True
             return False
 
         def randomize_loc_a_little(loc, range=5):
@@ -201,8 +210,7 @@ class Marksman(RuneWalkerPilot):
 
         cur = datetime.now()
         if cur > self.data['bonus_exp_cp']:
-            if setup_once_if_needed():
-                self.web(delayAfter=0.4)
+            setup_once_if_needed()
             loc = common.locate_center_on_screen(Images.EXP_BONUS_CP, confidence=0.9, region=self.data['use_inventory_region'], grayscale=True)
             if loc:
                 print("Bonus Exp CP")
@@ -249,6 +257,20 @@ class Marksman(RuneWalkerPilot):
                 interception.move_to((uniform(600, 800), uniform(100, 200)))
                 sleep(0.2)
 
+        if cur > self.data['legion_meso']:
+            setup_once_if_needed()
+            loc = common.locate_center_on_screen(Images.LEGION_MESO, confidence=0.9, region=self.data['use_inventory_region'])
+            if loc:
+                print("Legion Mesos")
+                interception.move_to(randomize_loc_a_little(loc))
+                interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
+                self.data['legion_meso'] = cur + timedelta(seconds=60 * 30 + 10)
+                self.database.set('legion_meso', self.data['legion_meso'])
+                sleep(0.15)
+                cancel_if_needed()
+                interception.move_to((uniform(600, 800), uniform(100, 200)))
+                sleep(0.2)
+
         if cur > self.data['wap']:
             setup_once_if_needed()
             loc = common.locate_center_on_screen(Images.WAP, confidence=0.9, region=self.data['use_inventory_region'])
@@ -278,6 +300,17 @@ class Marksman(RuneWalkerPilot):
                 cancel_if_needed()
                 interception.move_to((uniform(600, 800), uniform(100, 200)))
                 sleep(0.2)
+
+        if cur > self.data['next_familiar_fuel']:
+            setup_once_if_needed()
+            loc = common.locate_center_on_screen(Images.FAM_FUEL, confidence=0.9, region=self.data['use_inventory_region'])
+            if loc:
+                print("Familiar Fuel")
+                interception.move_to(randomize_loc_a_little(loc))
+                interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
+                self.data['next_familiar_fuel'] = cur + timedelta(hours=1)
+            else:
+                print("No familiar fuel found")
                 
     def shoot(self, delayAfter=0.51):
         if self.should_exit(): return
@@ -316,6 +349,17 @@ class Marksman(RuneWalkerPilot):
             self.bot.press_release('n')
             self.data['next_janus2'] = datetime.now() + timedelta(seconds=59)
             self.database.set('next_janus2', self.data['next_janus2'])
+            sleep(delayAfter)
+            return True
+        return False
+    
+    def janus3(self, delayAfter=0.68):
+        if self.should_exit(): return
+        if datetime.now() > self.data['next_janus3']:
+            self.bot.press_release('n')
+            self.bot.press_release('n')
+            self.data['next_janus3'] = datetime.now() + timedelta(seconds=59)
+            self.database.set('next_janus3', self.data['next_janus3'])
             sleep(delayAfter)
             return True
         return False
@@ -368,9 +412,11 @@ class Marksman(RuneWalkerPilot):
             return True
         return False
 
-    def flash_jump(self, jumpDelay=0.2, delayAfter=0.7):
+    def flash_jump(self, jumpDelay=0.2, delayAfter=0.7, extraPress=False):
         if self.should_exit(): return
         self.bot.press_release('e', jumpDelay)
+        if (extraPress):
+            self.bot.press_release('e', 0.05)
         self.bot.press_release('e', delayAfter)
 
     def jump_attack(self, attackDelay=0.2, jumpDelay=0.05, delayAfter=0.54, withSurge=False):

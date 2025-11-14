@@ -68,14 +68,14 @@ class RuneWalker:
             if ping_seq % 5 == 0:
                 self.pilot.bot.play_audio(Audio.PING, loops=1)
                 if ping_seq == 0:
-                    self.pilot.bot.voice_command.clear_queue()
-                    self.pilot.bot.voice_command.start()
+                    # self.pilot.bot.voice_command.clear_queue()
+                    # self.pilot.bot.voice_command.start()
                     self.pilot.rune_interact()
             ping_seq += 1
             time.sleep(1)
             if common.locate_center_on_screen(Images.RUNE_BUFF, confidence=0.7, region=get_rune_buff_region()):
                 self.pilot.bot.rune_in_progress = False
-        self.pilot.bot.voice_command.stop()
+        # self.pilot.bot.voice_command.stop()
     ''' 
     Find the player's position
     Return (x, y)
