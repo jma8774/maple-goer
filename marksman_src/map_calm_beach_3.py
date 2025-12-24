@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from mail import Marksman
 
+GLOBAL_HAS_VAC_PET = False
+
 def calm_beach_3_macro(marksman: 'Marksman'):
     marksman.data['_last_reset_in_place'] = datetime.now()
     marksman.data['_last_spawn'] = datetime.now() - timedelta(seconds=10)
@@ -71,11 +73,45 @@ def calm_beach_3_macro(marksman: 'Marksman'):
         marksman.bot.release('left')
         marksman.jump_attack(delayAfter=0.63)
         marksman.flash_jump(delayAfter=0.6)
+        if not GLOBAL_HAS_VAC_PET:
+            marksman.jump_attack(delayAfter=0.63)
+            marksman.jump_attack(delayAfter=0.63)
         if uniform(0, 1) < 0.5:
             marksman.flash_jump(delayAfter=0.6)
+
         time.sleep(0.2)
         marksman.teleport_reset()
         marksman.data['next_loot'] = datetime.now() + timedelta(minutes=uniform(1, 1.2))
+    
+    def loot_2():
+        if datetime.now() < marksman.data.get('next_loot_2', datetime.now()):
+            return
+        marksman.jump_down_attack(delayAfter=0.63)
+        marksman.jump_attack(delayAfter=0.63)
+        
+        time.sleep(0.3)
+        marksman.teleport_reset()
+        marksman.data['next_loot_2'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.6))
+
+    def loot_3():
+        if datetime.now() < marksman.data.get('next_loot_3', datetime.now()):
+            return
+        
+        marksman.bot.press('left', delay=0.6)
+        marksman.bot.release('left')
+        marksman.rope(delayAfter=1.8)
+        marksman.jump_attack(delayAfter=0.63)
+        marksman.jump_attack(delayAfter=0.63)
+        time.sleep(1.2)
+        marksman.jump_attack(delayAfter=0.63)
+        marksman.jump_attack(delayAfter=0.63)
+        marksman.bot.press('right', delay=1.5)
+        marksman.bot.release('right')
+        marksman.bot.press_release('left')
+
+        time.sleep(1)
+        marksman.teleport_reset()
+        marksman.data['next_loot_3'] = datetime.now() + timedelta(minutes=uniform(1.4, 1.6))
     
     print("Started Calm Beach 3 macro")
     while not marksman.should_exit():
@@ -86,4 +122,8 @@ def calm_beach_3_macro(marksman: 'Marksman'):
           setup_stationaries()
         elif datetime.now() > marksman.data.get('next_loot', datetime.now()):
           loot()
+        elif not GLOBAL_HAS_VAC_PET and datetime.now() > marksman.data.get('next_loot_2', datetime.now()):
+          loot_2()
+        elif not GLOBAL_HAS_VAC_PET and datetime.now() > marksman.data.get('next_loot_3', datetime.now()):
+          loot_3()
     print("Paused Calm Beach 3 macro")

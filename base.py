@@ -496,6 +496,8 @@ class BotBase:
 
   def update_use_inventory_region(self, dirty=False):
     res = pag.size()
+    self.data['use_inventory_region_res'] = res
+    return True
     if dirty or self.data['use_inventory_region'] is None:
       self.data['use_inventory_region'] = None
       equip_tab = common.locate_on_screen(Images.INVENTORY_SORT_BUTTON, confidence=0.9, grayscale=True)
@@ -624,7 +626,7 @@ class BotBase:
       self.data['key_pressed'][key] = True
       self.data['all_used_keys'].add(key)
       if delay > 0:
-        sleep(delay, randomize_percentage=0.02)
+        sleep(delay, randomize_percentage=0.1)
     except Exception as e:
       print(f"Error pressing key {key}: {e}")
       self.data['key_pressed'][key] = False
@@ -634,7 +636,7 @@ class BotBase:
       interception.key_up(key)
       self.data['key_pressed'][key] = False
       if delay > 0:
-        sleep(delay, randomize_percentage=0.02)
+        sleep(delay, randomize_percentage=0.1)
     except Exception as e:
       print(f"Error releasing key {key}: {e}")
 
@@ -807,8 +809,11 @@ class Images:
 
   # Cubing  
   CUBE_RESULT       = openImage("cube_result.png")
+  CUBE_POTENTIAL_KEYWORD_TOPLEFT = openImage("cube_potential_keyword_topleft.png")
   CUBE_AFTER        = openImage("cube_after.png")
   ONEMORETRY        = openImage("one_more_try.png")
+  POTENTIAL_RESET_KEYWORD = openImage("potential_reset_keyword.png")
+  POTENTIAL_RESET_KEYWORD_NONHIGHLIGHT = openImage("potential_reset_keyword_nonhighlight.png")
   ATT_INCREASE      = openImage("att_increase.png")
   EPIC_POT          = openImage("epic_pot.png")
 

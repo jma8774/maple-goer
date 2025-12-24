@@ -17,8 +17,8 @@ class RuneWalker:
         self.move_seq = 0
 
 
-    def flash_jump(self):
-        self.pilot.rune_flash_jump()
+    def flash_jump(self, direction=None):
+        self.pilot.rune_flash_jump(direction=direction)
 
     def rope(self):
         self.pilot.rune_rope()
@@ -41,12 +41,10 @@ class RuneWalker:
 
             if me_loc is None:
                 if try_left:
-                    self.pilot.bot.press_release('left')
-                    self.flash_jump()
+                    self.flash_jump(direction='left')
                     try_left = False
                 else:
-                    self.pilot.bot.press_release('right')
-                    self.flash_jump()
+                    self.flash_jump(direction='right')
                     try_left = True
                 time.sleep(0.5)
                 continue
@@ -131,8 +129,9 @@ class RuneWalker:
         if abs(dx) > 40:
             fj_times = math.ceil(abs(dx) / 40)
             print(f"Flash jump {fj_times} times")
+            direction = 'right' if dx > 0 else 'left'
             for _ in range(fj_times):
-                self.flash_jump()
+                self.flash_jump(direction=direction)
                 time.sleep(0.15)
             return
         

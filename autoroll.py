@@ -72,11 +72,11 @@ STATS = {
   "dex":      { "display": "DEX",                   "image": Images.DEX },
   "int":      { "display": "INT",                   "image": Images.INT },
   "luk":      { "display": "LUK",                   "image": Images.LUK },
-  "critdmg":  { "display": "Critical Damage (don't use)",       "image": Images.CRIT_DMG },
+  "critdmg":  { "display": "Critical Damage (don't use)",       "image": Images.CRIT_DMG }, # TODO: get the actual image
   "boss":     { "display": "Boss Damage",           "image": Images.BOSS },
   "ied":      { "display": "Ignore Enemy Defense",  "image": Images.IED },
-  "meso":     { "display": "Meso Obtained",         "image": Images.MESO_OBTAINED },
-  "drop":     { "display": "Item Drop Rate",        "image": Images.ITEM_DROP },
+  "meso":     { "display": "Meso Obtained",         "image": Images.MESO_OBTAINED }, # TODO: get the actual image
+  "drop":     { "display": "Item Drop Rate",        "image": Images.ITEM_DROP }, # TODO: get the actual image
 }
 
 def print_combinations():
@@ -156,7 +156,7 @@ def edit_combinations():
           error = e;
 
 def refresh_mouse_position():
-  data['corner_pos'] = pag.locateOnScreen(Images.CUBE_RESULT, confidence=0.7, grayscale=True) or pag.locateOnScreen(Images.CUBE_AFTER, confidence=0.7, grayscale=True)
+  data['corner_pos'] = pag.locateOnScreen(Images.CUBE_POTENTIAL_KEYWORD_TOPLEFT, confidence=0.7, grayscale=True)
   print(f"Top left corner of the inner cube ui box is at: {data['corner_pos']}")
 
 def cube_to_epic():
@@ -169,17 +169,22 @@ def cube(tier_to=None, force_first=False):
 
   try_again_loc = None
   def try_again():
-    nonlocal try_again_loc
-    if not try_again_loc:
-      interception.move_to((200,200))
-      try_again_loc = pag.locateOnScreen(Images.ONEMORETRY, confidence=0.8, grayscale=True)
-    if not try_again_loc:
-      raise Exception("One more try not found, exiting...")
-    interception.click(try_again_loc)
-    press_release('enter', delay=0.1)
-    press_release('enter', delay=0.1)
-    press_release('enter', delay=0.1)
-    press_release('enter', delay=0.1)
+    # press_release('enter', delay=0.1)
+    # press_release('enter', delay=0.1)
+    # nonlocal try_again_loc
+    # if not try_again_loc:
+    #   interception.move_to((200,200))
+    #   try_again_loc = pag.locateOnScreen(Images.POTENTIAL_RESET_KEYWORD, confidence=0.8, grayscale=True) or
+    # if not try_again_loc:
+    #   raise Exception("One more try not found, exiting...")
+    # interception.click(try_again_loc)
+    # press_release('enter', delay=0.1)
+    # press_release('enter', delay=0.1)
+    # press_release('enter', delay=0.1)
+    # press_release('enter', delay=0.1)
+    press_release('space', delay=0.2)
+    press_release('space', delay=0.2)
+    press_release('space', delay=0.2)
 
   lines_found = {}
   for combination in combinations:
@@ -192,7 +197,6 @@ def cube(tier_to=None, force_first=False):
       print("Forcing first cube...")
       force_first = False
       return False
-    # TODO: maybe make this part multi-threaded so it's faster
     for stat in lines_found:
       locs = pag.locateAllOnScreen(STATS[stat]["image"], confidence=0.95, region=box_region)
       lines_found[stat] = len(list(locs)) if locs else 0
@@ -212,29 +216,31 @@ def cube(tier_to=None, force_first=False):
     print("Checking for tier up...")
     return pag.locateOnScreen(tier_to, confidence=0.8, grayscale=True, region=box_region)
   
-  # WIDTH = 195, HEIGHT = 110
-  box_region = (data['corner_pos'][0]-15, data['corner_pos'][1], 225, 110)
+  # width = 1203-819
+  # height = 714-608
+  width = 1203-819
+  height = 714-608
+  box_region = (data['corner_pos'][0]-15, data['corner_pos'][1], width, height)
   ok_loc = None
   while data['script'] and data['script'][0] == cube.__name__:
     if (not tier_to and not check_for_lines()) or (tier_to and not check_for_tier()):
-      ok_loc = pag.locateOnScreen(Images.OK_START, confidence=0.8, grayscale=True, region=box_region)
-      if ok_loc:
-        interception.click(ok_loc, delay=0.1)
+      # ok_loc = pag.locateOnScreen(Images.OK_START, confidence=0.8, grayscale=True, region=box_region)
+      # if ok_loc:
+      #   interception.click(ok_loc, delay=0.1)
       try_again()
     else:
       print("Desired lines found, cubing stopped.")
       play_audio()
       data['script'] = None
       break
-    time.sleep(0.75)
-    now = datetime.now()
-    while not pag.locateOnScreen(Images.ATT_INCREASE, confidence=0.8, grayscale=True, region=box_region):
-      time.sleep(0.1)
-      if datetime.now() - now > timedelta(seconds=1.5):
-        print("Bugged")
-        play_audio("images/retro_ping.wav", 1)
-        now = datetime.now() + timedelta(seconds=9999)
-    time.sleep(0.35)
+    time.sleep(1.1)
+    # now = datetime.now()
+    # while not pag.locateOnScreen(Images.ATT_INCREASE, confidence=0.8, grayscale=True, region=box_region):
+    #   time.sleep(0.1)
+    #   if datetime.now() - now > timedelta(seconds=1.5):
+    #     print("Bugged")
+    #     play_audio("images/retro_ping.wav", 1)
+    #     now = datetime.now() + timedelta(seconds=9999)
 
 def setup_audio(volume=1):
   pygame.init()

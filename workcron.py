@@ -7,73 +7,40 @@ import pyautogui as pag
 from state import state
 import common
 from common import uniform, sleep
-from marksman_src.map_outlaw2 import outlaw2_macro
-from marksman_src.map_alley3 import alley3_macro
-from marksman_src.map_summer5 import summer5_macro
-from marksman_src.map_bottomdeck6 import bottomdeck6_macro
-from marksman_src.map_gate1 import gate1_macro
-from marksman_src.map_firespirit3 import firespirit3_macro
-from marksman_src.map_carcion import carcion_macro
-from marksman_src.map_calm_beach_3 import calm_beach_3_macro
 from rune.rune_abstract import RuneWalkerPilot
 from rune.rune import RuneWalker
 from database.database import Database
 import interception
 
 
-class Marksman(RuneWalkerPilot):
+class Ren(RuneWalkerPilot):
     # Region definitions
-    ascendion_region = (0, 200, 450, 500)
-    firespirit_region = (0, 450, 700, 750-450)
-    ebon_region = (750, 230, 1365-750, 415-230)
-    gate1_region = (5, 300, 365-5, 545-300)
-    alley3_region = (0, 310, 670, 725-310)
-    summer5_region = (2, 408, 772-2, 652-408)
-    bottompassage6_region = (10, 165, 608-10, 513-165)
-    calm_beach_3_region = (363, 381, 983-363, 501-381)
 
     confirmation_dialog_region = (550, 310, 815-550, 477-310)
 
     def __init__(self):
         self.bot = None
-        self.database = Database(db_path="data/jeemong_marksman.json")
+        self.database = Database(db_path="data/jeemong_ren.json")
         self.data = {
-            'next_blink_setup': self.database.get('next_blink_setup', datetime.now()),
-            'next_boss_buff': datetime.now() + timedelta(minutes=0.5),
-            'next_surgebolt': datetime.now(),
-            'next_web': datetime.now(),
-            'next_solar_crest': datetime.now(),
-            'next_high_speed': datetime.now(),
-            'next_bolt_burst': datetime.now(),
+            'next_buff_check': datetime.now() + timedelta(seconds=15),
+            'next_decents': datetime.now() + timedelta(seconds=181),
             'next_erda_fountain': self.database.get('next_erda_fountain', datetime.now()),
             'next_janus': self.database.get('next_janus', datetime.now()),
             'next_janus2': self.database.get('next_janus2', datetime.now()),
             'next_janus3': self.database.get('next_janus3', datetime.now()),
-            'next_loot_2': datetime.now() + timedelta(minutes=1.5),
-            'next_loot_3': datetime.now() + timedelta(minutes=1.5),
             'next_familiar_fuel': datetime.now() + timedelta(hours=1),
             'whiteroomed': False,
-            'is_paused': False
+            'is_paused': False,
+            'consumable_enabled': "enabled",
+            'use_inventory_region': None
         }
-        # Initialize script mapping
+        # Initialize script mapping - TODO: Add Ren-specific map macros
         self.scripts = {
-            # "arcus": lambda: outlaw2_macro(self),
-            # "odium": lambda: alley3_macro(self),
-            # "shangrila": lambda: summer5_macro(self),
-            "arteria": lambda: bottomdeck6_macro(self),
-            "carcion": lambda: calm_beach_3_macro(self),
-            "default": lambda: calm_beach_3_macro(self)
-            # Commented out scripts
-            # "cernium": lambda: firespirit3_macro(self),
-            # "gate1": lambda: gate1_macro(self),
-            # "burnium": self.ebonmage_macro,
+            "default": lambda: self.default_macro()
         }
 
     def getMap(self):
         maps = {
-            # "cernium": Images.CERNIUM_ICON,
-            # "burnium": Images.BURNIUM_ICON,
-            # "gate1": Images.ODIUM_ICON,
             "arcus": Images.ARCUS_ICON,
             "odium": Images.ODIUM_ICON,
             "shangrila": Images.SHANGRILA_ICON,
@@ -95,7 +62,7 @@ class Marksman(RuneWalkerPilot):
         self.bot.run()
 
     def setup(self):
-        self.data['next_petfood'] = datetime.now() + timedelta(seconds=90)
+        pass
 
     def consumable_setup(self):
         self.data['bonus_exp_cp'] = self.database.get('bonus_exp_cp', datetime.min)
@@ -124,44 +91,24 @@ class Marksman(RuneWalkerPilot):
                 return func(self, *args, **kwargs)
                 
         return wrapper
- 
+
     def buff_setup(self):
         if self.should_exit(): return
         if self.bot.check_rune_and_walk():
-            self.teleport_reset(delayAfter=0.05)
-            self.teleport_reset()
             return
         cur = datetime.now()
         
-        self.bot.check_person_entered_map(only_guild=True)
-        # self.bot.check_fam_leveling()
-        # self.bot.check_tof("y")
-        # self.bot.check_wap()
-        # self.bot.check_fam_fuel()
+        # self.bot.check_person_entered_map(only_guild=True)
         self.bot.check_elite_box()
 
-        if cur > self.data['next_petfood']:
-          self.bot.press_release('f10')
-          self.data['next_petfood'] = cur + timedelta(seconds=90)
-
-        if cur > self.data['next_boss_buff'] and common.locate_on_screen(Images.ELITE_BOSS_HP, region=(200, 0, 1150-200, 30)):
-            self.bot.press_release('t', 0.5)
-            self.bot.press_release('pageup', 0.45)
-            self.bot.press_release('home', 0.45)
-            self.bot.press_release('insert', 0.9)
-            self.bot.press_release('delete', 0.6)
-            self.data['next_boss_buff'] = cur + timedelta(minutes=uniform(1.5, 1.7))
-
-        if cur > self.data['next_blink_setup']:
-            self.bot.press('down')
-            self.bot.press_release('x')
-            self.bot.press_release('x')
-            self.bot.release('down', 0.6)
-            self.data['next_blink_setup'] = cur + timedelta(seconds=uniform(35, 40))
-            self.database.set('next_blink_setup', self.data['next_blink_setup'])
+        if cur > self.data['next_decents']:
+            self.bot.press_release('pagedown', 1.5)
+            # Pet Food
+            self.bot.press_release('f10', 0.5)
+            self.bot.press_release('f10', 0.5)
+            self.data['next_decents'] = cur + timedelta(seconds=181)
 
     def consumables_check(self):
-        # if self.should_exit(): return
         if self.data['consumable_enabled'] == "disabled": return
         print(f"Consumable setup: {self.data['consumable_enabled']}")
         if self.data['consumable_enabled'] == "reset all":
@@ -173,21 +120,11 @@ class Marksman(RuneWalkerPilot):
             self.data['wap'] = datetime.min
             self.data['eap'] = datetime.min
             self.data['consumable_enabled'] = "enabled"
-        # "bonus_exp_cp", "regular_exp_cp", "legion_drop", "wap"
-        # EXP_BONUS_CP      = openImage("exp_bonus.png")
-        # EXP_REGULAR_MUGONG = openImage("exp_regular_mugong.png")
-        # EXP_REGULAR_2x    = openImage("exp_regular_2x.png")
-        # EXP_REGULAR_3x    = openImage("exp_regular_3x.png")
-        # EXP_REGULAR_MVP   = openImage("exp_regular_mvp.png")
 
-        # # Legion
-        # LEGION_DROP       = openImage("legion_drop.png")
-        # LEGION_EXP        = openImage("legion_exp.png")
         updated_already = False
         def setup_once_if_needed():
             nonlocal updated_already
             if updated_already: return False
-            # Update self.data['use_inventory_region']
             if not self.bot.update_use_inventory_region(dirty=True):
                 print("Could not find inventory USE region")
             updated_already = True
@@ -232,7 +169,6 @@ class Marksman(RuneWalkerPilot):
                 common.locate_center_on_screen(Images.EXP_REGULAR_MVP, confidence=0.9, region=self.data['use_inventory_region']) or \
                 common.locate_center_on_screen(Images.EXP_REGULAR_MUGONG, confidence=0.9, region=self.data['use_inventory_region'])
             if loc:
-                self.web(delayAfter=0.4)
                 print("Regular Exp CP")
                 interception.move_to(randomize_loc_a_little(loc))
                 interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
@@ -247,7 +183,6 @@ class Marksman(RuneWalkerPilot):
             setup_once_if_needed()
             loc = common.locate_center_on_screen(Images.LEGION_DROP, confidence=0.9, region=self.data['use_inventory_region'])
             if loc:
-                self.web(delayAfter=0.4)
                 print("Legion Drop")
                 interception.move_to(randomize_loc_a_little(loc))
                 interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
@@ -276,7 +211,6 @@ class Marksman(RuneWalkerPilot):
             setup_once_if_needed()
             loc = common.locate_center_on_screen(Images.WAP, confidence=0.9, region=self.data['use_inventory_region'])
             if loc:
-                self.web(delayAfter=0.4)
                 print("WAP")
                 interception.move_to(randomize_loc_a_little(loc))
                 interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
@@ -291,7 +225,6 @@ class Marksman(RuneWalkerPilot):
             setup_once_if_needed()
             loc = common.locate_center_on_screen(Images.EAP, confidence=0.95, region=self.data['use_inventory_region'])
             if loc:
-                self.web(delayAfter=0.4)
                 print("EAP")
                 interception.move_to(randomize_loc_a_little(loc))
                 interception.click(loc, clicks=2, interval=uniform(0.1, 0.15))
@@ -312,14 +245,11 @@ class Marksman(RuneWalkerPilot):
                 self.data['next_familiar_fuel'] = cur + timedelta(hours=1)
             else:
                 print("No familiar fuel found")
-                
-    def shoot(self, delayAfter=0.51):
-        if self.should_exit(): return
-        self.bot.press_release('q', delay=delayAfter)
 
-    def covering_fire(self, delayAfter=0.7):
+    def wheel(self):
         if self.should_exit(): return
-        self.bot.press_release('shift', delay=delayAfter)
+        self.bot.press_release('a', 0.5)
+        return True
 
     def erda_fountain(self, delayAfter=0.55, custom_cd=59):
         if self.should_exit(): return
@@ -365,68 +295,20 @@ class Marksman(RuneWalkerPilot):
             return True
         return False
 
-    def bolt_burst(self, delayAfter=0.5, isGo=True):
-        if self.should_exit(): return
-        if isGo and datetime.now() > self.data['next_bolt_burst']:
-            self.bot.press_release('d', delay=delayAfter)
-            self.data['next_bolt_burst'] = datetime.now() + timedelta(seconds=7-delayAfter)
-            return True
-        return False
-
-    def jump_web(self, jumpDelay=0.2, delayAfter=0.3):
-        if self.should_exit(): return
-        if datetime.now() > self.data['next_web']:
-            self.jump_down(delayAfter=jumpDelay)
-            self.web(delayAfter=delayAfter)
-            return True
-        return False
-
-    def web(self, delayAfter=0.3):
-        if self.should_exit(): return
-        if datetime.now() > self.data['next_web']:
-            self.bot.press_release('4', delay=delayAfter)
-            self.data['next_web'] = datetime.now() + timedelta(seconds=251)
-            return True
-        return False
-    
-    def solar_crest(self, delayAfter=0.4):
-        if self.should_exit(): return
-        if datetime.now() > self.data['next_solar_crest']:
-            self.bot.press_release('5', delay=delayAfter)
-            self.data['next_solar_crest'] = datetime.now() + timedelta(seconds=251)
-            return True
-        return False
-
-    def jump_high_speed_shot(self, jumpDelay=0.2, delayAfter=0.3, isGo=True):
-        if self.should_exit(): return
-        if isGo and datetime.now() > self.data['next_high_speed']:
-            self.jump_down(delayAfter=jumpDelay)
-            self.high_speed_shot(delayAfter=delayAfter)
-            return True
-        return False
-
-    def high_speed_shot(self, delayAfter=0.3, isGo=True):
-        if self.should_exit(): return
-        if isGo and datetime.now() > self.data['next_high_speed']:
-            self.bot.press_release('f2', delay=delayAfter)
-            self.data['next_high_speed'] = datetime.now() + timedelta(seconds=15)
-            return True
-        return False
-
-    def flash_jump(self, jumpDelay=0.2, delayAfter=0.7, extraPress=False):
+    def flash_jump(self, jumpDelay=0.25, delayAfter=0.7, extraPress=False):
         if self.should_exit(): return
         self.bot.press_release('e', jumpDelay)
         if (extraPress):
             self.bot.press_release('e', 0.05)
         self.bot.press_release('e', delayAfter)
 
-    def jump_attack(self, attackDelay=0.2, jumpDelay=0.05, delayAfter=0.54, withSurge=False):
+    def jump_attack(self, attackDelay=0.2, jumpDelay=0.05, delayAfter=0.54, withSkill=False):
         if self.should_exit(): return
         self.bot.press_release('e', jumpDelay)
         self.bot.press_release('e', attackDelay)
         self.bot.press_release('q')
-        if withSurge:
-            self.surgebolt()
+        if withSkill:
+            pass  # Placeholder for skill usage
         sleep(delayAfter)
 
     def jump_attack_still(self, attackDelay=0.05, delayAfter=0.67):
@@ -479,40 +361,79 @@ class Marksman(RuneWalkerPilot):
         self.bot.press('e')
         self.bot.release('e', delayAfter)
 
-    def surgebolt(self, delayAfter=0.07):
-        if datetime.now() > self.data['next_surgebolt']:
-            self.bot.press_release('r')
-            self.data['next_surgebolt'] = datetime.now() + timedelta(seconds=10)
-            sleep(delayAfter)
-            return True
-        return False
-
-    def q_and_surgebolt(self, afterDelay=0.7):
-        if self.should_exit(): return
-        if datetime.now() > self.data['next_surgebolt']:
-            self.bot.press('q', delay=0.02)
-            self.bot.press_release('r')
-            self.bot.release('q', afterDelay)
-            self.data['next_surgebolt'] = datetime.now() + timedelta(seconds=uniform(10, 13))
-        else:
-            self.bot.press_release('q', afterDelay)
-
     def rope(self, delayAfter=2):
         if self.should_exit(): return
         self.bot.press_release('c', delayAfter)
 
-    def teleport_reset(self, delayAfter=0.65):
-        if self.should_exit(): return
-        self.bot.press_release('x')
-        self.bot.press_release('x', delayAfter)
+    def default_macro(self):
+      """Default macro for Ren class - placeholder implementation"""
 
+      def setup():
+        self.bot.press_release('right')
+        self.flash_jump()
+        self.bot.press_release('left')
+        self.flash_jump()
+        self.rope(delayAfter=2.5)
+        self.wheel()
+        self.bot.press('q')
+        self.bot.press('left', delay=1)
+        self.bot.release('left')
+        self.flash_jump()
+        self.bot.release('q', delay=0.2)
+        self.flash_jump(delayAfter=0.9)
+        self.erda_fountain()
+        self.bot.press('left', delay=0.3)
+        self.bot.release('left')
+        self.flash_jump(jumpDelay=0.3)
+        self.bot.press('left', delay=0.3)
+        self.bot.release('left')
+        self.janus()
+        self.bot.press('q')
+        self.flash_jump()
+        self.flash_jump(delayAfter=1)
+        self.bot.press('right')
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.jump_down()
+        self.bot.release('right')
+      
+      def rotation():
+        self.bot.press('left')
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.bot.release('left')
+        self.bot.press('right')
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.flash_jump()
+        self.bot.release('right')
+
+      self.bot.press('q')
+      while not self.should_exit():
+        if datetime.now() > self.data['next_buff_check']:
+          self.bot.release('q')
+          self.buff_setup()
+          self.data['next_buff_check'] = datetime.now() + timedelta(seconds=30)
+          self.bot.press('q')
+        if datetime.now() > self.data['next_erda_fountain']:
+          self.bot.release('q')
+          setup()
+        # self.consumables_check()
+        self.bot.release('q')
+        self.bot.press('q')
+        rotation()
+      self.bot.release('q')
 
 # OVERRIDES FOR RUNE BOT INTERFACE
-    def rune_flash_jump(self, direction=None):
-        if direction == 'left':
-            self.bot.press_release('left')
-        elif direction == 'right':
-            self.bot.press_release('right')
+    def rune_flash_jump(self):
         self.flash_jump()
 
     def rune_rope(self):
@@ -525,9 +446,7 @@ class Marksman(RuneWalkerPilot):
         self.bot.press_release('e')
 
     def rune_protect(self):
-        if not self.solar_crest():
-            self.web()
-        sleep(0.3)
+        return
     
     def rune_interact(self):
         self.bot.press_release('y')
@@ -535,10 +454,8 @@ class Marksman(RuneWalkerPilot):
 
 if __name__=="__main__":
     try:
-        marksman = Marksman()
-        marksman.main()
+        ren = Ren()
+        ren.main()
     except KeyboardInterrupt:
         state['running'] = False
         exit()
-
-  
