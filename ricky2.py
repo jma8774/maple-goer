@@ -196,7 +196,7 @@ class Ricky(RuneWalkerPilot):
         self.bot.press('up')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('up', delay=0.25)
+            self.bot.release('up', delay=0.15)
             self.bot.press_release('z')
         else:
             self.bot.release('up')
@@ -207,7 +207,7 @@ class Ricky(RuneWalkerPilot):
         self.bot.press('down')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('down', delay=0.25)
+            self.bot.release('down', delay=0.15)
             self.bot.press_release('z')
         else:
             self.bot.release('down')
@@ -218,7 +218,7 @@ class Ricky(RuneWalkerPilot):
         self.bot.press('left')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('left', delay=0.25)
+            self.bot.release('left', delay=0.15)
             self.bot.press_release('z')
         else:
             self.bot.release('left')
@@ -229,7 +229,7 @@ class Ricky(RuneWalkerPilot):
         self.bot.press('right')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('right', delay=0.25)
+            self.bot.release('right', delay=0.15)
             self.bot.press_release('z')
         else:
             self.bot.release('right')
