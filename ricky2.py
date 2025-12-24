@@ -191,45 +191,45 @@ class Ricky(RuneWalkerPilot):
             return True
         return False
 
-    def teleport_up(self, delayAfter=0.65, should_z=False):
+    def teleport_up(self, delayAfter=0.65, should_z=False, z_delay_before_attack=0.15):
         if self.should_exit(): return
         self.bot.press('up')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('up', delay=0.15)
+            self.bot.release('up', delay=z_delay_before_attack)
             self.bot.press_release('z')
         else:
             self.bot.release('up')
         sleep(delayAfter, randomize_percentage=0.1)
 
-    def teleport_down(self, delayAfter=0.65, should_z=False):
+    def teleport_down(self, delayAfter=0.65, should_z=False, z_delay_before_attack=0.15):
         if self.should_exit(): return
         self.bot.press('down')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('down', delay=0.15)
+            self.bot.release('down', delay=z_delay_before_attack)
             self.bot.press_release('z')
         else:
             self.bot.release('down')
         sleep(delayAfter, randomize_percentage=0.1)
 
-    def teleport_left(self, delayAfter=0.65, should_z=False):
+    def teleport_left(self, delayAfter=0.65, should_z=False, z_delay_before_attack=0.15):
         if self.should_exit(): return
         self.bot.press('left')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('left', delay=0.15)
+            self.bot.release('left', delay=z_delay_before_attack)
             self.bot.press_release('z')
         else:
             self.bot.release('left')
         sleep(delayAfter, randomize_percentage=0.1)
 
-    def teleport_right(self, delayAfter=0.65, should_z=False):
+    def teleport_right(self, delayAfter=0.65, should_z=False, z_delay_before_attack=0.15):
         if self.should_exit(): return
         self.bot.press('right')
         self.bot.press_release('d')
         if should_z:
-            self.bot.release('right', delay=0.15)
+            self.bot.release('right', delay=z_delay_before_attack)
             self.bot.press_release('z')
         else:
             self.bot.release('right')
