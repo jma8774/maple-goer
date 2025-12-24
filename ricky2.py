@@ -194,34 +194,46 @@ class Ricky(RuneWalkerPilot):
     def teleport_up(self, delayAfter=0.65, should_z=False):
         if self.should_exit(): return
         self.bot.press('up')
-        self.bot.press_release('d', delay=0.25)
+        self.bot.press_release('d')
         if should_z:
+            self.bot.release('up', delay=0.25)
             self.bot.press_release('z')
-        self.bot.release('up', delayAfter)
+        else:
+            self.bot.release('up')
+        sleep(delayAfter, randomize_percentage=0.1)
 
     def teleport_down(self, delayAfter=0.65, should_z=False):
         if self.should_exit(): return
         self.bot.press('down')
-        self.bot.press_release('d', delay=0.25)
+        self.bot.press_release('d')
         if should_z:
+            self.bot.release('down', delay=0.25)
             self.bot.press_release('z')
-        self.bot.release('down', delayAfter)
+        else:
+            self.bot.release('down')
+        sleep(delayAfter, randomize_percentage=0.1)
 
     def teleport_left(self, delayAfter=0.65, should_z=False):
         if self.should_exit(): return
         self.bot.press('left')
-        self.bot.press_release('d', delay=0.25)
+        self.bot.press_release('d')
         if should_z:
+            self.bot.release('left', delay=0.25)
             self.bot.press_release('z')
-        self.bot.release('left', delayAfter)
+        else:
+            self.bot.release('left')
+        sleep(delayAfter, randomize_percentage=0.1)
 
     def teleport_right(self, delayAfter=0.65, should_z=False):
         if self.should_exit(): return
         self.bot.press('right')
-        self.bot.press_release('d', delay=0.25)
+        self.bot.press_release('d')
         if should_z:
+            self.bot.release('right', delay=0.25)
             self.bot.press_release('z')
-        self.bot.release('right', delayAfter)
+        else:
+            self.bot.release('right')
+        sleep(delayAfter, randomize_percentage=0.1)
 
 
 # OVERRIDES FOR RUNE BOT INTERFACE
