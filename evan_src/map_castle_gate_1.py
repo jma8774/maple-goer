@@ -51,13 +51,13 @@ def castle_gate_1_macro(evan: 'Ricky'):
         evan.bot.press('left', 0.6)
         evan.bot.release('left')
         evan.janus()
-        evan.teleport_down()
+        evan.teleport_down(delayAfter=0.5)
         evan.teleport_right(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
         evan.teleport_right(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
         evan.teleport_right(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
         evan.teleport_right(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
         evan.teleport_right(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
-        evan.teleport_right(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
+        evan.teleport_right(delayAfter=0.5)
         evan.bot.press_release('left')
 
     def loot():
