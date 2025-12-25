@@ -32,7 +32,7 @@ def castle_gate_1_macro(evan: 'Ricky'):
         #     else:
         #         print(f"Found mob at {mob_loc}, continuing rotation")
         # evan.data['_last_spawn'] = datetime.now()
-        if not evan.data.get('dragon_finished_action', datetime.now()) < datetime.now():
+        if evan.data.get('dragon_finished_action', datetime.now()) > datetime.now():
             return
         if not evan.fire_breath():
             evan.wind_breath()
@@ -44,7 +44,7 @@ def castle_gate_1_macro(evan: 'Ricky'):
         evan.teleport_up(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
         evan.teleport_left(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
         evan.teleport_left(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
-        evan.teleport_left(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
+        evan.teleport_left()
         evan.erda_fountain()
         evan.teleport_left(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
         evan.teleport_left(should_z=random.choice([True, False]), z_delay_before_attack=uniform(0.09, 0.15))
