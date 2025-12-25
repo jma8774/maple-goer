@@ -759,6 +759,9 @@ class Images:
   CASH_TAB          = openImage("cash_tab.png")
   ELITE_BOSS_HP     = openImage("elite_boss_hp.png")
   REFRESH_BOSS      = openImage("refresh_boss.png")
+  EVENT_DEPART      = openImage("depart.png")
+  EVENT_ALPACA_4    = openImage("alpaca_4.png")
+  EVENT_ALPACA_5    = openImage("alpaca_5.png")
 
   # Auto familiar leveling
   SETUP             = openImage("setup.png")

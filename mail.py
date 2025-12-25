@@ -19,7 +19,7 @@ from rune.rune_abstract import RuneWalkerPilot
 from rune.rune import RuneWalker
 from database.database import Database
 import interception
-
+from tts.tts import TTS
 
 class Marksman(RuneWalkerPilot):
     # Region definitions
@@ -159,6 +159,20 @@ class Marksman(RuneWalkerPilot):
             self.bot.release('down', 0.6)
             self.data['next_blink_setup'] = cur + timedelta(seconds=uniform(35, 40))
             self.database.set('next_blink_setup', self.data['next_blink_setup'])
+
+        depart_loc = common.locate_on_screen(Images.EVENT_DEPART, confidence=0.9, grayscale=True)
+        print(f"Departing found: {depart_loc}")
+        if depart_loc:
+            print("Departing found")
+            interception.move_to(depart_loc)
+            interception.mouse_down("left")
+            time.sleep(1.75)
+            interception.mouse_up("left")
+            interception.move_to((uniform(600, 800), uniform(100, 200)))
+            time.sleep(1)
+            alpaca_5_loc = common.locate_on_screen(Images.EVENT_ALPACA_5, confidence=0.95)
+            if alpaca_5_loc:
+                self.bot.tts.speak("Five")
 
     def consumables_check(self):
         # if self.should_exit(): return

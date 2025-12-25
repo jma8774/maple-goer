@@ -102,6 +102,18 @@ class Ricky(RuneWalkerPilot):
             # return
 
     def consumables_check(self):
+        depart_loc = common.locate_on_screen(Images.EVENT_DEPART, confidence=0.9, grayscale=True)
+        if depart_loc:
+            print("Departing found")
+            interception.move_to(depart_loc)
+            interception.mouse_down("left")
+            time.sleep(1.75)
+            interception.mouse_up("left")
+            interception.move_to((uniform(600, 800), uniform(100, 200)))
+            time.sleep(1)
+            alpaca_5_loc = common.locate_on_screen(Images.EVENT_ALPACA_5, confidence=0.95)
+            if alpaca_5_loc:
+                self.bot.tts.speak("Five")
         pass
 
     # Helper functions from original ricky.py
